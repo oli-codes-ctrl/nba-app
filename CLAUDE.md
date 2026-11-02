@@ -32,8 +32,7 @@ Ported from a MATLAB App Designer app kept at `legacy/FINAL_NOKEY.m` for referen
 - Daily puzzles are frozen once published. Never change a past or current day's entry.
 
 ## Commands
-- The repo lives at `C:
-ba-app`. Keep it out of OneDrive: OneDrive breaks uv hardlinks and locks `.venv`. If uv reports "os error 396", run `uv cache clean <package>` for the named package.
+- The repo lives at `C:\nba-app`. Keep it out of OneDrive: OneDrive breaks uv hardlinks and locks `.venv`. If uv reports "os error 396", run `uv cache clean <package>` for the named package.
 - Pipeline tests: `cd pipeline && uv run --extra dev pytest`
 - Pipeline local run (about 2 minutes): `cd pipeline && uv run python -m hoops_pipeline nightly --state ../.state --out ../out`
 - Rebuild JSON from saved state without network: same with `build-only`.
