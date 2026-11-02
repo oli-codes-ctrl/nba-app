@@ -23,7 +23,7 @@ export interface KeyValueStore {
   setItem(key: string, value: string): Promise<void>;
 }
 
-export type FetchFn = (url: string, init?: { headers?: Record<string, string> }) => Promise<{
+export type FetchFn = (url: string) => Promise<{
   ok: boolean;
   status: number;
   json(): Promise<unknown>;

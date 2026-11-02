@@ -44,6 +44,46 @@ export type Colors = Record<ColorToken, string>;
 
 export const colors: Record<ColorScheme, Colors> = palette;
 
+/**
+ * Chart colors. Validated with the dataviz palette checker against each
+ * mode's background: the two trend colors pass all-pairs CVD and contrast
+ * checks; each ramp passes the ordinal checks (one hue, visible steps).
+ * Ramps run low to high. In dark mode low recedes into the background.
+ */
+export type ChartColors = {
+  grid: string;
+  axis: string;
+  axisLabel: string;
+  aboveTrend: string;
+  belowTrend: string;
+  trendLine: string;
+  highlight: string;
+  ramp: readonly string[];
+};
+
+export const chartColors: Record<ColorScheme, ChartColors> = {
+  light: {
+    grid: '#E1E0D9',
+    axis: '#C3C2B7',
+    axisLabel: '#6B6A65',
+    aboveTrend: '#2A78D6',
+    belowTrend: '#EB6834',
+    trendLine: '#52514E',
+    highlight: '#0B0B0B',
+    ramp: ['#86B6EF', '#3987E5', '#256ABF', '#184F95', '#0D366B'],
+  },
+  dark: {
+    grid: '#2C2C2A',
+    axis: '#383835',
+    axisLabel: '#A9A79F',
+    aboveTrend: '#3987E5',
+    belowTrend: '#D95926',
+    trendLine: '#C3C2B7',
+    highlight: '#F0EFEC',
+    ramp: ['#184F95', '#256ABF', '#3987E5', '#86B6EF', '#CDE2FB'],
+  },
+};
+
 /** Text colors that sit on a team chip, chosen by the chip's brightness. */
 export const chipText = { onLight: '#111316', onDark: '#FFFFFF' } as const;
 

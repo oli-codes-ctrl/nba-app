@@ -1,4 +1,5 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { StatusBar } from 'expo-status-bar';
 
 import { DataProvider } from '@/data/DataProvider';
@@ -25,10 +26,16 @@ export default function RootLayout() {
     <DataProvider>
       <ThemeProvider value={navTheme}>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-        <Stack screenOptions={{ headerTintColor: c.accent, headerTitleStyle: { color: c.text } }}>
-          <Stack.Screen name="index" options={{ title: 'Players', headerLargeTitle: true }} />
-          <Stack.Screen name="player/[id]" options={{ title: '' }} />
-        </Stack>
+        <NativeTabs tintColor={c.accent}>
+          <NativeTabs.Trigger name="(players)">
+            <NativeTabs.Trigger.Label>Players</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="person.3.fill" md="groups" />
+          </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="graphs">
+            <NativeTabs.Trigger.Label>Graphs</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="chart.dots.scatter" md="scatter_plot" />
+          </NativeTabs.Trigger>
+        </NativeTabs>
       </ThemeProvider>
     </DataProvider>
   );

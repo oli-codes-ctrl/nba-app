@@ -31,16 +31,20 @@ class MemoryStore implements KeyValueStore {
 
 function fakeFetch(files: Record<string, unknown>) {
   const calls: string[] = [];
+  const queries: string[] = [];
   let offline = false;
   const fn: FetchFn = async (url) => {
-    calls.push(url.replace(BASE, ''));
+    const [path, query] = url.replace(BASE, '').split('?');
+    calls.push(path);
+    queries.push(query ?? '');
     if (offline) throw new TypeError('Network request failed');
-    const body = files[url.replace(BASE, '')];
+    const body = files[path];
     return { ok: body !== undefined, status: body === undefined ? 404 : 200, json: async () => body };
   };
   return {
     fn,
     calls,
+    queries,
     files,
     goOffline: () => {
       offline = true;
@@ -75,6 +79,15 @@ describe('remote data source', () => {
     expect(snapshot.manifest.asOf).toBe('2026-11-02');
     expect(store.data.has(CACHE_KEY)).toBe(true);
     expect(await source.cached()).toEqual(snapshot);
+  });
+
+  it('busts caches with query strings, not headers, and never on the hashed players file', async () => {
+    const { net, source } = setup({ ...initial });
+    await source.load();
+    const byPath = Object.fromEntries(net.calls.map((c, i) => [c, net.queries[i]]));
+    expect(byPath['manifest.json']).toBe(`v=${new Date('2026-11-02T12:00:00Z').getTime()}`);
+    expect(byPath['puzzles.json']).toBe(`v=${encodeURIComponent('2026-11-02T10:00:00+00:00')}`);
+    expect(byPath['players.aaa.json']).toBe('');
   });
 
   it('only fetches the manifest when nothing changed', async () => {

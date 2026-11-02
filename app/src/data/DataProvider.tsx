@@ -27,7 +27,7 @@ type DataState = {
 const DataContext = createContext<DataState | null>(null);
 
 export function defaultDataSource(): DataSource {
-  return createRemoteDataSource({ fetch: (url, init) => fetch(url, init), store: AsyncStorage });
+  return createRemoteDataSource({ fetch: (url) => fetch(url), store: AsyncStorage });
 }
 
 export function DataProvider({ source, children }: { source?: DataSource; children: ReactNode }) {

@@ -74,8 +74,15 @@ export function createRemoteDataSource({
   baseUrl = DATA_BASE_URL,
   now = () => new Date(),
 }: Options): DataSource {
-  async function getJson(path: string): Promise<unknown> {
-    const res = await fetch(baseUrl + path, { headers: { 'Cache-Control': 'no-cache' } });
+  /**
+   * `bust` is appended as a query string so caches between the app and
+   * GitHub Pages never serve an old copy. A query string (not a no-cache
+   * header) keeps the request "simple", so browsers skip the CORS preflight
+   * that GitHub Pages would reject.
+   */
+  async function getJson(path: string, bust?: string): Promise<unknown> {
+    const url = baseUrl + path + (bust ? `?v=${encodeURIComponent(bust)}` : '');
+    const res = await fetch(url);
     if (!res.ok) throw new DataError(`Download of ${path} failed (HTTP ${res.status})`);
     return res.json();
   }
@@ -90,14 +97,15 @@ export function createRemoteDataSource({
   }
 
   async function fetchFresh(previous: Snapshot | null): Promise<Snapshot> {
-    const manifest = parseManifest(await getJson('manifest.json'));
+    const manifest = parseManifest(await getJson('manifest.json', String(now().getTime())));
     if (previous && previous.manifest.generatedAt === manifest.generatedAt) {
       return { ...previous, manifest, fetchedAt: now().toISOString() };
     }
     const samePlayers = previous?.manifest.files.players === manifest.files.players;
     const [players, puzzles] = await Promise.all([
       samePlayers && previous ? previous.players : getJson(manifest.files.players).then(parsePlayers),
-      getJson(manifest.files.puzzles).then(parsePuzzles),
+      // The puzzles file name has no hash, so tie it to this data refresh.
+      getJson(manifest.files.puzzles, manifest.generatedAt).then(parsePuzzles),
     ]);
     return { manifest, players, puzzles, fetchedAt: now().toISOString() };
   }
