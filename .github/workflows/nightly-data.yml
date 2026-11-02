@@ -1,0 +1,58 @@
+name: Nightly data
+
+on:
+  schedule:
+    - cron: "0 10 * * *" # 5-6am US Eastern, after every game is final
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly-data
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load pipeline state
+        run: |
+          mkdir -p .state
+          if git ls-remote --exit-code --heads origin pipeline-state > /dev/null; then
+            git fetch --depth=1 origin pipeline-state
+            git archive FETCH_HEAD | tar -x -C .state
+          else
+            echo "No pipeline-state branch yet; starting fresh."
+          fi
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Run pipeline
+        working-directory: pipeline
+        run: uv run --python 3.12 python -m hoops_pipeline nightly --state ../.state --out ../out
+
+      - name: Save pipeline state
+        # Single force-pushed commit so the branch never grows.
+        working-directory: .state
+        run: |
+          git init -q -b pipeline-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Pipeline state $(date -u +%F)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:pipeline-state
+
+      - name: Publish JSON to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_message: "Data refresh"

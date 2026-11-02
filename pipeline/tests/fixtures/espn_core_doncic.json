@@ -1,0 +1,81 @@
+{
+ "splits": {
+  "categories": [
+   {
+    "name": "defensive",
+    "stats": [
+     {
+      "name": "defensiveRebounds",
+      "value": 47.0
+     },
+     {
+      "name": "defReboundRate",
+      "value": 0.0
+     },
+     {
+      "name": "avgDefensiveRebounds",
+      "value": 7.8333335
+     },
+     {
+      "name": "avg48DefensiveRebounds",
+      "value": 10.493023
+     }
+    ]
+   },
+   {
+    "name": "general",
+    "stats": [
+     {
+      "name": "reboundRate",
+      "value": 0.0
+     },
+     {
+      "name": "rebounds",
+      "value": 49.0
+     },
+     {
+      "name": "avgRebounds",
+      "value": 8.166667
+     },
+     {
+      "name": "avgTeamRebounds",
+      "value": 0.0
+     },
+     {
+      "name": "totalRebounds",
+      "value": 49.0
+     },
+     {
+      "name": "avg48Rebounds",
+      "value": 10.939535
+     }
+    ]
+   },
+   {
+    "name": "offensive",
+    "stats": [
+     {
+      "name": "offensiveRebounds",
+      "value": 2.0
+     },
+     {
+      "name": "offReboundRate",
+      "value": 0.0
+     },
+     {
+      "name": "avgOffensiveRebounds",
+      "value": 0.33333334
+     },
+     {
+      "name": "offensiveReboundPct",
+      "value": 0.02739726
+     },
+     {
+      "name": "avg48OffensiveRebounds",
+      "value": 0.44651163
+     }
+    ]
+   }
+  ]
+ }
+}
