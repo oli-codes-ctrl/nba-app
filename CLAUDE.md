@@ -32,6 +32,7 @@ Ported from a MATLAB App Designer app kept at `legacy/FINAL_NOKEY.m` for referen
 - Daily puzzles are frozen once published. Never change a past or current day's entry.
 
 ## Commands
+- The repo sits in OneDrive, which breaks uv's hardlinks and locks `.venv`. If uv errors, set `UV_LINK_MODE=copy` and point `UV_PROJECT_ENVIRONMENT` at a folder outside OneDrive.
 - Pipeline tests: `cd pipeline && uv run --extra dev pytest`
 - Pipeline local run (about 2 minutes): `cd pipeline && uv run python -m hoops_pipeline nightly --state ../.state --out ../out`
 - Rebuild JSON from saved state without network: same with `build-only`.
