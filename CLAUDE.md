@@ -13,6 +13,7 @@ Ported from a MATLAB App Designer app kept at `legacy/FINAL_NOKEY.m` for referen
 - Source: ESPN's public, unofficial, undocumented JSON feeds. No API key. The owner chose this over paid BallDontLie tiers; do not reintroduce paid sources without asking.
   - Bulk feed (`site.web.api.espn.com/.../statistics/byathlete`): one request returns every player's season totals, age, position and team. Traded players come as one combined line, current team first in `teams`.
   - Core feed (`sports.core.api.espn.com/.../athletes/{id}/statistics`): one request per player, used only for the offensive/defensive rebound split. Failures fall back to last night's split.
+  - Recent form comes from no extra feed: the pipeline saves each night's season totals (`totals_history.json` in pipeline state, last 21 nights) and subtracts an earlier night. A single game since the previous run becomes the player's `g` (latest box line); about a week back gives `r` (recent averages). The players file carries `latest`/`recent` windows. All of these are optional and absent until history exists.
   - ESPN labels seasons by end year (2026-27 = 2027). Internally `season` is the start year.
   - ESPN team abbreviations (GS, NY, SA, NO, UTAH, WSH) are mapped to standard ones in `pipeline/hoops_pipeline/teams.py`.
 - The pipeline fails loudly if a stat column disappears, the season is wrong, too few players come back, or too many rebound splits are missing. A failed run never overwrites published data.

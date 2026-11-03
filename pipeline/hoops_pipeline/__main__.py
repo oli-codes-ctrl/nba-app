@@ -13,7 +13,7 @@ from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import config, espn, puzzles
+from . import config, espn, puzzles, recent
 from .aggregate import mark_qualified
 from .http_client import JsonClient
 from .publish import PublishError, build_player_records, write_outputs
@@ -56,16 +56,24 @@ def main(argv: list[str] | None = None) -> int:
     mark_qualified(lines)
     records, pool_size = build_player_records(lines)
 
+    totals_history = recent.load_history(args.state)
+    recent_info, recent_by_player = recent.compute(totals_history, today, lines)
+    for rec in records:
+        rec.update(recent_by_player.get(rec["id"], {}))
+
     history = puzzles.load_history(args.state)
     window = puzzles.ensure_window(today, season, records, history)
 
     v_dir = write_outputs(
         args.out, season, records, pool_size, window, today.isoformat(),
-        min_players=args.min_players,
+        min_players=args.min_players, extra=recent_info,
     )
     # Save state only after a successful publish build.
     espn.save_state(args.state, bulk, splits)
     puzzles.save_history(args.state, history)
+    if args.command == "nightly":
+        recent.record(totals_history, today, lines)
+        recent.save_history(args.state, totals_history)
     log.info("Wrote %d players (%d qualified) to %s", len(records),
              sum(1 for r in records if r["q"]), v_dir)
     return 0

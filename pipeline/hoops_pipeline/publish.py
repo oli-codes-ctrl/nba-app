@@ -70,6 +70,7 @@ def write_outputs(
     as_of: str,
     min_players: int = config.MIN_PLAYERS_TO_PUBLISH,
     now: datetime | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> Path:
     validate(records, min_players)
     v_dir = out_dir / f"v{config.SCHEMA_VERSION}"
@@ -80,6 +81,8 @@ def write_outputs(
         "season": season,
         "poolSize": pool_size,
         "lowerIsBetter": sorted(LOWER_IS_BETTER),
+        # Optional additions (recent form). Absent until there is history.
+        **(extra or {}),
         "players": records,
     }
     players_bytes = _dump(players_doc)
