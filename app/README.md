@@ -21,7 +21,14 @@ npx expo lint       # ESLint
 
 ## Layout
 
-- `src/app/`: screens. The player list is `index.tsx`; a player's page is `player/[id].tsx`.
+- `src/app/`: screens, one folder per tab, each with its own stack:
+  - `(players)/`: player list and player pages.
+  - `graphs/`: scatter, color-by and density charts.
+  - `daily/`: the daily "Guess the Player" game.
+  - `compare/`: the "Who has more?" game.
+  Each tab has a `player/[id].tsx` that re-exports `src/screens/PlayerScreen.tsx`.
+- `src/game/`: game rules as pure functions (tested), plus on-device saving.
+- `src/graphs/`: chart math (tested) and the SVG chart.
 - `src/data/`: the `DataSource` interface, the GitHub Pages source with on-device caching, and the React provider.
 - `src/stats/catalog.ts`: stat labels, units and direction. A test checks it against the pipeline's `metrics.py`.
 - `src/theme/`: light and dark color tokens and team colors.

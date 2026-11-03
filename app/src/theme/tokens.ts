@@ -58,6 +58,8 @@ export type ChartColors = {
   belowTrend: string;
   trendLine: string;
   highlight: string;
+  /** Unemphasized dots, so one highlighted dot stands out. Above 3:1 on each background. */
+  neutral: string;
   ramp: readonly string[];
 };
 
@@ -70,6 +72,7 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
     belowTrend: '#EB6834',
     trendLine: '#52514E',
     highlight: '#0B0B0B',
+    neutral: '#898781',
     ramp: ['#86B6EF', '#3987E5', '#256ABF', '#184F95', '#0D366B'],
   },
   dark: {
@@ -80,6 +83,7 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
     belowTrend: '#D95926',
     trendLine: '#C3C2B7',
     highlight: '#F0EFEC',
+    neutral: '#898781',
     ramp: ['#184F95', '#256ABF', '#3987E5', '#86B6EF', '#CDE2FB'],
   },
 };

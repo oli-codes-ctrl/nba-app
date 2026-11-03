@@ -35,15 +35,20 @@ export type ChartScales = {
 
 type Props = {
   points: readonly ChartPoint[];
-  mode: GraphMode;
+  /** 'plain' draws every dot in one neutral color (used by the daily game). */
+  mode: ChartMode;
   xStat: StatId;
   yStat: StatId;
   bins: { nx: number; ny: number };
   highlightId: number | null;
+  /** Text beside the highlighted dot. Defaults to the player's name; null hides it. */
+  highlightLabel?: string | null;
   onSelect: (id: number) => void;
 };
 
-export function useChartScales(points: readonly ChartPoint[], mode: GraphMode, bins: { nx: number; ny: number }): ChartScales {
+export type ChartMode = GraphMode | 'plain';
+
+export function useChartScales(points: readonly ChartPoint[], mode: ChartMode, bins: { nx: number; ny: number }): ChartScales {
   return useMemo(() => {
     const xd = paddedDomain(extent(points.map((p) => p.x)));
     const yd = paddedDomain(extent(points.map((p) => p.y)));
@@ -55,7 +60,7 @@ export function useChartScales(points: readonly ChartPoint[], mode: GraphMode, b
   }, [points, mode, bins.nx, bins.ny]);
 }
 
-export function ScatterChart({ points, mode, xStat, yStat, bins, highlightId, onSelect }: Props) {
+export function ScatterChart({ points, mode, xStat, yStat, bins, highlightId, highlightLabel, onSelect }: Props) {
   const ui = useColors();
   const cc = useChartColors();
   const [width, setWidth] = useState(0);
@@ -82,12 +87,14 @@ export function ScatterChart({ points, mode, xStat, yStat, bins, highlightId, on
   const densityBins = mode === 'density' ? bin2d(points, bins.nx, bins.ny, xd, yd) : [];
   const highlightIndex = highlightId == null ? -1 : points.findIndex((p) => p.id === highlightId);
   const highlight = highlightIndex >= 0 ? points[highlightIndex] : null;
+  const label = highlight ? (highlightLabel === undefined ? highlight.name : highlightLabel) : null;
 
   function dotColor(p: ChartPoint): string {
     if (mode === 'trend' && fit) {
       return p.y >= fit.slope * p.x + fit.intercept ? cc.aboveTrend : cc.belowTrend;
     }
     if (mode === 'color' && zd && p.z != null) return cc.ramp[classIndex(p.z, zd, RAMP_CLASSES)];
+    if (mode === 'plain') return cc.neutral;
     return cc.aboveTrend;
   }
 
@@ -203,7 +210,7 @@ export function ScatterChart({ points, mode, xStat, yStat, bins, highlightId, on
               )}
             </G>
 
-            {highlight && (
+            {highlight && label && (
               <SvgText
                 x={screen[highlightIndex].sx + (screen[highlightIndex].sx > width * 0.6 ? -12 : 12)}
                 y={Math.max(plot.y1 + 12, screen[highlightIndex].sy - 10)}
@@ -211,7 +218,7 @@ export function ScatterChart({ points, mode, xStat, yStat, bins, highlightId, on
                 fontWeight="600"
                 fill={ui.text}
                 textAnchor={screen[highlightIndex].sx > width * 0.6 ? 'end' : 'start'}>
-                {highlight.name}
+                {label}
               </SvgText>
             )}
 

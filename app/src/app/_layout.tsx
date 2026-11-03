@@ -35,6 +35,14 @@ export default function RootLayout() {
             <NativeTabs.Trigger.Label>Graphs</NativeTabs.Trigger.Label>
             <NativeTabs.Trigger.Icon sf="chart.dots.scatter" md="scatter_plot" />
           </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="daily">
+            <NativeTabs.Trigger.Label>Daily</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="questionmark.circle.fill" md="quiz" />
+          </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="compare">
+            <NativeTabs.Trigger.Label>Compare</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="arrow.left.arrow.right" md="compare_arrows" />
+          </NativeTabs.Trigger>
         </NativeTabs>
       </ThemeProvider>
     </DataProvider>
