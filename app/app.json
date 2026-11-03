@@ -8,17 +8,21 @@
     "scheme": "hoops",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.olicodes.hoopsanalytics",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#D9480F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.olicodes.hoopsanalytics"
     },
     "web": {
       "output": "server",
@@ -31,7 +35,7 @@
         {
           "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76,
+          "imageWidth": 120,
           "dark": {
             "backgroundColor": "#0B0C0E"
           }

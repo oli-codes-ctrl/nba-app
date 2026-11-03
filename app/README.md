@@ -19,6 +19,22 @@ npm run typecheck   # TypeScript
 npx expo lint       # ESLint
 ```
 
+## Release (iOS)
+
+Needs a paid Apple Developer account. No Mac required; EAS builds in the cloud.
+
+```sh
+npm install -g eas-cli
+eas login            # same Expo account as `npx expo login`
+eas init             # first time only: links the project, writes projectId to app.json
+eas build -p ios --profile production
+eas submit -p ios    # uploads the latest build to App Store Connect / TestFlight
+```
+
+The bundle identifier is `com.olicodes.hoopsanalytics` (in `app.json`). It is permanent once the app exists in App Store Connect. Build numbers are managed remotely by EAS (`autoIncrement`); bump `version` in `app.json` for each App Store release.
+
+The icon is drawn from an SVG basketball (no league marks) and lives in `assets/images/`.
+
 ## Layout
 
 - `src/app/`: screens, one folder per tab, each with its own stack:
