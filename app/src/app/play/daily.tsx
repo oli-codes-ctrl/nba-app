@@ -95,7 +95,7 @@ export default function DailyScreen() {
         )}
       </View>
       {isDoublePoints(puzzle.date) && (
-        <View style={[styles.banner, { backgroundColor: colors.accent }]}>
+        <View style={[styles.banner, { backgroundColor: colors.accentFill }]}>
           <AppText variant="bodyStrong" color="textOnAccent">
             Double points today
           </AppText>
@@ -348,7 +348,7 @@ function Result({
         {canOpen && (
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.push({ pathname: '/daily/player/[id]', params: { id: String(puzzle.answerId) } })}
+            onPress={() => router.push({ pathname: '/play/player/[id]', params: { id: String(puzzle.answerId) } })}
             style={[styles.secondaryButton, styles.flex, { borderColor: colors.border }]}>
             <AppText variant="bodyStrong" color="accent">
               Player page

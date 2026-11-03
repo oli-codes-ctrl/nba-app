@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { PrimaryButton, SecondaryButton } from '@/components/Button';
 import { FirstLoad } from '@/components/DataStatus';
 import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
@@ -27,6 +27,8 @@ import {
 } from '@/game/compare';
 import { loadCompareScore, saveCompareScore } from '@/game/storage';
 import { formatStat } from '@/lib/format';
+import { rightFeedback, tapFeedback, wrongFeedback } from '@/lib/haptics';
+import { usePlayerLink } from '@/lib/usePlayerLink';
 import { CATALOG } from '@/stats/catalog';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
@@ -34,6 +36,7 @@ import { useColors } from '@/theme/useTokens';
 export default function CompareScreen() {
   const { snapshot } = useData();
   const colors = useColors();
+  const openPlayer = usePlayerLink();
   const players = snapshot?.players.players;
   const pool = useMemo(() => (players ? comparePool(players) : []), [players]);
 
@@ -74,6 +77,8 @@ export default function CompareScreen() {
     if (!active || !isComplete(answers)) return;
     const graded = grade(active, answers);
     setResults(graded);
+    if (roundPoints(active, graded) > 0) rightFeedback();
+    else wrongFeedback();
     const next = addRound(total, roundPoints(active, graded));
     setTotal(next);
     saveCompareScore(AsyncStorage, next);
@@ -116,7 +121,7 @@ export default function CompareScreen() {
       </AppText>
 
       {active.double && (
-        <View style={[styles.banner, { backgroundColor: colors.accent }]}>
+        <View style={[styles.banner, { backgroundColor: colors.accentFill }]}>
           <AppText variant="bodyStrong" color="textOnAccent">
             Double points: right answers score 2
           </AppText>
@@ -140,7 +145,11 @@ export default function CompareScreen() {
             round={active}
             picked={answers[stat]}
             result={results?.find((r) => r.stat === stat)}
-            onPick={(side) => !submitted && setAnswers((a) => ({ ...a, [stat]: side }))}
+            onPick={(side) => {
+              if (submitted) return;
+              tapFeedback();
+              setAnswers((a) => ({ ...a, [stat]: side }));
+            }}
           />
         ))}
       </View>
@@ -152,11 +161,11 @@ export default function CompareScreen() {
             {points} {Math.abs(points) === 1 ? 'point' : 'points'} this round
           </AppText>
           <View style={styles.actions}>
-            <PrimaryButton label="Next round" onPress={nextRound} />
+            <PrimaryButton label="Next round" onPress={nextRound} style={styles.flex} />
           </View>
           <View style={styles.actions}>
-            <SecondaryButton label={`Open ${active.a.name}`} onPress={() => openPlayer(active.a)} />
-            <SecondaryButton label={`Open ${active.b.name}`} onPress={() => openPlayer(active.b)} />
+            <SecondaryButton label={active.a.name} accessibilityLabel={`Open ${active.a.name}`} onPress={() => openPlayer(active.a.id)} style={styles.flex} />
+            <SecondaryButton label={active.b.name} accessibilityLabel={`Open ${active.b.name}`} onPress={() => openPlayer(active.b.id)} style={styles.flex} />
           </View>
         </View>
       ) : (
@@ -165,8 +174,9 @@ export default function CompareScreen() {
             label={isComplete(answers) ? 'Check answers' : `Answer all ${COMPARE_STATS.length} to check`}
             disabled={!isComplete(answers)}
             onPress={submit}
+            style={styles.primary}
           />
-          <SecondaryButton label="Skip" onPress={nextRound} />
+          <SecondaryButton label="Skip" onPress={nextRound} style={styles.flex} />
         </View>
       )}
 
@@ -177,10 +187,6 @@ export default function CompareScreen() {
       </Pressable>
     </ScrollView>
   );
-}
-
-function openPlayer(p: Player) {
-  router.push({ pathname: '/compare/player/[id]', params: { id: String(p.id) } });
 }
 
 function ScoreItem({ label, value }: { label: string; value: string }) {
@@ -257,8 +263,8 @@ function StatQuestion({
               style={[
                 styles.choice,
                 {
-                  backgroundColor: selected ? colors.accent : colors.surfaceRaised,
-                  borderColor: selected ? colors.accent : colors.border,
+                  backgroundColor: selected ? colors.accentFill : colors.surfaceRaised,
+                  borderColor: selected ? colors.accentFill : colors.border,
                 },
               ]}>
               <AppText variant="small" color={selected ? 'textOnAccent' : 'text'} numberOfLines={1} style={styles.bold}>
@@ -274,36 +280,6 @@ function StatQuestion({
         })}
       </View>
     </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
-  const colors = useColors();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.primary, { backgroundColor: disabled ? colors.border : colors.accent }]}>
-      <AppText variant="bodyStrong" color={disabled ? 'textSecondary' : 'textOnAccent'}>
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
-function SecondaryButton({ label, onPress }: { label: string; onPress: () => void }) {
-  const colors = useColors();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[styles.secondary, { borderColor: colors.border }]}>
-      <AppText variant="bodyStrong" color="accent" numberOfLines={1}>
-        {label}
-      </AppText>
-    </Pressable>
   );
 }
 
@@ -335,14 +311,6 @@ const styles = StyleSheet.create({
   },
   after: { gap: spacing.md, alignItems: 'stretch' },
   actions: { flexDirection: 'row', gap: spacing.sm },
-  primary: { flex: 2, alignItems: 'center', paddingVertical: spacing.md, borderRadius: radius.md },
-  secondary: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
+  primary: { flex: 2 },
   reset: { alignSelf: 'center', padding: spacing.sm },
 });

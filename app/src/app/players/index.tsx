@@ -117,7 +117,7 @@ function PlayerRow({ player, position, sort }: { player: Player; position: numbe
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${player.name}, ${CATALOG[sort].label} ${formatStat(sort, player.s[sort])}`}
-      onPress={() => router.push({ pathname: '/player/[id]', params: { id: String(player.id) } })}
+      onPress={() => router.push({ pathname: '/players/player/[id]', params: { id: String(player.id) } })}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
       <AppText variant="caption" color="textSecondary" style={styles.position}>
         {position}

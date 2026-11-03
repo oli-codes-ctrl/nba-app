@@ -112,6 +112,11 @@ function previousDay(iso: string): string {
   return dt.toISOString().slice(0, 10);
 }
 
+/** The streak as it stands today: it lapses once a whole day goes unplayed. */
+export function liveStreak(stats: DailyStats, today: string): number {
+  return stats.lastDate === today || stats.lastDate === previousDay(today) ? stats.currentStreak : 0;
+}
+
 /** Fold a finished game into the running stats. Recording the same day twice is a no-op. */
 export function recordResult(stats: DailyStats, state: GameState, puzzle: Puzzle): DailyStats {
   if (state.status === 'playing' || stats.lastDate === state.date) return stats;

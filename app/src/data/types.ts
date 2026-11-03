@@ -37,13 +37,27 @@ export type Player = {
   /** Present only for qualified players. */
   pct?: Partial<Record<StatId, number>>;
   rank?: Partial<Record<StatId, number>>;
+  /** Averages over the recent window (PlayersDoc.recent). Absent if no games in it. */
+  r?: RecentLine;
+  /** Box line of the player's latest game, when exactly one game was played since PlayersDoc.latest.since. */
+  g?: GameLine;
 };
+
+/** Averages over the recent window. Percentages are from the window's totals. */
+export type RecentLine = { gp: number } & Partial<Record<StatId, number | null>>;
+
+/** One game's box line. mpg is that game's minutes. */
+export type GameLine = Partial<Record<StatId, number>>;
 
 export type PlayersDoc = {
   schemaVersion: number;
   season: number;
   poolSize: Partial<Record<StatId, number>>;
   lowerIsBetter: StatId[];
+  /** Present once the pipeline has an earlier night to compare with. */
+  latest?: { since: string };
+  /** Present once the pipeline has at least a few days of history. */
+  recent?: { since: string; days: number };
   players: Player[];
 };
 

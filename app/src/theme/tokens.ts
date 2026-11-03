@@ -14,6 +14,8 @@ const palette = {
     textSecondary: '#5C6370',
     textOnAccent: '#FFFFFF',
     accent: '#D9480F',
+    /** Filled buttons and cards that carry white text (7:1). */
+    accentFill: '#C2410C',
     danger: '#C92A2A',
     // Percentile scale: poor, middling, strong.
     scaleLow: '#E03131',
@@ -30,6 +32,7 @@ const palette = {
     textSecondary: '#A1A8B3',
     textOnAccent: '#FFFFFF',
     accent: '#FF7A3D',
+    accentFill: '#C2410C',
     danger: '#FF6B6B',
     scaleLow: '#FF6B6B',
     scaleMid: '#FCC419',

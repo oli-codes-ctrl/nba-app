@@ -12,7 +12,9 @@ import {
   type Snapshot,
 } from './types';
 
-export const DATA_BASE_URL = 'https://oli-codes-ctrl.github.io/nba-app/v1/';
+/** Override with EXPO_PUBLIC_DATA_URL to test against a local copy of the pipeline output. */
+export const DATA_BASE_URL =
+  process.env.EXPO_PUBLIC_DATA_URL || 'https://oli-codes-ctrl.github.io/nba-app/v1/';
 export const CACHE_KEY = `hoops:snapshot:v${SCHEMA_VERSION}`;
 
 export class DataError extends Error {}

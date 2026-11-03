@@ -3,6 +3,7 @@ import type { KeyValueStore } from '@/data/DataSource';
 
 import { EMPTY_SCORE, type CompareScore } from './compare';
 import { EMPTY_STATS, newGame, type DailyStats, type GameState } from './daily';
+import { EMPTY_STREAK_STATS, type StreakStats } from './streak';
 
 const compareKey = 'hoops:compare:v1:score';
 
@@ -15,6 +16,20 @@ export async function saveCompareScore(store: KeyValueStore, score: CompareScore
     await store.setItem(compareKey, JSON.stringify(score));
   } catch {
     // A lost running score is not worth an error screen.
+  }
+}
+
+const streakKey = 'hoops:streak:v1:stats';
+
+export async function loadStreakStats(store: KeyValueStore): Promise<StreakStats> {
+  return { ...EMPTY_STREAK_STATS, ...(await readJson<StreakStats>(store, streakKey)) };
+}
+
+export async function saveStreakStats(store: KeyValueStore, stats: StreakStats): Promise<void> {
+  try {
+    await store.setItem(streakKey, JSON.stringify(stats));
+  } catch {
+    // A lost best streak is not worth an error screen.
   }
 }
 
