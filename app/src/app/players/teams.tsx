@@ -9,6 +9,7 @@ import { useData } from '@/data/DataProvider';
 import { useLinks } from '@/lib/usePlayerLink';
 import { formatStat } from '@/lib/format';
 import { roster, teamLeader, teamsByConference } from '@/teams/team';
+import { LuckCard, RatingsCard } from '@/teams/TeamCharts';
 import { teamInfo } from '@/theme/teams';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
@@ -27,6 +28,8 @@ export default function TeamsScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic">
+      <RatingsCard doc={snapshot.teams} onSelect={links.team} />
+      <LuckCard doc={snapshot.teams} onSelect={links.team} />
       {conferences.map(({ conf, teams }) => (
         <Section key={conf} title={`${conf}ern Conference`}>
           <View style={[styles.list, { backgroundColor: colors.surface }]}>

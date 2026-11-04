@@ -137,6 +137,9 @@ def team_record(t: Team) -> dict[str, Any]:
         "pyth_w": _round(pyth),
         # Wins above what the point differential usually produces.
         "luck": _round(None if pyth is None or t.wins is None else t.wins - pyth),
+        # 95% half-widths of luck alone, so the app only calls what clears them.
+        "luck_noise": _round(f.luck_noise(t.gp, (t.own["pts"] + t.opp["pts"]) / (2 * t.gp) if t.gp else 0)),
+        "net_noise": _round(f.net_rating_noise(t.gp, f.pace(poss, t.minutes))),
         # Offense: Oliver's four factors, plus how often they shoot threes.
         "efg_pct": _round(f.efg_pct(t.own)),
         "tov_pct": _round(f.team_tov_pct(t.own)),

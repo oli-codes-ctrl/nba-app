@@ -13,9 +13,12 @@ import { updateCareer } from '@/game/storage';
 import { useTrophies } from '@/game/TrophyProvider';
 import type { TeamSeason } from '@/data/types';
 import { formatStat, ordinal } from '@/lib/format';
-import { usePlayerLink } from '@/lib/usePlayerLink';
+import { useLinks, usePlayerLink } from '@/lib/usePlayerLink';
 import { CATALOG } from '@/stats/catalog';
+import { factorRows } from '@/teams/analysis';
+import { FourFactors } from '@/teams/FourFactors';
 import { roster, TEAM_LEADER_STATS, teamLeader } from '@/teams/team';
+import { LuckCard, RatingsCard, signed } from '@/teams/TeamCharts';
 import { teamInfo } from '@/theme/teams';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
@@ -25,6 +28,7 @@ export default function TeamScreen() {
   const { snapshot, teamByAbbr } = useData();
   const colors = useColors();
   const openPlayer = usePlayerLink();
+  const links = useLinks();
   const { check } = useTrophies();
   const players = snapshot?.players.players;
   const team = useMemo(() => (players ? roster(players, abbr) : []), [players, abbr]);
@@ -68,6 +72,18 @@ export default function TeamScreen() {
       </View>
 
       {teamByAbbr.get(abbr) && <AtAGlance season={teamByAbbr.get(abbr)!} teams={teamByAbbr.size} />}
+
+      {teamByAbbr.get(abbr) && (
+        <>
+          <RatingsCard doc={snapshot.teams} highlight={abbr} onSelect={(other) => other !== abbr && links.team(other)} />
+          <LuckCard doc={snapshot.teams} highlight={abbr} onSelect={(other) => other !== abbr && links.team(other)} />
+          <Section
+            title="Where do they win and lose?"
+            note="Dean Oliver’s four factors decide most games. Bars run right when better than the league average, longer the further from it compared with the other teams.">
+            <FourFactors sides={factorRows(teamByAbbr.get(abbr)!, snapshot.teams.teams, snapshot.teams.league)} teams={snapshot.teams.teams.length} />
+          </Section>
+        </>
+      )}
 
       {team.length === 0 ? (
         <AppText color="textSecondary">No players on this team in today’s data.</AppText>
@@ -135,11 +151,6 @@ export default function TeamScreen() {
       )}
     </ScrollView>
   );
-}
-
-/** Signed to one decimal: "+2.1", "-3.4". */
-function signed(v: number): string {
-  return `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(1)}`;
 }
 
 function AtAGlance({ season, teams }: { season: TeamSeason; teams: number }) {

@@ -184,3 +184,43 @@ def test_team_stats_are_empty_without_team_context(make_line):
     stats = compute_stats(make_line(1))
     assert stats["usg_pct"] is None and stats["pts100"] is None
     assert stats["pts36"] == pytest.approx(14 * 36 / 30)  # per-36 needs no team
+
+
+# ----------------------------------------------------------- team noise
+
+
+def test_net_rating_noise_shrinks_with_games():
+    # 1.96 * 12 / sqrt(8) at 100 possessions a game.
+    assert f.net_rating_noise(8, 100) == pytest.approx(8.316, abs=0.01)
+    assert f.net_rating_noise(32, 100) == pytest.approx(f.net_rating_noise(8, 100) / 2)
+    assert f.net_rating_noise(0, 100) is None
+
+
+def test_luck_noise_hardly_depends_on_the_margin_spread():
+    mid = f.luck_noise(82, 114)
+    assert 5.0 < mid < 5.7  # about 0.30 wins per game, so +/- 5.4 over a season
+    assert f.luck_noise(82, 114, 11) == pytest.approx(mid, rel=0.03)
+    assert f.luck_noise(82, 114, 13) == pytest.approx(mid, rel=0.03)
+    assert f.luck_noise(4 * 20, 114) == pytest.approx(2 * f.luck_noise(20, 114))
+
+
+def test_luck_noise_matches_a_simulated_league():
+    """Seasons of coin-flip close games: wins minus the (nonlinear)
+    Pythagorean expectation spread as the linearized formula says."""
+    import random
+
+    rng = random.Random(7)
+    games, ppg, seasons = 82, 114.0, 3000
+    gaps = []
+    for _ in range(seasons):
+        pf = pa = 0.0
+        wins = 0
+        for _ in range(games):
+            margin = rng.gauss(0, f.GAME_MARGIN_SD)
+            pace_noise = rng.gauss(0, 8)  # both teams score more in a fast game
+            pf += ppg + pace_noise + margin / 2
+            pa += ppg + pace_noise - margin / 2
+            wins += margin > 0
+        gaps.append(wins - f.pythagorean_wins(pf, pa, games))
+    sd = (sum(g * g for g in gaps) / seasons) ** 0.5
+    assert 1.96 * sd == pytest.approx(f.luck_noise(games, ppg), rel=0.08)

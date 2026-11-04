@@ -157,6 +157,10 @@ export type TeamSeason = Record<TeamStatId, number | null> & {
   pyth_w: number | null;
   /** Wins above that expectation. */
   luck: number | null;
+  /** 95% half-width of luck alone (wins), when close games are coin flips. Older files lack it. */
+  luck_noise?: number | null;
+  /** 95% half-width of the net rating from game-to-game luck (per 100 possessions). Older files lack it. */
+  net_noise?: number | null;
   rank: Partial<Record<TeamStatId, number>>;
 };
 

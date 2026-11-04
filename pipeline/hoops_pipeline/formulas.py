@@ -20,10 +20,14 @@ Sources
 - [Hollinger] John Hollinger, Game Score, "Pro Basketball Prospectus" (2002).
 - [Morey] Daryl Morey's Pythagorean expectation for basketball; exponent 14
   as used by Basketball-Reference.
+- [Winston] Wayne Winston (author of "Mathletics"), "Why is standard
+  deviation of NBA scores about point spread 12 points?" (blog, March 2018):
+  game margins vary about 12 points around the expected margin.
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 
 Totals = Mapping[str, float]
@@ -148,6 +152,41 @@ def pythagorean_wins(points_for: float, points_against: float, games: int) -> fl
         return None
     k = PYTHAGOREAN_EXPONENT
     return games * points_for ** k / (points_for ** k + points_against ** k)
+
+
+# ----------------------------------------------------------- team noise
+# How far NBA games land from the expected margin: one standard deviation,
+# in points. A rough, widely quoted figure [Winston]; to be measured from
+# box scores once game summaries are in the pipeline.
+GAME_MARGIN_SD = 12.0
+Z95 = 1.959964
+
+
+def net_rating_noise(games: int, pace: float | None) -> float | None:
+    """95% half-width of a net rating from game-to-game luck alone, in points
+    per 100 possessions: 1.96 * SD / sqrt(G), rescaled from points per game
+    to per 100 possessions. Teams closer than this could be equally good."""
+    if games <= 0 or not pace:
+        return None
+    return Z95 * GAME_MARGIN_SD * (100 / pace) / math.sqrt(games)
+
+
+def luck_noise(games: int, points_per_game: float, margin_sd: float = GAME_MARGIN_SD) -> float | None:
+    """95% half-width of wins above the Pythagorean expectation when close
+    games are coin flips (no skill at winning them).
+
+    Model: each game's margin M ~ Normal(mu, s^2). Linearized around even
+    scoring, the expected win share is 1/2 + k * M with
+    k = exponent / (4 * points per game), so each game adds
+    Var(1[M > 0] - k M) = p (1 - p) + (k s)^2 - 2 k s phi(mu / s)
+    to the gap. At mu = 0 that is 1/4 + (k s)^2 - 2 k s / sqrt(2 pi):
+    about 0.30 wins per game for any s from 11 to 13 points, and slightly
+    less for strong or weak teams, so this is the even-team case."""
+    if games <= 0 or points_per_game <= 0:
+        return None
+    ks = PYTHAGOREAN_EXPONENT / (4 * points_per_game) * margin_sd
+    per_game = 0.25 + ks * ks - 2 * ks / math.sqrt(2 * math.pi)
+    return Z95 * math.sqrt(max(0.0, per_game) * games)
 
 
 # ------------------------------------------- player shares of team play [BR]
