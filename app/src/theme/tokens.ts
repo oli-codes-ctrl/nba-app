@@ -90,6 +90,16 @@ export type ChartColors = {
   /** Unemphasized dots, so one highlighted dot stands out. Above 3:1 on each background. */
   neutral: string;
   ramp: readonly string[];
+  /**
+   * Dots by position: guards, forwards, centers. Green, violet and magenta,
+   * so they never borrow the blue/orange "cold to hot" meaning of the
+   * percentile bars. Validated all-pairs (scatter rule) in both modes against
+   * the card and the page: color-vision Delta E 14.0 light / 13.0 dark,
+   * normal vision 23.6 / 19.7, every dot 3:1 or more.
+   */
+  positions: { G: string; F: string; C: string };
+  /** Dashed league-median reference lines. */
+  median: string;
 };
 
 export const chartColors: Record<ColorScheme, ChartColors> = {
@@ -103,6 +113,8 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
     highlight: '#0B0B0B',
     neutral: '#898781',
     ramp: ['#86B6EF', '#3987E5', '#256ABF', '#184F95', '#0D366B'],
+    positions: { G: '#008300', F: '#6250D6', C: '#D0578A' },
+    median: '#6B6A65',
   },
   dark: {
     grid: '#2C2C2A',
@@ -114,6 +126,8 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
     highlight: '#F0EFEC',
     neutral: '#898781',
     ramp: ['#184F95', '#256ABF', '#3987E5', '#86B6EF', '#CDE2FB'],
+    positions: { G: '#008300', F: '#9085E9', C: '#D55181' },
+    median: '#A9A79F',
   },
 };
 

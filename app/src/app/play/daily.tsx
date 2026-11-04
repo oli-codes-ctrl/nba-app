@@ -26,9 +26,8 @@ import { fold } from '@/lib/fold';
 import { formatDate } from '@/lib/format';
 import { CATALOG, type StatId } from '@/stats/catalog';
 import { radius, spacing } from '@/theme/tokens';
-import { useColors } from '@/theme/useTokens';
+import { useChartColors, useColors } from '@/theme/useTokens';
 
-const NO_BINS = { nx: 1, ny: 1 };
 const MAX_SUGGESTIONS = 6;
 
 function poolValue(entry: PuzzlePoolEntry, stat: StatId): number | null {
@@ -122,6 +121,7 @@ function Game({
   onClue: () => void;
 }) {
   const colors = useColors();
+  const cc = useChartColors();
   const { playerById } = useData();
   const [hint, setHint] = useState<StatId>(puzzle.hintStats[0] ?? 'pts');
   const [tapped, setTapped] = useState<string | null>(null);
@@ -153,12 +153,12 @@ function Game({
 
       <ScatterChart
         points={points}
-        mode="plain"
         xStat={puzzle.xStat}
         yStat={hint}
-        bins={NO_BINS}
-        highlightId={puzzle.answerId}
-        highlightLabel={done && answer ? answer.name : '?'}
+        color={(p) => (p.id === puzzle.answerId ? cc.highlight : cc.neutral)}
+        highlightIds={[puzzle.answerId]}
+        labels={[{ id: puzzle.answerId, text: done && answer ? answer.name : '?' }]}
+        summary={`${CATALOG[hint].label} against ${CATALOG[puzzle.xStat].label.toLowerCase()} for the top ${puzzle.pool.length} scorers. The mystery player is the highlighted dot.`}
         onSelect={(id) =>
           setTapped(
             id === puzzle.answerId && !done

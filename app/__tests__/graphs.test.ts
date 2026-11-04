@@ -1,9 +1,7 @@
 import type { Player } from '@/data/types';
 import {
-  bin2d,
   classBreaks,
   classIndex,
-  countRanges,
   extent,
   linearFit,
   nearestIndex,
@@ -82,21 +80,6 @@ describe('color classes', () => {
 
   it('gives classes + 1 breaks for the legend', () => {
     expect(classBreaks([0, 10], 5)).toEqual([0, 2, 4, 6, 8, 10]);
-  });
-
-  it('lists the counts each density class covers', () => {
-    expect(countRanges(1, 5)).toEqual([[1, 1], null, null, null, null]);
-    expect(countRanges(10, 5)).toEqual([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]);
-    expect(countRanges(3, 5)).toEqual([[1, 1], null, [2, 2], null, [3, 3]]);
-  });
-});
-
-describe('bin2d', () => {
-  it('counts points per grid square and skips empty squares', () => {
-    const bins = bin2d([pt(1, 0, 0), pt(2, 0.4, 0.4), pt(3, 9, 9)], 2, 2, [0, 10], [0, 10]);
-    expect(bins).toHaveLength(2);
-    expect(bins.find((b) => b.col === 0 && b.row === 0)).toMatchObject({ count: 2, ids: [1, 2] });
-    expect(bins.find((b) => b.col === 1 && b.row === 1)).toMatchObject({ count: 1, ids: [3] });
   });
 });
 

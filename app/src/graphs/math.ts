@@ -7,8 +7,12 @@ export type ChartPoint = {
   name: string;
   x: number;
   y: number;
-  /** Third stat for "color by" mode. */
+  /** Third stat when coloring by a stat. */
   z: number | null;
+  /** Position group (G, F, C) for coloring by position. */
+  group?: string;
+  /** Total minutes played: the sample behind the dot. */
+  minutes?: number;
 };
 
 /** Min and max, padded when every value is the same. */
@@ -101,38 +105,6 @@ export function classIndex(value: number, [min, max]: Domain, classes: number): 
 /** Band boundaries for a legend: classes + 1 numbers from min to max. */
 export function classBreaks([min, max]: Domain, classes: number): number[] {
   return Array.from({ length: classes + 1 }, (_, i) => min + ((max - min) * i) / classes);
-}
-
-/**
- * Which whole-number counts fall in each color class, for the density legend.
- * Uses the same banding as the tiles: classIndex(count, [1, max], classes).
- * Classes no count can reach are returned as null.
- */
-export function countRanges(maxCount: number, classes: number): ([number, number] | null)[] {
-  const ranges: ([number, number] | null)[] = Array.from({ length: classes }, () => null);
-  for (let c = 1; c <= maxCount; c++) {
-    const i = classIndex(c, [1, maxCount + 1e-9], classes);
-    const r = ranges[i];
-    ranges[i] = r ? [r[0], c] : [c, c];
-  }
-  return ranges;
-}
-
-export type Bin ={ col: number; row: number; count: number; ids: number[] };
-
-/** Count points in an nx-by-ny grid over the domains. Only non-empty bins are returned. */
-export function bin2d(points: readonly ChartPoint[], nx: number, ny: number, xd: Domain, yd: Domain): Bin[] {
-  const bins = new Map<number, Bin>();
-  for (const p of points) {
-    const col = classIndex(p.x, xd, nx);
-    const row = classIndex(p.y, yd, ny);
-    const key = row * nx + col;
-    const bin = bins.get(key) ?? { col, row, count: 0, ids: [] };
-    bin.count += 1;
-    bin.ids.push(p.id);
-    bins.set(key, bin);
-  }
-  return [...bins.values()];
 }
 
 /** Index of the point closest to (px, py) in screen space, within maxDistance. */

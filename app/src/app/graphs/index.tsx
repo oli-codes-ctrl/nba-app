@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Card } from '@/components/Card';
 import { FirstLoad } from '@/components/DataStatus';
 import { PercentileBar } from '@/components/PercentileBar';
 import { PlayerPicker } from '@/components/PlayerPicker';
@@ -11,151 +12,308 @@ import { StatPicker } from '@/components/StatPicker';
 import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
-import { classBreaks, countRanges, type ChartPoint } from '@/graphs/math';
-import { buildPoints, chartColumns, GRAPH_MODES, leftOut, type GraphMode } from '@/graphs/points';
-import { RAMP_CLASSES, ScatterChart, useChartScales } from '@/graphs/ScatterChart';
-import { minimumsText } from '@/stats/samples';
-import { betterThan, formatStat, rankText } from '@/lib/format';
+import {
+  describeRelationship,
+  median,
+  pearson,
+  quadrantCounts,
+  quadrantExemplars,
+  sharedInputs,
+  shortName,
+  thinSamples,
+  type QuadrantKey,
+} from '@/graphs/analysis';
+import { classBreaks, classIndex, extent, linearFit, type ChartPoint } from '@/graphs/math';
+import { buildPoints, chartColumns, leftOut } from '@/graphs/points';
+import { CUSTOM_ID, PRESETS, presetById } from '@/graphs/presets';
+import { ScatterChart } from '@/graphs/ScatterChart';
+import { betterThan, formatDate, formatStat, rankText } from '@/lib/format';
 import { CATALOG, isStatId, type StatId } from '@/stats/catalog';
+import { minimumsText } from '@/stats/samples';
+import { groupNoun, POSITION_GROUPS, type PositionGroup } from '@/stats/views';
 import { radius, spacing } from '@/theme/tokens';
 import { useChartColors, useColors } from '@/theme/useTokens';
 
+const MAX_HIGHLIGHTS = 3;
+const EXAMPLE_LABELS = 4;
+const RAMP_CLASSES = 5;
+
 type PickerTarget = 'x' | 'y' | 'z' | 'player' | null;
+type PositionFilter = 'all' | PositionGroup;
+type ColorMode = 'position' | 'stat';
 
-const MIN_BINS = 3;
-const MAX_BINS = 12;
-
-type GraphParams = { x?: string; y?: string; z?: string; mode?: string; player?: string };
+/**
+ * Links set the starting view, e.g. /graphs?preset=efficiency&hl=3975,6442,
+ * or a custom chart: /graphs?x=age&y=pts&color=stat&z=reb.
+ */
+type GraphParams = {
+  preset?: string;
+  x?: string;
+  y?: string;
+  z?: string;
+  color?: string;
+  hl?: string;
+  player?: string;
+  pos?: string;
+};
 
 function statParam(value: string | undefined, fallback: StatId): StatId {
   return value && isStatId(value) ? value : fallback;
 }
 
+function idsParam(value: string | undefined): number[] {
+  return (value ?? '')
+    .split(',')
+    .filter((s) => /^\d+$/.test(s))
+    .map(Number)
+    .slice(0, MAX_HIGHLIGHTS);
+}
+
+const POSITION_OPTIONS: readonly { id: PositionFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  ...POSITION_GROUPS.map((g) => ({ id: g, label: groupNoun(g).replace(/^./, (c) => c.toUpperCase()) })),
+];
+
 export default function GraphsScreen() {
   const { snapshot, playerById } = useData();
   const colors = useColors();
-  // Links like /graphs?y=ts_pct&x=mpg&mode=color&z=age&player=3945274 set the starting view.
+  const cc = useChartColors();
   const params = useLocalSearchParams<GraphParams>();
-  const [x, setX] = useState<StatId>(() => statParam(params.x, 'age'));
-  const [y, setY] = useState<StatId>(() => statParam(params.y, 'pts'));
-  const [z, setZ] = useState<StatId>(() => statParam(params.z, 'reb'));
-  const [mode, setMode] = useState<GraphMode>(() =>
-    GRAPH_MODES.some((m) => m.id === params.mode) ? (params.mode as GraphMode) : 'trend',
+
+  const [presetId, setPresetId] = useState<string>(() => {
+    if (params.preset && (presetById(params.preset) || params.preset === CUSTOM_ID)) return params.preset;
+    return params.x || params.y ? CUSTOM_ID : PRESETS[0].id;
+  });
+  const [cx, setCx] = useState<StatId>(() => statParam(params.x, 'age'));
+  const [cy, setCy] = useState<StatId>(() => statParam(params.y, 'pts'));
+  const [cz, setCz] = useState<StatId>(() => statParam(params.z, 'reb'));
+  const [colorMode, setColorMode] = useState<ColorMode>(params.color === 'stat' ? 'stat' : 'position');
+  const [showTrend, setShowTrend] = useState(false);
+  const [position, setPosition] = useState<PositionFilter>(() =>
+    params.pos === 'G' || params.pos === 'F' || params.pos === 'C' ? params.pos : 'all',
   );
-  const [bins, setBins] = useState({ nx: 6, ny: 6 });
-  const [highlightId, setHighlightId] = useState<number | null>(() =>
-    params.player && /^\d+$/.test(params.player) ? Number(params.player) : null,
-  );
+  const [highlights, setHighlights] = useState<number[]>(() => idsParam(params.hl ?? params.player));
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [picker, setPicker] = useState<PickerTarget>(null);
   const [showList, setShowList] = useState(false);
 
+  const preset = presetById(presetId);
+  const custom = !preset;
+  const x = preset ? preset.x : cx;
+  const y = preset ? preset.y : cy;
+  const z = custom && colorMode === 'stat' ? cz : null;
+  // "Up" means better: lower-is-better stats on the Y axis are drawn flipped.
+  const invertY = preset ? !!preset.invertY : CATALOG[y].lowerIsBetter;
+
   const players = snapshot?.players.players;
   const rules = snapshot?.players.minAttempts;
+  const pos = position === 'all' ? null : position;
   const points = useMemo(
-    () => (players ? buildPoints(players, x, y, mode === 'color' ? z : null, rules) : []),
-    [players, x, y, z, mode, rules],
+    () => (players ? buildPoints(players, x, y, z, rules, pos) : []),
+    [players, x, y, z, rules, pos],
   );
-  const scales = useChartScales(points, mode, bins);
+
+  const analysis = useMemo(() => {
+    if (points.length < 5) return null;
+    const mx = median(points.map((p) => p.x));
+    const my = median(points.map((p) => p.y));
+    const hollow = thinSamples(points);
+    return {
+      medians: { x: mx, y: my },
+      counts: quadrantCounts(points, mx, my, invertY),
+      hollow,
+      examples: quadrantExemplars(points, mx, my, invertY, new Set([...hollow, ...highlights])),
+      relationship: describeRelationship(points, CATALOG[x].label.toLowerCase(), CATALOG[y].label.toLowerCase()),
+      fit: linearFit(points),
+      r: pearson(
+        points.map((p) => p.x),
+        points.map((p) => p.y),
+      ),
+      zd: z ? extent(points.flatMap((p) => (p.z == null ? [] : [p.z]))) : null,
+    };
+  }, [points, invertY, highlights, x, y, z]);
 
   if (!snapshot || !players) return <FirstLoad />;
 
-  const highlight = highlightId == null ? undefined : playerById.get(highlightId);
-  const highlightOnChart = highlight != null && points.some((p) => p.id === highlight.id);
-  const modeInfo = GRAPH_MODES.find((m) => m.id === mode)!;
-  const used = mode === 'color' ? [x, y, z] : [x, y];
-  const missing = leftOut(players, used, rules);
+  const nameOf = (id: number) => playerById.get(id)?.name ?? '';
+  const onChart = new Set(points.map((p) => p.id));
+  const used = z ? [x, y, z] : [x, y];
+  const missing = leftOut(players, used, rules, pos);
   const under = minimumsText(used, rules);
+  const noun = pos ? groupNoun(pos) : 'players';
+  const through = snapshot.manifest.gamesThrough ?? snapshot.manifest.asOf;
+  const shared = custom ? sharedInputs(x, y) : [];
+
+  const colorOf = (p: ChartPoint): string => {
+    if (z && analysis?.zd && p.z != null) return cc.ramp[classIndex(p.z, analysis.zd, RAMP_CLASSES)];
+    const g = p.group as PositionGroup | undefined;
+    return g ? cc.positions[g] : cc.neutral;
+  };
+
+  const quadrantLabels: Record<QuadrantKey, string> | null =
+    preset && analysis
+      ? {
+          topRight: `${preset.quadrants.topRight} · ${analysis.counts.topRight}`,
+          topLeft: `${preset.quadrants.topLeft} · ${analysis.counts.topLeft}`,
+          bottomLeft: `${preset.quadrants.bottomLeft} · ${analysis.counts.bottomLeft}`,
+          bottomRight: `${preset.quadrants.bottomRight} · ${analysis.counts.bottomRight}`,
+        }
+      : null;
+
+  const labels = [
+    ...highlights.filter((id) => onChart.has(id)).map((id) => ({ id, text: shortName(nameOf(id)) })),
+    ...(analysis?.examples ?? []).slice(0, EXAMPLE_LABELS).map((id) => ({ id, text: shortName(nameOf(id)) })),
+  ];
+
+  const title = preset ? preset.question : `${CATALOG[y].label} vs. ${CATALOG[x].label.toLowerCase()}`;
+  const selected = selectedId == null ? undefined : playerById.get(selectedId);
+
+  function toggleHighlight(id: number) {
+    setHighlights((h) => (h.includes(id) ? h.filter((v) => v !== id) : [...h, id].slice(-MAX_HIGHLIGHTS)));
+  }
 
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic">
-      {/* One control area above the chart scopes everything below it. */}
-      <View style={styles.controls}>
-        <View style={styles.axisRow}>
-          <PickerButton label="Y axis" value={CATALOG[y].short} onPress={() => setPicker('y')} />
-          <PickerButton label="X axis" value={CATALOG[x].short} onPress={() => setPicker('x')} />
-          {mode === 'color' && (
-            <PickerButton label="Color by" value={CATALOG[z].short} onPress={() => setPicker('z')} />
-          )}
-        </View>
-        <Segmented
-          options={GRAPH_MODES.map((m) => ({ id: m.id, label: m.label }))}
-          value={mode}
-          onChange={setMode}
-        />
-        {mode === 'density' && (
-          <View style={styles.axisRow}>
-            <Stepper
-              label="Columns"
-              value={bins.nx}
-              onChange={(nx) => setBins((b) => ({ ...b, nx }))}
-            />
-            <Stepper label="Rows" value={bins.ny} onChange={(ny) => setBins((b) => ({ ...b, ny }))} />
-          </View>
-        )}
-        <View style={[styles.highlightRow, { backgroundColor: colors.surface }]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={highlight ? `Highlighted: ${highlight.name}. Change` : 'Highlight a player'}
-            onPress={() => setPicker('player')}
-            style={styles.highlightButton}>
-            <AppText variant="small" color="textSecondary">
-              Highlight
-            </AppText>
-            <AppText variant="bodyStrong" style={styles.flex} numberOfLines={1}>
-              {highlight ? highlight.name : 'Choose a player'}
-            </AppText>
-          </Pressable>
-          {highlight && (
+      {/* Questions first: each chip is a chart an analyst would draw. */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.chips}>
+        {[...PRESETS.map((p) => ({ id: p.id, label: p.label })), { id: CUSTOM_ID, label: 'Custom' }].map((o) => {
+          const on = o.id === presetId;
+          return (
             <Pressable
+              key={o.id}
               accessibilityRole="button"
-              accessibilityLabel="Clear highlighted player"
-              onPress={() => setHighlightId(null)}
-              style={styles.clearButton}>
-              <AppText variant="small" color="accent">
-                Clear
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={o.label}
+              onPress={() => {
+                setPresetId(o.id);
+                setSelectedId(null);
+              }}
+              style={[styles.chip, { backgroundColor: on ? colors.accentFill : colors.surface }]}>
+              <AppText variant="small" color={on ? 'textOnAccent' : 'text'} style={styles.bold}>
+                {o.label}
               </AppText>
             </Pressable>
-          )}
+          );
+        })}
+      </ScrollView>
+
+      <Segmented accessibilityLabel="Position" options={POSITION_OPTIONS} value={position} onChange={setPosition} />
+
+      {custom && (
+        <View style={styles.controls}>
+          <View style={styles.row}>
+            <PickerButton label="Up (Y)" value={CATALOG[y].short} onPress={() => setPicker('y')} />
+            <PickerButton label="Across (X)" value={CATALOG[x].short} onPress={() => setPicker('x')} />
+          </View>
+          <View style={styles.row}>
+            <View style={styles.flex}>
+              <Segmented
+                accessibilityLabel="Color dots by"
+                options={[
+                  { id: 'position', label: 'Color: position' },
+                  { id: 'stat', label: 'Color: a stat' },
+                ]}
+                value={colorMode}
+                onChange={setColorMode}
+              />
+            </View>
+          </View>
+          {colorMode === 'stat' && <PickerButton label="Color by" value={CATALOG[cz].short} onPress={() => setPicker('z')} />}
+          <View style={styles.row}>
+            <AppText variant="small" style={styles.flex}>
+              Straight-line trend
+            </AppText>
+            <Switch
+              value={showTrend}
+              onValueChange={setShowTrend}
+              trackColor={{ true: colors.accentFill, false: colors.border }}
+              accessibilityLabel="Show a straight-line trend"
+            />
+          </View>
         </View>
-      </View>
+      )}
 
-      <View style={styles.titleBlock}>
-        <AppText variant="title">
-          {CATALOG[y].label} vs. {CATALOG[x].label.toLowerCase()}
-        </AppText>
-        <AppText variant="caption" color="textSecondary">
-          {points.length} qualified players
-          {missing.smallSample > 0 && under ? ` · ${missing.smallSample} left out with ${under}` : ''}
-          {missing.noValue > 0 ? ` · ${missing.noValue} without a value left out` : ''}. {modeInfo.help}
-        </AppText>
-      </View>
-
-      <ScatterChart
-        points={points}
-        mode={mode}
-        xStat={x}
-        yStat={y}
-        bins={bins}
-        highlightId={highlightOnChart ? highlightId : null}
-        onSelect={setHighlightId}
+      <HighlightRow
+        ids={highlights}
+        nameOf={nameOf}
+        onRemove={toggleHighlight}
+        onAdd={() => setPicker('player')}
+        canAdd={highlights.length < MAX_HIGHLIGHTS}
       />
 
-      <Legend mode={mode} z={z} zd={scales.zd} maxBinCount={scales.maxBinCount} />
+      <Card style={styles.chartCard}>
+        <View style={styles.titleBlock}>
+          <AppText variant="title">{title}</AppText>
+          <AppText variant="caption" color="textSecondary">
+            {points.length} qualified {noun} · games through {formatDate(through)}
+            {missing.smallSample > 0 && under ? ` · ${missing.smallSample} left out with ${under}` : ''}
+            {missing.noValue > 0 ? ` · ${missing.noValue} without a value` : ''}
+          </AppText>
+        </View>
 
-      {highlight && (
+        {points.length < 5 ? (
+          <AppText color="textSecondary">Not enough qualified {noun} with these stats yet.</AppText>
+        ) : (
+          <ScatterChart
+            points={points}
+            xStat={x}
+            yStat={y}
+            invertY={invertY}
+            color={colorOf}
+            hollowIds={analysis?.hollow}
+            medians={analysis?.medians}
+            quadrants={quadrantLabels}
+            trend={custom && showTrend ? (analysis?.fit ?? null) : null}
+            highlightIds={highlights}
+            labels={labels}
+            surface={colors.surface}
+            summary={`${title} ${points.length} ${noun}. ${analysis?.relationship.text ?? ''}`}
+            onSelect={setSelectedId}
+          />
+        )}
+
+        <Legend colorMode={z ? 'stat' : 'position'} z={z} zd={analysis?.zd ?? null} />
+
+        {analysis && (
+          <View style={styles.insight}>
+            <AppText variant="small">{analysis.relationship.text}</AppText>
+            {custom && showTrend && Number.isFinite(analysis.r) && (
+              <AppText variant="caption" color="textSecondary">
+                The line is a least-squares fit (r = {analysis.r.toFixed(2).replace('-', '−')}). It shows the average
+                trend, not a rule for any one player.
+              </AppText>
+            )}
+            {shared.length > 0 && (
+              <AppText variant="caption" color="danger">
+                Heads-up: both stats are built from some of the same numbers ({shared.join(', ').toUpperCase()}), so
+                part of any pattern is automatic.
+              </AppText>
+            )}
+            {preset && (
+              <AppText variant="caption" color="textSecondary">
+                {preset.note}
+              </AppText>
+            )}
+          </View>
+        )}
+      </Card>
+
+      {selected ? (
         <SelectedCard
-          player={highlight}
-          stats={chartColumns(x, y, mode === 'color' ? z : null).map((c) => c.stat)}
+          player={selected}
+          stats={chartColumns(x, y, z).map((c) => c.stat)}
           poolSize={snapshot.players.poolSize}
-          onChart={highlightOnChart}
+          onChart={onChart.has(selected.id)}
+          highlighted={highlights.includes(selected.id)}
+          canHighlight={highlights.length < MAX_HIGHLIGHTS}
+          onToggleHighlight={() => toggleHighlight(selected.id)}
         />
-      )}
-      {!highlight && (
+      ) : (
         <AppText variant="small" color="textSecondary">
-          Tap the chart to pick the nearest player and see their numbers and percentiles.
+          Tap a dot to see that player’s numbers.
         </AppText>
       )}
 
@@ -169,30 +327,72 @@ export default function GraphsScreen() {
         </AppText>
       </Pressable>
       {showList && (
-        <ValueTable
-          points={points}
-          x={x}
-          y={y}
-          z={mode === 'color' ? z : null}
-          onSelect={setHighlightId}
-          selectedId={highlightId}
-        />
+        <ValueTable points={points} x={x} y={y} z={z} onSelect={setSelectedId} selectedId={selectedId} />
       )}
 
       <StatPicker
         visible={picker === 'x' || picker === 'y' || picker === 'z'}
-        title={picker === 'x' ? 'X axis' : picker === 'y' ? 'Y axis' : 'Color by'}
-        selected={picker === 'x' ? x : picker === 'y' ? y : z}
-        onSelect={(id) => (picker === 'x' ? setX(id) : picker === 'y' ? setY(id) : setZ(id))}
+        title={picker === 'x' ? 'Across (X)' : picker === 'y' ? 'Up (Y)' : 'Color by'}
+        selected={picker === 'x' ? x : picker === 'y' ? y : cz}
+        onSelect={(id) => (picker === 'x' ? setCx(id) : picker === 'y' ? setCy(id) : setCz(id))}
         onClose={() => setPicker(null)}
       />
       <PlayerPicker
         visible={picker === 'player'}
+        title="Highlight a player"
         players={players}
-        onSelect={setHighlightId}
+        onSelect={(id) => {
+          if (!highlights.includes(id)) toggleHighlight(id);
+        }}
         onClose={() => setPicker(null)}
       />
     </ScrollView>
+  );
+}
+
+function HighlightRow({
+  ids,
+  nameOf,
+  onRemove,
+  onAdd,
+  canAdd,
+}: {
+  ids: number[];
+  nameOf: (id: number) => string;
+  onRemove: (id: number) => void;
+  onAdd: () => void;
+  canAdd: boolean;
+}) {
+  const colors = useColors();
+  return (
+    <View style={styles.highlights}>
+      {ids.map((id) => (
+        <Pressable
+          key={id}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${nameOf(id)} from the chart`}
+          onPress={() => onRemove(id)}
+          style={[styles.highlightChip, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+          <AppText variant="small" style={styles.bold} numberOfLines={1}>
+            {nameOf(id)}
+          </AppText>
+          <AppText variant="small" color="textSecondary">
+            ✕
+          </AppText>
+        </Pressable>
+      ))}
+      {canAdd && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Highlight a player"
+          onPress={onAdd}
+          style={[styles.highlightChip, { borderColor: colors.border }]}>
+          <AppText variant="small" color="accent" style={styles.bold}>
+            {ids.length ? '+ Add player' : '+ Highlight players'}
+          </AppText>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
@@ -203,10 +403,7 @@ function PickerButton({ label, value, onPress }: { label: string; value: string;
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value}. Change`}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.pickerButton,
-        { backgroundColor: pressed ? colors.border : colors.surface },
-      ]}>
+      style={({ pressed }) => [styles.pickerButton, { backgroundColor: pressed ? colors.border : colors.surface }]}>
       <AppText variant="caption" color="textSecondary">
         {label}
       </AppText>
@@ -215,110 +412,60 @@ function PickerButton({ label, value, onPress }: { label: string; value: string;
   );
 }
 
-function Stepper({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  const colors = useColors();
-  const step = (d: number) => onChange(Math.max(MIN_BINS, Math.min(MAX_BINS, value + d)));
-  return (
-    <View
-      style={[styles.stepper, { backgroundColor: colors.surface }]}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={`${label}: ${value}`}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-      onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}>
-      <AppText variant="caption" color="textSecondary" style={styles.flex}>
-        {label}
-      </AppText>
-      <Pressable hitSlop={8} onPress={() => step(-1)} disabled={value <= MIN_BINS} style={styles.stepButton}>
-        <AppText variant="title" color={value <= MIN_BINS ? 'textSecondary' : 'accent'}>
-          −
-        </AppText>
-      </Pressable>
-      <AppText variant="number" style={styles.stepValue}>
-        {value}
-      </AppText>
-      <Pressable hitSlop={8} onPress={() => step(1)} disabled={value >= MAX_BINS} style={styles.stepButton}>
-        <AppText variant="title" color={value >= MAX_BINS ? 'textSecondary' : 'accent'}>
-          +
-        </AppText>
-      </Pressable>
-    </View>
-  );
-}
-
-function Swatch({ color, round = true }: { color: string; round?: boolean }) {
-  return <View style={[styles.swatch, { backgroundColor: color, borderRadius: round ? 6 : 2 }]} />;
-}
-
-function Legend({
-  mode,
-  z,
-  zd,
-  maxBinCount,
-}: {
-  mode: GraphMode;
-  z: StatId;
-  zd: readonly [number, number] | null;
-  maxBinCount: number;
-}) {
+function Legend({ colorMode, z, zd }: { colorMode: ColorMode; z: StatId | null; zd: readonly [number, number] | null }) {
   const cc = useChartColors();
-  if (mode === 'trend') {
-    return (
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <Swatch color={cc.aboveTrend} />
-          <AppText variant="caption">Above the line</AppText>
-        </View>
-        <View style={styles.legendItem}>
-          <Swatch color={cc.belowTrend} />
-          <AppText variant="caption">Below the line</AppText>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.lineSwatch, { backgroundColor: cc.trendLine }]} />
-          <AppText variant="caption">Best fit</AppText>
-        </View>
-      </View>
-    );
-  }
-  if (mode === 'color') {
-    if (!zd) return null;
-    const breaks = classBreaks(zd, RAMP_CLASSES);
-    return (
-      <View style={styles.legendBlock}>
-        <AppText variant="caption" color="textSecondary">
-          {CATALOG[z].label}
-        </AppText>
+  const colors = useColors();
+  return (
+    <View style={styles.legendBlock}>
+      {colorMode === 'stat' && z && zd ? (
+        <>
+          <AppText variant="caption" color="textSecondary">
+            Color: {CATALOG[z].label}
+          </AppText>
+          <View style={styles.legend}>
+            {cc.ramp.map((c, i) => {
+              const breaks = classBreaks(zd, RAMP_CLASSES);
+              return (
+                <View key={c} style={styles.legendItem}>
+                  <Swatch color={c} />
+                  <AppText variant="caption">
+                    {formatStat(z, breaks[i])}–{formatStat(z, breaks[i + 1])}
+                  </AppText>
+                </View>
+              );
+            })}
+          </View>
+        </>
+      ) : (
         <View style={styles.legend}>
-          {cc.ramp.map((color, i) => (
-            <View key={color} style={styles.legendItem}>
-              <Swatch color={color} />
-              <AppText variant="caption">
-                {formatStat(z, breaks[i])}–{formatStat(z, breaks[i + 1])}
-              </AppText>
+          {POSITION_GROUPS.map((g) => (
+            <View key={g} style={styles.legendItem}>
+              <Swatch color={cc.positions[g]} />
+              <AppText variant="caption">{groupNoun(g).replace(/^./, (c) => c.toUpperCase())}</AppText>
             </View>
           ))}
         </View>
-      </View>
-    );
-  }
-  const ranges = countRanges(maxBinCount, RAMP_CLASSES);
-  return (
-    <View style={styles.legendBlock}>
-      <AppText variant="caption" color="textSecondary">
-        Players per square
-      </AppText>
+      )}
       <View style={styles.legend}>
-        {ranges.map((r, i) =>
-          r ? (
-            <View key={cc.ramp[i]} style={styles.legendItem}>
-              <Swatch color={cc.ramp[i]} round={false} />
-              <AppText variant="caption">{r[0] === r[1] ? r[0] : `${r[0]}–${r[1]}`}</AppText>
-            </View>
-          ) : null,
-        )}
+        <View style={styles.legendItem}>
+          <View style={[styles.hollow, { borderColor: colors.textSecondary }]} />
+          <AppText variant="caption" color="textSecondary">
+            Under half the typical minutes
+          </AppText>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.dash, { borderColor: cc.median }]} />
+          <AppText variant="caption" color="textSecondary">
+            Median
+          </AppText>
+        </View>
       </View>
     </View>
   );
+}
+
+function Swatch({ color }: { color: string }) {
+  return <View style={[styles.swatch, { backgroundColor: color }]} />;
 }
 
 function SelectedCard({
@@ -326,15 +473,20 @@ function SelectedCard({
   stats,
   poolSize,
   onChart,
+  highlighted,
+  canHighlight,
+  onToggleHighlight,
 }: {
   player: Player;
   stats: StatId[];
   poolSize: Partial<Record<StatId, number>>;
   onChart: boolean;
+  highlighted: boolean;
+  canHighlight: boolean;
+  onToggleHighlight: () => void;
 }) {
-  const colors = useColors();
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+    <Card>
       <View style={styles.cardHeader}>
         <AppText variant="bodyStrong" style={styles.flex} numberOfLines={1}>
           {player.name}
@@ -343,7 +495,7 @@ function SelectedCard({
       </View>
       {!onChart && (
         <AppText variant="caption" color="textSecondary">
-          Not on this chart: missing a value for one of these stats.
+          Not on this chart: a missing value, too few attempts, or another position.
         </AppText>
       )}
       {stats.map((id) => {
@@ -369,14 +521,23 @@ function SelectedCard({
           </View>
         );
       })}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push({ pathname: '/graphs/player/[id]', params: { id: String(player.id) } })}>
-        <AppText variant="bodyStrong" color="accent">
-          Open player page
-        </AppText>
-      </Pressable>
-    </View>
+      <View style={styles.row}>
+        {(highlighted || canHighlight) && (
+          <Pressable accessibilityRole="button" onPress={onToggleHighlight} style={styles.flex}>
+            <AppText variant="bodyStrong" color="accent">
+              {highlighted ? 'Remove highlight' : 'Highlight on chart'}
+            </AppText>
+          </Pressable>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push({ pathname: '/graphs/player/[id]', params: { id: String(player.id) } })}>
+          <AppText variant="bodyStrong" color="accent">
+            Player page ›
+          </AppText>
+        </Pressable>
+      </View>
+    </Card>
   );
 }
 
@@ -438,40 +599,34 @@ function ValueTable({
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl * 2 },
+  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl * 2 },
   flex: { flex: 1 },
   bold: { fontWeight: '600' },
+  bleed: { marginHorizontal: -spacing.lg },
+  chips: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  chip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.pill, minHeight: 36, justifyContent: 'center' },
   controls: { gap: spacing.sm },
-  axisRow: { flexDirection: 'row', gap: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   pickerButton: { flex: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  stepper: {
-    flex: 1,
+  highlights: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  highlightChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
     gap: spacing.sm,
-  },
-  stepButton: { paddingHorizontal: spacing.xs },
-  stepValue: { minWidth: 20, textAlign: 'center' },
-  highlightRow: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.md },
-  highlightButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+    minHeight: 36,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  clearButton: { paddingHorizontal: spacing.md, paddingVertical: spacing.md },
-  titleBlock: { gap: spacing.xs },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, rowGap: spacing.xs },
-  legendBlock: { gap: spacing.xs },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
-  swatch: { width: 12, height: 12 },
-  lineSwatch: { width: 16, height: 2 },
-  card: { borderRadius: radius.lg, padding: spacing.md, gap: spacing.md },
+  chartCard: { paddingHorizontal: spacing.md, gap: spacing.sm },
+  titleBlock: { gap: 2, paddingHorizontal: spacing.xs },
+  insight: { gap: spacing.xs, paddingHorizontal: spacing.xs },
+  legendBlock: { gap: spacing.xs, paddingHorizontal: spacing.xs },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  swatch: { width: 10, height: 10, borderRadius: 5 },
+  hollow: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5 },
+  dash: { width: 16, borderTopWidth: 1, borderStyle: 'dashed' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   cardStat: { gap: spacing.xs },
   cardStatTop: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.md },
@@ -483,7 +638,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  table: { borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  table: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.md, overflow: 'hidden' },
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm },
   tableNum: { width: 56, textAlign: 'right', fontVariant: ['tabular-nums'] },
 });

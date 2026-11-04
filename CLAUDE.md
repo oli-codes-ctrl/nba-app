@@ -27,6 +27,7 @@ Design every screen as a senior design engineer would. Concretely:
 - Before calling UI done, screenshot it at phone width in both modes and review it against this list.
 - The system as built: tokens in `app/src/theme/tokens.ts` (colors, `percentileScale`, type sizes, spacing, radius, `motion`); text through `AppText` variants (`display`, `large`, `title`, `body`, `bodyStrong`, `small`, `caption`, `kicker`, `number`); shared pieces in `app/src/components/` (`Card`, `Segmented`, `Section`, `Avatar`, `Skeleton`/`FirstLoad`, `PercentileBar`, `TeamChip`, `Button`). `__tests__/contrast.test.ts` checks every text color on every surface, white on `accentFill`, every percentile step against track and card, and all 30 team chips.
 - Percentile bars use the cold-to-hot scale (blue, gray, orange; validated with the dataviz validator). Neutral stats show a dot on the line instead. `success`/`danger` are for game feedback only. Fills behind white text use `accentFill`, never `accent`.
+- Charts (`app/src/graphs/`): every chart answers one question (its title), says who is included (n, filter, date), and explains itself in a caption. Relationships are described with Spearman's rank correlation and only called a link when |rho| clears 1.96/sqrt(n-1); quadrants come from medians of the plotted players; dots with under half the median minutes are hollow; position colors are `chartColors.positions` (green / violet / magenta, validated all-pairs), never the blue/orange of the percentile scale. Axis titles are words, with "up" meaning better (lower-is-better Y axes are flipped).
 - Appearance: `ThemePreferenceProvider` (System / Dark / Light, default Dark, saved on device) applies the choice through `Appearance.setColorScheme` so native parts follow; Settings lives at `(today)/settings`.
 
 ## Layout
@@ -76,22 +77,24 @@ Foundations:
 2. [x] Team data + formulas module: team totals and standings, usage/AST%/TOV%/REB%, per-36 and per-100, team ratings and pace, drop the Off/Def split (schema v2), reference tests.
 3. [x] Honest samples + position percentiles: Wilson ranges, shrinkage for low-volume shooting, G/F/C percentile pools, medians, leaderboard toggles.
 4a. [x] Design system: tokens, type scale, dark default with a System / Dark / Light setting, cold-to-hot percentile colors, avatars, skeletons, contrast test.
-4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More?
-5. [ ] Glossary and first-launch onboarding.
 
-v1 features:
-6. [ ] Player card (Savant-style percentiles vs. position, insights).
-7. [ ] "Who's he like?" comps (cosine similarity on standardized stats, with the stats that drive the match).
+Visual track (approved 2026-11-04: charts come before the tab restructure):
+V1. [x] Scatter playground: question presets with named quadrants at the medians, dots by position, hollow thin samples, labeled examples, up to 3 highlights, Spearman relationship in words (only when it beats chance), custom mode with optional least-squares line and a shared-inputs warning.
+V2. [ ] Distribution: one dot per player for any stat with median and quartiles and the player's range; tap any stat row on a player page to open it.
+V3. [ ] Player card (Savant style) with rank-uncertainty bands and gated insights, plus "Who's he like?" comps (cosine similarity on standardized rates, with the stats that drive each match).
+V4. [ ] Team charts: offense vs. defense quadrant with net-rating lines and a noise note, luck meter with a noise band, four factors vs. league.
+V5. [ ] Head-to-head as aligned percentile dots.
+V6. [ ] Box scores from game summaries, then trends (rolling 10-game lines with uncertainty bands), best performances, and a heat check that only flags changes bigger than noise.
+
+Then:
+4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More? Charts move into Explore and Teams.
+5. [ ] Glossary and first-launch onboarding.
 8. [ ] Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart.
-9. [ ] Box scores from game summaries + best performances of the night and week.
-10. [ ] Heat check: last 10 vs. season, league risers and fallers, small-sample warnings.
 11. [ ] Build your own MVP: weight sliders over standardized categories, shareable ladder.
-12. [ ] Teams: offense vs. defense quadrant, luck meter (Pythagorean), team identity.
-13. [ ] Scatter playground: medians, labeled quadrants, up to 3 highlighted players.
 14. [ ] Share cards for every chart and result.
 
-Later: verified fun facts in the pipeline, rookie and breakout tracker, fantasy 9-cat preset, rule-based archetypes, season trajectory, season streaks and highs, shot charts, clutch splits, 3-player compare, games pass (Rank 'Em, Daily Guess hint ladder, percentile-gap difficulty), distribution histograms.
-Cut: age curve, lineups/on-off, salaries, Who Has More?
+Later: verified fun facts in the pipeline, rookie and breakout tracker, fantasy 9-cat preset, rule-based archetypes, season trajectory, season streaks and highs, shot charts, clutch splits, 3-player compare, games pass (Rank 'Em, Daily Guess hint ladder, percentile-gap difficulty).
+Cut: age curve, lineups/on-off, salaries, Who Has More?, the trend-line coloring and density grid on Graphs (replaced by quadrants and the distribution view).
 
 ## Commands
 - The repo lives at `C:\nba-app`. Keep it out of OneDrive: OneDrive breaks uv hardlinks and locks `.venv`. If uv reports "os error 396", run `uv cache clean <package>` for the named package.
