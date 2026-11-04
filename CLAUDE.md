@@ -25,6 +25,9 @@ Design every screen as a senior design engineer would. Concretely:
 - Motion is short (150-250 ms), purposeful, built with Reanimated, and respects Reduce Motion. Haptics only for game feedback.
 - Dark mode is the default with a System / Dark / Light setting; light mode is designed, not inverted.
 - Before calling UI done, screenshot it at phone width in both modes and review it against this list.
+- The system as built: tokens in `app/src/theme/tokens.ts` (colors, `percentileScale`, type sizes, spacing, radius, `motion`); text through `AppText` variants (`display`, `large`, `title`, `body`, `bodyStrong`, `small`, `caption`, `kicker`, `number`); shared pieces in `app/src/components/` (`Card`, `Segmented`, `Section`, `Avatar`, `Skeleton`/`FirstLoad`, `PercentileBar`, `TeamChip`, `Button`). `__tests__/contrast.test.ts` checks every text color on every surface, white on `accentFill`, every percentile step against track and card, and all 30 team chips.
+- Percentile bars use the cold-to-hot scale (blue, gray, orange; validated with the dataviz validator). Neutral stats show a dot on the line instead. `success`/`danger` are for game feedback only. Fills behind white text use `accentFill`, never `accent`.
+- Appearance: `ThemePreferenceProvider` (System / Dark / Light, default Dark, saved on device) applies the choice through `Appearance.setColorScheme` so native parts follow; Settings lives at `(today)/settings`.
 
 ## Layout
 - `pipeline/`: Python 3.12 package `hoops_pipeline`, managed with uv. Pulls ESPN season stats, computes derived stats, publishes JSON.
@@ -72,7 +75,8 @@ Foundations:
 1. [x] Trustworthy numbers: fresh data (retry until ESPN's totals include last night), "games through" date, attempt minimums for percentage stats, sample sizes shown.
 2. [x] Team data + formulas module: team totals and standings, usage/AST%/TOV%/REB%, per-36 and per-100, team ratings and pace, drop the Off/Def split (schema v2), reference tests.
 3. [x] Honest samples + position percentiles: Wilson ranges, shrinkage for low-volume shooting, G/F/C percentile pools, medians, leaderboard toggles.
-4. [ ] Design system, tabs (Explore / Players / Teams / Play) and search; cut Who Has More?
+4a. [x] Design system: tokens, type scale, dark default with a System / Dark / Light setting, cold-to-hot percentile colors, avatars, skeletons, contrast test.
+4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More?
 5. [ ] Glossary and first-launch onboarding.
 
 v1 features:

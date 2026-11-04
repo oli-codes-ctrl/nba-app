@@ -191,7 +191,7 @@ function LineCard({ player, kind }: { player: Player; kind: MysteryKind }) {
       : `${formatStat('fg_pct', s.fg_pct)} FG · ${formatStat('fg3_pct', s.fg3_pct)} 3PT · ${formatStat('mpg', s.mpg)} min · ${s.gp} games · ${player.pos}`;
   return (
     <View style={[styles.lineCard, { backgroundColor: colors.surface }]}>
-      <AppText variant="caption" color="textSecondary" style={styles.kicker}>
+      <AppText variant="kicker" color="textSecondary" style={styles.center}>
         {kind === 'game' ? 'LATEST GAME' : 'SEASON AVERAGES'}
       </AppText>
       <View style={styles.grid}>
@@ -248,7 +248,7 @@ function Question({
                 styles.dot,
                 {
                   backgroundColor:
-                    i < marks.length ? (marks[i] ? colors.scaleHigh : colors.danger) : i === number - 1 ? colors.accent : colors.border,
+                    i < marks.length ? (marks[i] ? colors.success : colors.danger) : i === number - 1 ? colors.accent : colors.border,
                 },
               ]}
             />
@@ -263,7 +263,7 @@ function Question({
         {options.map((p) => {
           const isAnswer = p.id === answer.id;
           const isPicked = p.id === picked;
-          const border = revealed && isAnswer ? colors.scaleHigh : revealed && isPicked ? colors.danger : colors.border;
+          const border = revealed && isAnswer ? colors.success : revealed && isPicked ? colors.danger : colors.border;
           return (
             <Pressable
               key={p.id}
@@ -309,7 +309,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   tabular: { fontVariant: ['tabular-nums'] },
-  kicker: { fontWeight: '700', letterSpacing: 0.8, textAlign: 'center' },
   card: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md },
   statsRow: { flexDirection: 'row' },
   mini: { flex: 1, alignItems: 'center' },

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Avatar } from '@/components/Avatar';
 import { FirstLoad } from '@/components/DataStatus';
 import { PercentileBar } from '@/components/PercentileBar';
 import { Segmented } from '@/components/Segmented';
@@ -37,7 +38,7 @@ export default function PlayerScreen() {
   // assists with every guard's says little.
   const [pool, setPool] = useState<'pos' | 'all'>('pos');
 
-  if (!snapshot) return <FirstLoad />;
+  if (!snapshot) return <FirstLoad shape="page" />;
   if (!player) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -64,6 +65,7 @@ export default function PlayerScreen() {
 
       <View style={styles.hero}>
         <View style={styles.titleRow}>
+          <Avatar name={player.name} team={player.team} size={56} />
           <AppText variant="large" style={styles.flex}>
             {player.name}
           </AppText>

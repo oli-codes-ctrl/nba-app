@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Avatar } from '@/components/Avatar';
 import { DataStatusLine, FirstLoad } from '@/components/DataStatus';
 import { Segmented } from '@/components/Segmented';
 import { TeamChip } from '@/components/TeamChip';
@@ -69,7 +70,7 @@ export default function PlayersScreen() {
   const rule = rules?.[view];
   const scalable = hasVariants(sort);
 
-  if (!snapshot) return <FirstLoad />;
+  if (!snapshot) return <FirstLoad shape="list" />;
 
   const header = (
     <View style={styles.header}>
@@ -196,6 +197,7 @@ function PlayerRow({
       <AppText variant="caption" color="textSecondary" style={styles.position}>
         {unranked ? '–' : position}
       </AppText>
+      <Avatar name={player.name} team={player.team} size={36} />
       <View style={styles.nameBlock}>
         <AppText variant="bodyStrong" numberOfLines={1}>
           {player.name}
@@ -253,6 +255,6 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   metaText: { flexShrink: 1 },
   value: { alignItems: 'flex-end', minWidth: 56 },
-  separator: { height: StyleSheet.hairlineWidth, marginLeft: spacing.lg + 24 + spacing.md },
+  separator: { height: StyleSheet.hairlineWidth, marginLeft: spacing.lg + 24 + spacing.md + 36 + spacing.md },
   empty: { padding: spacing.xl, textAlign: 'center' },
 });

@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useData } from '@/data/DataProvider';
 import { formatDate, seasonLabel } from '@/lib/format';
@@ -6,6 +6,7 @@ import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
 
 import { AppText } from './AppText';
+import { ScreenSkeleton, type SkeletonShape } from './Skeleton';
 
 /** One line under the search box: what the data covers, and whether it is current. */
 export function DataStatusLine() {
@@ -20,30 +21,28 @@ export function DataStatusLine() {
   );
 }
 
-/** Full-screen state for first launch, before any data exists on the device. */
-export function FirstLoad() {
+/**
+ * Full-screen state for first launch, before any data exists on the device:
+ * a skeleton shaped like the coming screen, or a retry if the download failed.
+ */
+export function FirstLoad({ shape = 'feed' }: { shape?: SkeletonShape }) {
   const { loading, error, refresh } = useData();
   const colors = useColors();
+  if (loading) return <ScreenSkeleton shape={shape} />;
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
-      {loading ? (
-        <ActivityIndicator color={colors.accent} />
-      ) : (
-        <>
-          <AppText variant="title">Couldn’t load stats</AppText>
-          <AppText color="textSecondary" style={styles.message}>
-            {error ?? 'Check your connection and try again.'}
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            onPress={refresh}
-            style={[styles.button, { backgroundColor: colors.accent }]}>
-            <AppText variant="bodyStrong" color="textOnAccent">
-              Try again
-            </AppText>
-          </Pressable>
-        </>
-      )}
+      <AppText variant="title">Couldn’t load stats</AppText>
+      <AppText color="textSecondary" style={styles.message}>
+        {error ?? 'Check your connection and try again.'}
+      </AppText>
+      <Pressable
+        accessibilityRole="button"
+        onPress={refresh}
+        style={[styles.button, { backgroundColor: colors.accentFill }]}>
+        <AppText variant="bodyStrong" color="textOnAccent">
+          Try again
+        </AppText>
+      </Pressable>
     </View>
   );
 }

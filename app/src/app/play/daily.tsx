@@ -142,7 +142,7 @@ function Game({
               accessibilityState={{ selected }}
               accessibilityLabel={`Show ${CATALOG[id].label}`}
               onPress={() => setHint(id)}
-              style={[styles.chip, { backgroundColor: selected ? colors.accent : colors.surface }]}>
+              style={[styles.chip, { backgroundColor: selected ? colors.accentFill : colors.surface }]}>
               <AppText variant="small" color={selected ? 'textOnAccent' : 'text'} style={styles.bold}>
                 {CATALOG[id].short}
               </AppText>
@@ -340,7 +340,7 @@ function Result({
         <Pressable
           accessibilityRole="button"
           onPress={() => Share.share({ message: shareText(state, puzzle) })}
-          style={[styles.primaryButton, { backgroundColor: colors.accent }]}>
+          style={[styles.primaryButton, { backgroundColor: colors.accentFill }]}>
           <AppText variant="bodyStrong" color="textOnAccent">
             Share result
           </AppText>

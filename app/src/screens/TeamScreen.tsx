@@ -4,8 +4,10 @@ import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Avatar } from '@/components/Avatar';
 import { FirstLoad } from '@/components/DataStatus';
 import { Section } from '@/components/Section';
+import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import { updateCareer } from '@/game/storage';
 import { useTrophies } from '@/game/TrophyProvider';
@@ -14,7 +16,7 @@ import { formatStat, ordinal } from '@/lib/format';
 import { usePlayerLink } from '@/lib/usePlayerLink';
 import { CATALOG } from '@/stats/catalog';
 import { roster, TEAM_LEADER_STATS, teamLeader } from '@/teams/team';
-import { chipTextColor, teamInfo } from '@/theme/teams';
+import { teamInfo } from '@/theme/teams';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
 
@@ -35,9 +37,8 @@ export default function TeamScreen() {
     ).then(() => check());
   }, [abbr, check]);
 
-  if (!snapshot) return <FirstLoad />;
+  if (!snapshot) return <FirstLoad shape="page" />;
   const info = teamInfo(abbr);
-  const onColor = chipTextColor(info.color);
   const conf = team[0]?.conf;
 
   return (
@@ -47,17 +48,23 @@ export default function TeamScreen() {
       contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: info.name }} />
 
-      <View style={[styles.hero, { backgroundColor: info.color, borderColor: colors.border }]}>
-        <AppText variant="caption" style={[styles.kicker, { color: onColor }]}>
-          {abbr}
-          {conf ? ` · ${conf.toUpperCase()}ERN CONFERENCE` : ''}
-        </AppText>
-        <AppText variant="large" style={{ color: onColor }}>
-          {info.name}
-        </AppText>
-        <AppText variant="small" style={{ color: onColor }}>
-          {team.length} {team.length === 1 ? 'player' : 'players'} this season
-        </AppText>
+      {/* Team color is an identity accent (the stripe and chip), never a background for text. */}
+      <View style={[styles.hero, { backgroundColor: colors.surface }]}>
+        <View style={[styles.stripe, { backgroundColor: info.color }]} />
+        <View style={styles.heroText}>
+          <View style={styles.heroTop}>
+            <TeamChip abbr={abbr} />
+            {conf ? (
+              <AppText variant="kicker" color="textSecondary">
+                {conf}ern Conference
+              </AppText>
+            ) : null}
+          </View>
+          <AppText variant="large">{info.name}</AppText>
+          <AppText variant="small" color="textSecondary">
+            {team.length} {team.length === 1 ? 'player' : 'players'} this season
+          </AppText>
+        </View>
       </View>
 
       {teamByAbbr.get(abbr) && <AtAGlance season={teamByAbbr.get(abbr)!} teams={teamByAbbr.size} />}
@@ -105,6 +112,7 @@ export default function TeamScreen() {
                     i > 0 && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
                     pressed && { backgroundColor: colors.border },
                   ]}>
+                  <Avatar name={p.name} team={p.team} size={36} />
                   <View style={styles.flex}>
                     <AppText variant="bodyStrong" numberOfLines={1}>
                       {p.name}
@@ -195,12 +203,14 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl * 2 },
   flex: { flex: 1 },
   tabular: { fontVariant: ['tabular-nums'] },
-  hero: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.xs, borderWidth: StyleSheet.hairlineWidth },
+  hero: { flexDirection: 'row', borderRadius: radius.lg, overflow: 'hidden' },
+  stripe: { width: 6 },
+  heroText: { flex: 1, padding: spacing.lg, gap: spacing.xs },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   glance: { gap: spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', borderRadius: radius.lg, paddingVertical: spacing.sm },
   tile: { width: '50%', paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, gap: 2 },
   tileLabel: { fontWeight: '700', letterSpacing: 0.8 },
-  kicker: { fontWeight: '700', letterSpacing: 0.8 },
   leaderGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   leader: { width: '48.5%', borderRadius: radius.lg, padding: spacing.md, gap: 2, flexGrow: 1 },
   list: { borderRadius: radius.lg, overflow: 'hidden' },

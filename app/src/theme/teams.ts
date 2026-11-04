@@ -7,7 +7,8 @@ import { chipText } from './tokens';
 export type TeamInfo = { name: string; color: string };
 
 export const TEAMS: Record<string, TeamInfo> = {
-  ATL: { name: 'Atlanta', color: '#E03A3E' },
+  // Deeper than the brand red so white chip text reaches 4.5:1.
+  ATL: { name: 'Atlanta', color: '#C8102E' },
   BOS: { name: 'Boston', color: '#007A33' },
   BKN: { name: 'Brooklyn', color: '#000000' },
   CHA: { name: 'Charlotte', color: '#1D1160' },
@@ -31,7 +32,7 @@ export const TEAMS: Record<string, TeamInfo> = {
   ORL: { name: 'Orlando', color: '#0077C0' },
   PHI: { name: 'Philadelphia', color: '#006BB6' },
   PHX: { name: 'Phoenix', color: '#1D1160' },
-  POR: { name: 'Portland', color: '#E03A3E' },
+  POR: { name: 'Portland', color: '#C8102E' },
   SAC: { name: 'Sacramento', color: '#5A2D81' },
   SAS: { name: 'San Antonio', color: '#C4CED4' },
   TOR: { name: 'Toronto', color: '#CE1141' },
@@ -54,6 +55,15 @@ export function luminance(hex: string): number {
   return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
 }
 
+/** WCAG contrast ratio between two #RRGGBB colors. */
+export function contrastRatio(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Whichever of white or near-black text reads better on a chip. */
 export function chipTextColor(background: string): string {
-  return luminance(background) > 0.4 ? chipText.onLight : chipText.onDark;
+  return contrastRatio(chipText.onDark, background) >= contrastRatio(chipText.onLight, background)
+    ? chipText.onDark
+    : chipText.onLight;
 }

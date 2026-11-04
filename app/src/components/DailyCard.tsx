@@ -75,7 +75,7 @@ export function DailyCard({
         { backgroundColor: done ? colors.surface : colors.accentFill, opacity: pressed ? 0.9 : 1 },
       ]}>
       <View style={styles.top}>
-        <AppText variant="caption" color={done ? 'textSecondary' : 'textOnAccent'} style={styles.kicker}>
+        <AppText variant="kicker" color={done ? 'textSecondary' : 'textOnAccent'}>
           DAILY GUESS · #{puzzle.number}
         </AppText>
         {double && !done && (
@@ -109,7 +109,6 @@ export function DailyCard({
 const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.xs },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  kicker: { fontWeight: '700', letterSpacing: 0.8 },
   tag: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   bold: { fontWeight: '700' },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.xs },

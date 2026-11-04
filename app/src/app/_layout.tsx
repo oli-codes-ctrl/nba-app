@@ -5,10 +5,20 @@ import { StatusBar } from 'expo-status-bar';
 import { DataProvider } from '@/data/DataProvider';
 import { FollowProvider } from '@/follow/FollowProvider';
 import { TrophyProvider } from '@/game/TrophyProvider';
+import { ThemePreferenceProvider } from '@/theme/ThemePreference';
 import { colors } from '@/theme/tokens';
 import { useScheme } from '@/theme/useTokens';
 
 export default function RootLayout() {
+  return (
+    <ThemePreferenceProvider>
+      <AppShell />
+    </ThemePreferenceProvider>
+  );
+}
+
+/** Everything that depends on the chosen appearance. */
+function AppShell() {
   const scheme = useScheme();
   const c = colors[scheme];
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
@@ -19,6 +29,7 @@ export default function RootLayout() {
       primary: c.accent,
       background: c.background,
       card: c.background,
+      notification: c.accentFill,
       text: c.text,
       border: c.border,
     },

@@ -121,7 +121,7 @@ export default function StreakScreen() {
       ) : (
         <>
           <View style={styles.statHead}>
-            <AppText variant="caption" color="textSecondary" style={styles.kicker}>
+            <AppText variant="kicker" color="textSecondary">
               LEVEL {lvl + 1} · {LEVEL_NAMES[lvl].toUpperCase()}
             </AppText>
             <AppText variant="title" style={styles.centerText}>
@@ -191,7 +191,7 @@ function Score({ label, value, highlight = false }: { label: string; value: numb
 
 function PlayerPanel({ player, value, mark = null }: { player: Player; value: string; mark?: 'right' | 'wrong' | null }) {
   const colors = useColors();
-  const border = mark === 'right' ? colors.scaleHigh : mark === 'wrong' ? colors.danger : colors.surface;
+  const border = mark === 'right' ? colors.success : mark === 'wrong' ? colors.danger : colors.surface;
   return (
     <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: border }]}>
       <View style={styles.panelText}>
@@ -245,7 +245,6 @@ const styles = StyleSheet.create({
   scoreItem: { flex: 1, alignItems: 'center' },
   card: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md },
   statHead: { alignItems: 'center', gap: 2 },
-  kicker: { fontWeight: '700', letterSpacing: 0.8 },
   panel: {
     flexDirection: 'row',
     alignItems: 'center',

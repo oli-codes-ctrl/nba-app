@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { SecondaryButton } from '@/components/Button';
@@ -14,14 +14,7 @@ import { useFollows } from '@/follow/FollowProvider';
 import { useGameProgress } from '@/game/useGameProgress';
 import { formatDate, formatStat } from '@/lib/format';
 import { usePlayerLink } from '@/lib/usePlayerLink';
-import { hourLabel, type ReminderSettings } from '@/notify/plan';
-import {
-  loadReminderSettings,
-  refreshReminders,
-  remindersSupported,
-  requestPermission,
-  saveReminderSettings,
-} from '@/notify/reminders';
+import { refreshReminders } from '@/notify/reminders';
 import { CATALOG } from '@/stats/catalog';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
@@ -88,7 +81,7 @@ export default function TodayScreen() {
 
       {feed.fact && (
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <AppText variant="caption" color="textSecondary" style={styles.kicker}>
+          <AppText variant="kicker" color="textSecondary">
             STAT OF THE DAY
           </AppText>
           <AppText variant="body">{feed.fact.text}</AppText>
@@ -112,7 +105,7 @@ export default function TodayScreen() {
                 onPress={() => openPlayer(p.id)}
                 style={({ pressed }) => [styles.gameTile, { backgroundColor: pressed ? colors.border : colors.surface }]}>
                 <View style={styles.tileTop}>
-                  <AppText variant="caption" color="textSecondary" style={styles.kicker}>
+                  <AppText variant="kicker" color="textSecondary">
                     #{i + 1}
                   </AppText>
                   <TeamChip abbr={p.team} />
@@ -162,7 +155,7 @@ export default function TodayScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.hList}>
           {LEADER_STATS.map((stat) => (
             <View key={stat} style={[styles.leaderCard, { backgroundColor: colors.surface }]}>
-              <AppText variant="caption" color="textSecondary" style={styles.kicker} numberOfLines={1}>
+              <AppText variant="kicker" color="textSecondary" numberOfLines={1}>
                 {CATALOG[stat].label.toUpperCase()}
               </AppText>
               {leaders(snapshot.players.players, stat, 3).map((p, i) => (
@@ -186,7 +179,6 @@ export default function TodayScreen() {
         </ScrollView>
       </Section>
 
-      {remindersSupported && <ReminderCard />}
     </ScrollView>
   );
 }
@@ -291,85 +283,10 @@ function FollowRow({
   );
 }
 
-const HOURS = [9, 12, 18, 21];
-
-function ReminderCard() {
-  const colors = useColors();
-  const [settings, setSettings] = useState<ReminderSettings | null>(null);
-  const [denied, setDenied] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadReminderSettings().then((s) => {
-      if (!cancelled) setSettings(s);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!settings) return null;
-
-  async function update(next: ReminderSettings) {
-    if (next.enabled && !settings?.enabled) {
-      const ok = await requestPermission();
-      setDenied(!ok);
-      if (!ok) return;
-    }
-    setSettings(next);
-    await saveReminderSettings(next);
-    await refreshReminders();
-  }
-
-  return (
-    <View style={[styles.card, { backgroundColor: colors.surface }]}>
-      <View style={styles.meta}>
-        <View style={styles.flex}>
-          <AppText variant="bodyStrong">Daily puzzle reminder</AppText>
-          <AppText variant="caption" color="textSecondary">
-            One nudge a day, skipped once you’ve played.
-          </AppText>
-        </View>
-        <Switch
-          value={settings.enabled}
-          onValueChange={(enabled) => update({ ...settings, enabled })}
-          trackColor={{ true: colors.accent, false: colors.border }}
-          accessibilityLabel="Daily puzzle reminder"
-        />
-      </View>
-      {denied && (
-        <AppText variant="caption" color="danger">
-          Notifications are off for this app. Turn them on in Settings to get reminders.
-        </AppText>
-      )}
-      {settings.enabled && (
-        <View style={styles.chipRow}>
-          {HOURS.map((h) => {
-            const selected = settings.hour === h;
-            return (
-              <Pressable
-                key={h}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                onPress={() => update({ ...settings, hour: h })}
-                style={[styles.hourChip, { backgroundColor: selected ? colors.accentFill : colors.background }]}>
-                <AppText variant="small" color={selected ? 'textOnAccent' : 'text'} style={styles.bold}>
-                  {hourLabel(h)}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl * 2 },
   flex: { flex: 1 },
   bold: { fontWeight: '600' },
-  kicker: { fontWeight: '700', letterSpacing: 0.8 },
   dateBlock: { gap: 2 },
   card: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -391,5 +308,4 @@ const styles = StyleSheet.create({
   leaderCard: { width: 240, borderRadius: radius.lg, padding: spacing.md, gap: spacing.xs },
   leaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 32 },
   rankNum: { width: 14, fontVariant: ['tabular-nums'] },
-  hourChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: radius.pill },
 });

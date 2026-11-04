@@ -88,7 +88,7 @@ function TrophyBanner({ trophy, onPress }: { trophy: Trophy; onPress: () => void
         style={[styles.banner, { backgroundColor: colors.surfaceRaised, borderColor: colors.accent, shadowColor: colors.shadow }]}>
         <AppText variant="title">🏆</AppText>
         <View style={styles.text}>
-          <AppText variant="caption" color="accent" style={styles.kicker}>
+          <AppText variant="kicker" color="accent">
             TROPHY UNLOCKED
           </AppText>
           <AppText variant="bodyStrong">{trophy.title}</AppText>
@@ -124,5 +124,4 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   text: { flex: 1, gap: 1 },
-  kicker: { fontWeight: '700', letterSpacing: 0.8 },
 });
