@@ -27,7 +27,7 @@ Design every screen as a senior design engineer would. Concretely:
 - Before calling UI done, screenshot it at phone width in both modes and review it against this list.
 - The system as built: tokens in `app/src/theme/tokens.ts` (colors, `percentileScale`, type sizes, spacing, radius, `motion`); text through `AppText` variants (`display`, `large`, `title`, `body`, `bodyStrong`, `small`, `caption`, `kicker`, `number`); shared pieces in `app/src/components/` (`Card`, `Segmented`, `Section`, `Avatar`, `Skeleton`/`FirstLoad`, `PercentileBar`, `TeamChip`, `Button`). `__tests__/contrast.test.ts` checks every text color on every surface, white on `accentFill`, every percentile step against track and card, and all 30 team chips.
 - Percentile bars use the cold-to-hot scale (blue, gray, orange; validated with the dataviz validator). Neutral stats show a dot on the line instead. `success`/`danger` are for game feedback only. Fills behind white text use `accentFill`, never `accent`.
-- Charts (`app/src/graphs/`): every chart answers one question (its title), says who is included (n, filter, date), and explains itself in a caption. Relationships are described with Spearman's rank correlation and only called a link when |rho| clears 1.96/sqrt(n-1); quadrants come from medians of the plotted players; dots with under half the median minutes are hollow; position colors are `chartColors.positions` (green / violet / magenta, validated all-pairs), never the blue/orange of the percentile scale. Axis titles are words, with "up" meaning better (lower-is-better Y axes are flipped).
+- Charts (`app/src/graphs/`): every chart answers one question (its title), says who is included (n, filter, date), and explains itself in a caption. Relationships are described with Spearman's rank correlation and only called a link when |rho| clears 1.96/sqrt(n-1); quadrants come from medians of the plotted players; dots with under half the median minutes are hollow; position colors are `chartColors.positions` (green / violet / magenta, validated all-pairs), never the blue/orange of the percentile scale. Axis titles are words, with "up" meaning better (lower-is-better Y axes are flipped). One-stat views (distribution) put better on the right, reversing lower-is-better axes, and pack dots in a beeswarm; ranks of a likely range come from `rankBand` (mid-rank percentiles of its two ends), called unsettled when 25+ points wide. Any chart colored by position shows `PositionLegend`.
 - Appearance: `ThemePreferenceProvider` (System / Dark / Light, default Dark, saved on device) applies the choice through `Appearance.setColorScheme` so native parts follow; Settings lives at `(today)/settings`.
 
 ## Layout
@@ -80,7 +80,7 @@ Foundations:
 
 Visual track (approved 2026-11-04: charts come before the tab restructure):
 V1. [x] Scatter playground: question presets with named quadrants at the medians, dots by position, hollow thin samples, labeled examples, up to 3 highlights, Spearman relationship in words (only when it beats chance), custom mode with optional least-squares line and a shared-inputs warning.
-V2. [ ] Distribution: one dot per player for any stat with median and quartiles and the player's range; tap any stat row on a player page to open it.
+V2. [x] Distribution: one dot per player for any stat with median and quartiles and the player's range; tap any stat row on a player page to open it (`/stat?stat=&player=&pos=` in every tab).
 V3. [ ] Player card (Savant style) with rank-uncertainty bands and gated insights, plus "Who's he like?" comps (cosine similarity on standardized rates, with the stats that drive each match).
 V4. [ ] Team charts: offense vs. defense quadrant with net-rating lines and a noise note, luck meter with a noise band, four factors vs. league.
 V5. [ ] Head-to-head as aligned percentile dots.
@@ -89,7 +89,7 @@ V6. [ ] Box scores from game summaries, then trends (rolling 10-game lines with 
 Then:
 4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More? Charts move into Explore and Teams.
 5. [ ] Glossary and first-launch onboarding.
-8. [ ] Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart.
+8. [ ] Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart. Known: the web tab bar (expo-router NativeTabs, Radix) logs a hydration id mismatch on every page in dev, and its light-mode styling needs a pass.
 11. [ ] Build your own MVP: weight sliders over standardized categories, shareable ladder.
 14. [ ] Share cards for every chart and result.
 

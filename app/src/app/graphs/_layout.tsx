@@ -10,6 +10,7 @@ export default function GraphsStack() {
       <Stack.Screen name="player/[id]" options={{ title: '' }} />
       <Stack.Screen name="team/[abbr]" options={{ title: '' }} />
       <Stack.Screen name="versus" options={{ title: 'Head to Head' }} />
+      <Stack.Screen name="stat" options={{ title: '' }} />
     </Stack>
   );
 }

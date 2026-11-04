@@ -24,6 +24,7 @@ import {
   type QuadrantKey,
 } from '@/graphs/analysis';
 import { classBreaks, classIndex, extent, linearFit, type ChartPoint } from '@/graphs/math';
+import { PositionLegend, Swatch } from '@/graphs/Legend';
 import { buildPoints, chartColumns, leftOut } from '@/graphs/points';
 import { CUSTOM_ID, PRESETS, presetById } from '@/graphs/presets';
 import { ScatterChart } from '@/graphs/ScatterChart';
@@ -437,14 +438,7 @@ function Legend({ colorMode, z, zd }: { colorMode: ColorMode; z: StatId | null; 
           </View>
         </>
       ) : (
-        <View style={styles.legend}>
-          {POSITION_GROUPS.map((g) => (
-            <View key={g} style={styles.legendItem}>
-              <Swatch color={cc.positions[g]} />
-              <AppText variant="caption">{groupNoun(g).replace(/^./, (c) => c.toUpperCase())}</AppText>
-            </View>
-          ))}
-        </View>
+        <PositionLegend />
       )}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
@@ -464,9 +458,6 @@ function Legend({ colorMode, z, zd }: { colorMode: ColorMode; z: StatId | null; 
   );
 }
 
-function Swatch({ color }: { color: string }) {
-  return <View style={[styles.swatch, { backgroundColor: color }]} />;
-}
 
 function SelectedCard({
   player,
@@ -624,7 +615,6 @@ const styles = StyleSheet.create({
   legendBlock: { gap: spacing.xs, paddingHorizontal: spacing.xs },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  swatch: { width: 10, height: 10, borderRadius: 5 },
   hollow: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5 },
   dash: { width: 16, borderTopWidth: 1, borderStyle: 'dashed' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

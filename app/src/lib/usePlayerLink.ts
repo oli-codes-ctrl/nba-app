@@ -19,6 +19,11 @@ export function useLinks() {
       player: (id: number) => router.push(`${prefix}/player/${id}` as Href),
       team: (abbr: string) => router.push(`${prefix}/team/${encodeURIComponent(abbr)}` as Href),
       versus: (a: number, b?: number) => router.push(`${prefix}/versus?a=${a}${b != null ? `&b=${b}` : ''}` as Href),
+      /** Where a player stands in one stat; pos is G, F, C or all (default: his position). */
+      stat: (stat: string, player?: number, pos?: string) =>
+        router.push(
+          `${prefix}/stat?stat=${stat}${player != null ? `&player=${player}` : ''}${pos ? `&pos=${pos}` : ''}` as Href,
+        ),
     }),
     [prefix],
   );

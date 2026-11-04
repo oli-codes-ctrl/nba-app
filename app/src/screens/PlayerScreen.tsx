@@ -239,6 +239,9 @@ export default function PlayerScreen() {
                 noun={noun}
                 sample={sampleFor(player, def.id, rules)}
                 first={i === 0}
+                onPress={
+                  def.ranked ? () => links.stat(def.id, player.id, byPosition && group ? group : 'all') : undefined
+                }
               />
             ))}
           </View>
@@ -326,6 +329,7 @@ function Summary({ label, value }: { label: string; value: string }) {
 }
 
 function StatRow({
+  onPress,
   def,
   player,
   pct,
@@ -345,6 +349,8 @@ function StatRow({
   /** Attempts behind a shooting percentage; null for other stats. */
   sample: Sample | null;
   first: boolean;
+  /** Opens where he stands among every ranked player in this stat. */
+  onPress?: () => void;
 }) {
   const colors = useColors();
   const better = pct == null ? null : betterThan(def.id, pct);
@@ -368,8 +374,16 @@ function StatRow({
     : '';
 
   return (
-    <View
-      style={[styles.statRow, !first && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}
+    <Pressable
+      disabled={!onPress}
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityHint={onPress ? 'Shows where he ranks among every qualified player' : undefined}
+      style={({ pressed }) => [
+        styles.statRow,
+        !first && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
+        pressed && styles.pressed,
+      ]}
       accessible
       accessibilityLabel={
         `${def.label}: ${formatStat(def.id, player.s[def.id])}` +
@@ -387,6 +401,11 @@ function StatRow({
         <AppText variant="number" color={waiting ? 'textSecondary' : 'text'}>
           {formatStat(def.id, player.s[def.id])}
         </AppText>
+        {onPress && (
+          <AppText variant="bodyStrong" color="textSecondary" style={styles.chevron}>
+            ›
+          </AppText>
+        )}
       </View>
       {(better != null || waiting) && (
         <View style={styles.statBottom}>
@@ -416,7 +435,7 @@ function StatRow({
           )}
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -460,6 +479,8 @@ const styles = StyleSheet.create({
   statBottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   rank: { minWidth: 96, textAlign: 'right', fontVariant: ['tabular-nums'] },
   emptyTrack: { flex: 1, height: 6, borderRadius: radius.pill },
+  pressed: { opacity: 0.6 },
+  chevron: { marginLeft: -spacing.xs },
   // Sits closer to the bar it qualifies than the rows around it.
   sampleBlock: { marginTop: -spacing.xs, gap: 1 },
   poolRow: { gap: spacing.xs },
