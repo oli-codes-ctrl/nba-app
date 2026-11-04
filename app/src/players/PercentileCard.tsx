@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import { formatStat, ordinal } from '@/lib/format';
+import { betterPct, formatStat, ordinal } from '@/lib/format';
 import { CATALOG } from '@/stats/catalog';
 import { percentileColor, radius, spacing } from '@/theme/tokens';
 import { useChartColors, useColors, useScheme } from '@/theme/useTokens';
@@ -124,7 +124,7 @@ function Row({ row, onPress }: { row: CardRow; onPress: () => void }) {
   const spoken =
     `${row.label}: ${formatStat(row.stat, row.value)}` +
     (ranked
-      ? `, ${row.neutral ? 'higher' : 'better'} than ${Math.round(row.better!)} percent` +
+      ? `, ${row.neutral ? 'higher' : 'better'} than ${betterPct(row.better!)} percent` +
         (row.band
           ? `; allowing for luck, between the ${ordinal(Math.round(row.band[0]))} and ${ordinal(Math.round(row.band[1]))} percentile`
           : '')

@@ -20,7 +20,8 @@ export type Manifest = {
   source: string;
   playerCount: number;
   qualifiedCount: number;
-  files: { players: string; puzzles: string; teams: string };
+  /** `games` (box scores) is optional: older data and failed pipeline runs lack it. */
+  files: { players: string; puzzles: string; teams: string; games?: string };
 };
 
 export type StatLine = Record<StatId, number | null>;
@@ -170,6 +171,46 @@ export type TeamsDoc = {
   gamesThrough: string;
   league: Partial<Record<TeamStatId, number | null>>;
   teams: TeamSeason[];
+};
+
+/** Box score columns, in the order the pipeline publishes them (games.py STAT_KEYS). */
+export type GameStatKey =
+  | 'min'
+  | 'pts'
+  | 'reb'
+  | 'ast'
+  | 'stl'
+  | 'blk'
+  | 'tov'
+  | 'fgm'
+  | 'fga'
+  | 'fg3m'
+  | 'fg3a'
+  | 'ftm'
+  | 'fta'
+  | 'oreb'
+  | 'dreb'
+  | 'pf'
+  | 'pm'
+  | 'gmsc';
+
+/** [game id, US Eastern date, home, away, home points, away points] */
+export type GameRow = [string, string, string, string, number, number];
+
+/**
+ * Box scores for the season (games.<hash>.json), loaded only when a screen
+ * needs them. Player rows: [game index, side (0 home, 1 away), starter (0/1),
+ * ...values in `keys` order].
+ */
+export type GamesDoc = {
+  schemaVersion: number;
+  season: number;
+  gamesThrough: string;
+  /** Last date whose box scores are all in; lags gamesThrough only after a failed fetch. */
+  boxScoresThrough: string | null;
+  keys: GameStatKey[];
+  games: GameRow[];
+  players: Record<string, number[][]>;
 };
 
 /** Everything the app needs from one data refresh. */

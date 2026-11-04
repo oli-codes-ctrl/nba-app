@@ -1,4 +1,4 @@
-import type { Snapshot } from './types';
+import type { GamesDoc, Manifest, Snapshot } from './types';
 
 export type LoadResult = {
   snapshot: Snapshot;
@@ -15,6 +15,12 @@ export interface DataSource {
   cached(): Promise<Snapshot | null>;
   /** Fetch the latest published data, falling back to the saved copy offline. */
   load(): Promise<LoadResult>;
+  /**
+   * The season's box scores named in this manifest, or the last saved copy
+   * offline (possibly older). Null when none are published. Fetched only
+   * when a screen asks, since the file grows through the season.
+   */
+  games(manifest: Manifest): Promise<{ doc: GamesDoc; stale: boolean } | null>;
 }
 
 /** The subset of AsyncStorage the data layer uses, so tests can fake it. */

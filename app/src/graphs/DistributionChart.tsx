@@ -8,7 +8,7 @@ import { useChartColors, useColors } from '@/theme/useTokens';
 
 import { beeswarm, quantile } from './distribution';
 import { textWidth } from './labels';
-import { extent, nearestIndex, paddedDomain, scale, tickLabel, ticks } from './math';
+import { extent, nearestIndex, pressPoint, paddedDomain, scale, tickLabel, ticks } from './math';
 
 const FONT = Platform.OS === 'web' ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' : undefined;
 const PAD = { left: 12, right: 12, top: 28, bottom: 56 };
@@ -88,7 +88,7 @@ export function DistributionChart({ stat, dots, focusId = null, focusLabel, rang
           accessibilityRole="image"
           accessibilityLabel={summary}
           onPress={(e) => {
-            const i = nearestIndex(screen, e.nativeEvent.locationX, e.nativeEvent.locationY, 24);
+            const i = nearestIndex(screen, pressPoint(e).x, pressPoint(e).y, 24);
             if (i != null) onSelect(dots[i].id);
           }}>
           <Svg width={width} height={height} pointerEvents="none">

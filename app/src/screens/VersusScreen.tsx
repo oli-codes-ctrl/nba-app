@@ -12,7 +12,7 @@ import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
 import { updateCareer } from '@/game/storage';
 import { useTrophies } from '@/game/TrophyProvider';
-import { betterThan, formatStat } from '@/lib/format';
+import { betterPct, betterThan, formatStat } from '@/lib/format';
 import { usePlayerLink } from '@/lib/usePlayerLink';
 import { clearTally, tally, versusRows, versusShareText, type Side, type VersusRow } from '@/players/versus';
 import { shortName } from '@/graphs/analysis';
@@ -199,8 +199,8 @@ function Row({ row, a, b }: { row: VersusRow; a: Player; b: Player }) {
   // Bold only a win that holds (or one with no range to test).
   const strong = (side: Side) => row.winner === side && row.clear !== false;
   const label =
-    `${def.label}: ${a.name} ${formatStat(row.stat, row.a)}${ba != null ? `, better than ${Math.round(ba)} percent` : ''}; ` +
-    `${b.name} ${formatStat(row.stat, row.b)}${bb != null ? `, better than ${Math.round(bb)} percent` : ''}` +
+    `${def.label}: ${a.name} ${formatStat(row.stat, row.a)}${ba != null ? `, better than ${betterPct(ba)} percent` : ''}; ` +
+    `${b.name} ${formatStat(row.stat, row.b)}${bb != null ? `, better than ${betterPct(bb)} percent` : ''}` +
     (status ? `. ${status}` : '');
   return (
     <View accessible accessibilityLabel={label} style={[styles.row, { borderTopColor: colors.border }]}>

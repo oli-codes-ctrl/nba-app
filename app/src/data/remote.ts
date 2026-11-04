@@ -6,6 +6,7 @@
 import type { DataSource, FetchFn, KeyValueStore, LoadResult } from './DataSource';
 import {
   SCHEMA_VERSION,
+  type GamesDoc,
   type Manifest,
   type PlayersDoc,
   type PuzzlesDoc,
@@ -17,6 +18,8 @@ import {
 export const DATA_BASE_URL =
   process.env.EXPO_PUBLIC_DATA_URL || `https://oli-codes-ctrl.github.io/nba-app/v${SCHEMA_VERSION}/`;
 export const CACHE_KEY = `hoops:snapshot:v${SCHEMA_VERSION}`;
+/** The last box scores file, saved as { file, doc } so an unchanged one is not downloaded again. */
+export const GAMES_CACHE_KEY = `hoops:games:v${SCHEMA_VERSION}`;
 
 export class DataError extends Error {}
 
@@ -63,6 +66,17 @@ export function parseTeams(value: unknown): TeamsDoc {
   const doc = checkSchema(value, 'Teams file');
   if (!Array.isArray(doc.teams) || !isObject(doc.league)) throw new DataError('Teams file is missing required fields');
   return doc as unknown as TeamsDoc;
+}
+
+export function parseGames(value: unknown): GamesDoc {
+  const doc = checkSchema(value, 'Games file');
+  if (!Array.isArray(doc.keys) || !Array.isArray(doc.games) || !isObject(doc.players)) {
+    throw new DataError('Games file is missing required fields');
+  }
+  for (const key of ['pts', 'min', 'gmsc']) {
+    if (!(doc.keys as unknown[]).includes(key)) throw new DataError(`Games file has no ${key} column`);
+  }
+  return doc as unknown as GamesDoc;
 }
 
 export function parsePuzzles(value: unknown): PuzzlesDoc {
@@ -139,5 +153,34 @@ export function createRemoteDataSource({
     }
   }
 
-  return { cached, load };
+  async function savedGames(): Promise<{ file: string; doc: GamesDoc } | null> {
+    try {
+      const raw = await store.getItem(GAMES_CACHE_KEY);
+      return raw ? (JSON.parse(raw) as { file: string; doc: GamesDoc }) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function games(manifest: Manifest): Promise<{ doc: GamesDoc; stale: boolean } | null> {
+    const file = manifest.files.games;
+    const saved = await savedGames();
+    if (!file) return saved ? { doc: saved.doc, stale: true } : null;
+    // Named by content hash: a saved copy of the same file is current.
+    if (saved?.file === file) return { doc: saved.doc, stale: false };
+    try {
+      const doc = parseGames(await getJson(file));
+      try {
+        await store.setItem(GAMES_CACHE_KEY, JSON.stringify({ file, doc }));
+      } catch {
+        // Still show it if the device cannot keep a copy.
+      }
+      return { doc, stale: false };
+    } catch (error) {
+      if (saved) return { doc: saved.doc, stale: true };
+      throw error;
+    }
+  }
+
+  return { cached, load, games };
 }

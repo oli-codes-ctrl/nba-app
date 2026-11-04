@@ -6,7 +6,7 @@ import { useChartColors, useColors } from '@/theme/useTokens';
 
 import { beeswarm } from './distribution';
 import { placeLabels, type Box } from './labels';
-import { nearestIndex, scale } from './math';
+import { nearestIndex, pressPoint, scale } from './math';
 
 const PAD = { left: 12, right: 12, top: 22, bottom: 34 };
 const BAND = 64;
@@ -107,7 +107,7 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
           accessibilityLabel={summary}
           disabled={!onSelect}
           onPress={(e) => {
-            const i = nearestIndex(screen, e.nativeEvent.locationX, e.nativeEvent.locationY, 24);
+            const i = nearestIndex(screen, pressPoint(e).x, pressPoint(e).y, 24);
             if (i != null) onSelect?.(teams[i].abbr);
           }}>
           <Svg width={width} height={height} pointerEvents="none">

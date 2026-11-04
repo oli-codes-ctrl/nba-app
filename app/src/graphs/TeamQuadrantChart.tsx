@@ -6,7 +6,7 @@ import { netLines, squareDomains, TEAM_QUADRANTS, teamQuadrant, type TeamQuadran
 import { useChartColors, useColors } from '@/theme/useTokens';
 
 import { placeLabels, textWidth, type Box } from './labels';
-import { nearestIndex, scale, tickLabel, ticks } from './math';
+import { nearestIndex, pressPoint, scale, tickLabel, ticks } from './math';
 
 const MARGIN = { left: 36, right: 12, top: 24, bottom: 40 };
 const DOT = 5;
@@ -125,7 +125,7 @@ export function TeamQuadrantChart({ teams, league, highlight = null, surface, su
           accessibilityLabel={summary}
           disabled={!onSelect}
           onPress={(e) => {
-            const i = nearestIndex(screen, e.nativeEvent.locationX, e.nativeEvent.locationY, TAP_RADIUS);
+            const i = nearestIndex(screen, pressPoint(e).x, pressPoint(e).y, TAP_RADIUS);
             if (i != null) onSelect?.(teams[i].abbr);
           }}>
           <Svg width={width} height={height} pointerEvents="none">

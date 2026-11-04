@@ -158,3 +158,40 @@ describe('remote data source', () => {
     await expect(source.load()).rejects.toThrow('players.aaa.json failed (HTTP 404)');
   });
 });
+
+describe('box scores on demand', () => {
+  const gamesDoc = {
+    schemaVersion: 2,
+    season: 2026,
+    gamesThrough: '2026-11-01',
+    boxScoresThrough: '2026-11-01',
+    keys: ['min', 'pts', 'gmsc'],
+    games: [['1', '2026-11-01', 'LAL', 'MIA', 110, 100]],
+    players: { '7': [[0, 0, 1, 30, 25, 20.5]] },
+  };
+  const withGames = { ...manifest('2026-11-02T10:00:00+00:00'), files: { ...manifest('x').files, games: 'games.aaa.json' } };
+
+  it('downloads the games file once, then reuses the saved copy', async () => {
+    const { net, source } = setup({ 'games.aaa.json': gamesDoc });
+    const first = await source.games(withGames);
+    expect(first?.doc.players['7'][0][4]).toBe(25);
+    expect(first?.stale).toBe(false);
+    await source.games(withGames);
+    expect(net.calls.filter((c) => c === 'games.aaa.json')).toHaveLength(1);
+  });
+
+  it('shows the saved copy offline, and nothing when none is published', async () => {
+    const { net, source } = setup({ 'games.aaa.json': gamesDoc });
+    await source.games(withGames);
+    net.goOffline();
+    const newer = { ...withGames, files: { ...withGames.files, games: 'games.bbb.json' } };
+    expect((await source.games(newer))?.stale).toBe(true);
+    const fresh = setup({});
+    expect(await fresh.source.games(manifest('2026-11-02T10:00:00+00:00'))).toBeNull();
+  });
+
+  it('rejects a games file without the columns the app needs', async () => {
+    const { source } = setup({ 'games.aaa.json': { ...gamesDoc, keys: ['min'] } });
+    await expect(source.games(withGames)).rejects.toBeInstanceOf(DataError);
+  });
+});

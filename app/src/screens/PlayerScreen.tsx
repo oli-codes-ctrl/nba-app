@@ -11,7 +11,8 @@ import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
 import { useFollows } from '@/follow/FollowProvider';
-import { betterThan, formatDate, formatStat, rankText } from '@/lib/format';
+import { GameTrend } from '@/games/GameTrend';
+import { betterPct, betterThan, formatDate, formatStat, rankText } from '@/lib/format';
 import { tapFeedback } from '@/lib/haptics';
 import { useLinks } from '@/lib/usePlayerLink';
 import { shortName } from '@/graphs/analysis';
@@ -172,46 +173,51 @@ export default function PlayerScreen() {
         </AppText>
       </Pressable>
 
-      {(player.g || player.r) && (
-        <View style={styles.group}>
-          <AppText variant="title">Recent form</AppText>
-          <View style={[styles.card, styles.formCard, { backgroundColor: colors.surface }]}>
-            {player.g && snapshot.players.latest && (
-              <View style={styles.formBlock}>
-                <AppText variant="caption" color="textSecondary">
-                  Latest game (since {formatDate(snapshot.players.latest.since)})
-                </AppText>
-                <AppText variant="bodyStrong">
-                  {player.g.pts ?? 0} PTS · {player.g.reb ?? 0} REB · {player.g.ast ?? 0} AST · {player.g.stl ?? 0} STL ·{' '}
-                  {player.g.blk ?? 0} BLK
-                </AppText>
-                <AppText variant="caption" color="textSecondary">
-                  {player.g.fgm ?? 0}-{player.g.fga ?? 0} FG · {player.g.fg3m ?? 0}-{player.g.fg3a ?? 0} 3PT ·{' '}
-                  {player.g.ftm ?? 0}-{player.g.fta ?? 0} FT · {player.g.mpg ?? 0} min · Game Score{' '}
-                  {formatStat('game_score', player.g.game_score)}
-                </AppText>
+      <GameTrend
+        player={player}
+        fallback={
+          player.g || player.r ? (
+            <View style={styles.group}>
+              <AppText variant="title">Recent form</AppText>
+              <View style={[styles.card, styles.formCard, { backgroundColor: colors.surface }]}>
+                {player.g && snapshot.players.latest && (
+                  <View style={styles.formBlock}>
+                    <AppText variant="caption" color="textSecondary">
+                      Latest game (since {formatDate(snapshot.players.latest.since)})
+                    </AppText>
+                    <AppText variant="bodyStrong">
+                      {player.g.pts ?? 0} PTS · {player.g.reb ?? 0} REB · {player.g.ast ?? 0} AST · {player.g.stl ?? 0} STL ·{' '}
+                      {player.g.blk ?? 0} BLK
+                    </AppText>
+                    <AppText variant="caption" color="textSecondary">
+                      {player.g.fgm ?? 0}-{player.g.fga ?? 0} FG · {player.g.fg3m ?? 0}-{player.g.fg3a ?? 0} 3PT ·{' '}
+                      {player.g.ftm ?? 0}-{player.g.fta ?? 0} FT · {player.g.mpg ?? 0} min · Game Score{' '}
+                      {formatStat('game_score', player.g.game_score)}
+                    </AppText>
+                  </View>
+                )}
+                {player.r && snapshot.players.recent && (
+                  <View style={styles.formBlock}>
+                    <AppText variant="caption" color="textSecondary">
+                      Since {formatDate(snapshot.players.recent.since)}: {player.r.gp} {player.r.gp === 1 ? 'game' : 'games'},
+                      against the season average
+                    </AppText>
+                    {RECENT_STATS.map((stat) => (
+                      <FormRow
+                        key={stat}
+                        label={CATALOG[stat].label}
+                        recent={player.r?.[stat] ?? null}
+                        season={player.s[stat]}
+                        stat={stat}
+                      />
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
-            {player.r && snapshot.players.recent && (
-              <View style={styles.formBlock}>
-                <AppText variant="caption" color="textSecondary">
-                  Since {formatDate(snapshot.players.recent.since)}: {player.r.gp} {player.r.gp === 1 ? 'game' : 'games'},
-                  against the season average
-                </AppText>
-                {RECENT_STATS.map((stat) => (
-                  <FormRow
-                    key={stat}
-                    label={CATALOG[stat].label}
-                    recent={player.r?.[stat] ?? null}
-                    season={player.s[stat]}
-                    stat={stat}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-      )}
+            </View>
+          ) : null
+        }
+      />
 
       {similar.length > 0 && (
         <View style={styles.group}>
@@ -430,7 +436,7 @@ function StatRow({
         `${def.label}: ${formatStat(def.id, player.s[def.id])}` +
         (better == null
           ? ''
-          : `, ${def.neutral ? 'higher' : 'better'} than ${Math.round(better)} percent of qualified ${noun}`) +
+          : `, ${def.neutral ? 'higher' : 'better'} than ${betterPct(better)} percent of qualified ${noun}`) +
         (waiting ? ', not ranked yet' : '') +
         (sampleLine ? `. ${sampleLine}` : '') +
         rangeSpoken

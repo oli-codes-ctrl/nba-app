@@ -49,3 +49,8 @@ export function formatDate(iso: string): string {
 export function seasonLabel(season: number): string {
   return `${season}-${String((season + 1) % 100).padStart(2, '0')}`;
 }
+
+/** "Better than X%" for sentences, whole percent. The very best is better than 99%, not 100%: no one beats himself. */
+export function betterPct(better: number): number {
+  return Math.min(99, Math.max(0, Math.round(better)));
+}

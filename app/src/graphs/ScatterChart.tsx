@@ -7,7 +7,7 @@ import { useChartColors, useColors } from '@/theme/useTokens';
 
 import type { QuadrantKey } from './analysis';
 import { placeLabels, textWidth, type Box } from './labels';
-import { extent, nearestIndex, paddedDomain, scale, tickLabel, ticks, type ChartPoint } from './math';
+import { extent, nearestIndex, pressPoint, paddedDomain, scale, tickLabel, ticks, type ChartPoint } from './math';
 
 const MARGIN = { left: 40, right: 12, top: 24, bottom: 40 };
 const DOT = 4.5;
@@ -128,7 +128,7 @@ export function ScatterChart({
           accessibilityLabel={summary}
           accessibilityHint="Tap to pick the nearest player. The list below the chart has every value."
           onPress={(e) => {
-            const i = nearestIndex(screen, e.nativeEvent.locationX, e.nativeEvent.locationY, TAP_RADIUS);
+            const i = nearestIndex(screen, pressPoint(e).x, pressPoint(e).y, TAP_RADIUS);
             if (i != null) onSelect(points[i].id);
           }}>
           <Svg width={width} height={height} pointerEvents="none">

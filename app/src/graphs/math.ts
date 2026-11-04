@@ -125,3 +125,20 @@ export function nearestIndex(
   });
   return best;
 }
+
+/** The parts of a press event this module reads (native and web). */
+type PressEventLike = {
+  nativeEvent: { locationX?: number; locationY?: number; offsetX?: number; offsetY?: number };
+};
+
+/**
+ * Where a press landed inside the pressed view. Native gives locationX/Y;
+ * React Native Web leaves them out, so fall back to the DOM's offsetX/Y
+ * (charts draw with pointer events off, so the pressed view is the target).
+ */
+export function pressPoint(e: PressEventLike): { x: number; y: number } {
+  const n = e.nativeEvent;
+  const pick = (a: number | undefined, b: number | undefined) =>
+    typeof a === 'number' && Number.isFinite(a) ? a : typeof b === 'number' && Number.isFinite(b) ? b : NaN;
+  return { x: pick(n.locationX, n.offsetX), y: pick(n.locationY, n.offsetY) };
+}

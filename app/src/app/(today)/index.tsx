@@ -8,7 +8,7 @@ import { DailyCard } from '@/components/DailyCard';
 import { DataStatusLine, FirstLoad } from '@/components/DataStatus';
 import { Section } from '@/components/Section';
 import { TeamChip } from '@/components/TeamChip';
-import { useData } from '@/data/DataProvider';
+import { useData, useGameLogs } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
 import { useFollows } from '@/follow/FollowProvider';
 import { useGameProgress } from '@/game/useGameProgress';
@@ -18,6 +18,7 @@ import { refreshReminders } from '@/notify/reminders';
 import { CATALOG } from '@/stats/catalog';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
+import { BoxScoreSections } from '@/today/BoxScoreSections';
 import { boxLine, factOfTheDay, formChanges, leaders, LEADER_STATS, topGames, type FormChange } from '@/today/feed';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -38,6 +39,8 @@ export default function TodayScreen() {
   const openPlayer = usePlayerLink();
   const { ids } = useFollows();
   const { today, puzzle, progress } = useGameProgress();
+  // Box scores, when published, give exact game lines and a luck-aware heat check.
+  const box = useGameLogs();
 
   // Keep scheduled reminders current each launch (streak text, skip if played).
   useEffect(() => {
@@ -94,44 +97,56 @@ export default function TodayScreen() {
         </View>
       )}
 
-      {latest && feed.games.length > 0 && (
-        <Section title={latestTitle} note={latestTitle === 'Latest games' ? `Since ${formatDate(latest.since)}, by Game Score` : 'By Game Score'}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.hList}>
-            {feed.games.map((p, i) => (
-              <Pressable
-                key={p.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${p.name}, ${boxLine(p.g)}`}
-                onPress={() => openPlayer(p.id)}
-                style={({ pressed }) => [styles.gameTile, { backgroundColor: pressed ? colors.border : colors.surface }]}>
-                <View style={styles.tileTop}>
-                  <AppText variant="kicker" color="textSecondary">
-                    #{i + 1}
-                  </AppText>
-                  <TeamChip abbr={p.team} />
-                </View>
-                <AppText variant="bodyStrong" numberOfLines={1}>
-                  {p.name}
-                </AppText>
-                <AppText variant="small">{boxLine(p.g)}</AppText>
-                <AppText variant="caption" color="textSecondary">
-                  {p.g.fgm ?? 0}-{p.g.fga ?? 0} FG · {p.g.mpg ?? 0} min · GmSc {formatStat('game_score', p.g.game_score)}
-                </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </Section>
-      )}
+      {box.doc ? (
+        <BoxScoreSections
+          doc={box.doc}
+          players={snapshot.players.players}
+          playerById={playerById}
+          today={today}
+          onOpen={openPlayer}
+        />
+      ) : (
+        <>
+          {latest && feed.games.length > 0 && (
+            <Section title={latestTitle} note={latestTitle === 'Latest games' ? `Since ${formatDate(latest.since)}, by Game Score` : 'By Game Score'}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.hList}>
+                {feed.games.map((p, i) => (
+                  <Pressable
+                    key={p.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${p.name}, ${boxLine(p.g)}`}
+                    onPress={() => openPlayer(p.id)}
+                    style={({ pressed }) => [styles.gameTile, { backgroundColor: pressed ? colors.border : colors.surface }]}>
+                    <View style={styles.tileTop}>
+                      <AppText variant="kicker" color="textSecondary">
+                        #{i + 1}
+                      </AppText>
+                      <TeamChip abbr={p.team} />
+                    </View>
+                    <AppText variant="bodyStrong" numberOfLines={1}>
+                      {p.name}
+                    </AppText>
+                    <AppText variant="small">{boxLine(p.g)}</AppText>
+                    <AppText variant="caption" color="textSecondary">
+                      {p.g.fgm ?? 0}-{p.g.fga ?? 0} FG · {p.g.mpg ?? 0} min · GmSc {formatStat('game_score', p.g.game_score)}
+                    </AppText>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Section>
+          )}
 
-      {recent && feed.form.hot.length > 0 && (
-        <Section title="Heating up" note={recentNote}>
-          <FormList rows={feed.form.hot} onOpen={openPlayer} />
-        </Section>
-      )}
-      {recent && feed.form.cold.length > 0 && (
-        <Section title="Cooling off">
-          <FormList rows={feed.form.cold} onOpen={openPlayer} />
-        </Section>
+          {recent && feed.form.hot.length > 0 && (
+            <Section title="Heating up" note={recentNote}>
+              <FormList rows={feed.form.hot} onOpen={openPlayer} />
+            </Section>
+          )}
+          {recent && feed.form.cold.length > 0 && (
+            <Section title="Cooling off">
+              <FormList rows={feed.form.cold} onOpen={openPlayer} />
+            </Section>
+          )}
+        </>
       )}
 
       <Section title="Following">

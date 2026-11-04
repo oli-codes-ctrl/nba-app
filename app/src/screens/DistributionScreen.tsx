@@ -14,7 +14,7 @@ import { shortName } from '@/graphs/analysis';
 import { DistributionChart } from '@/graphs/DistributionChart';
 import { quantile, rankBand } from '@/graphs/distribution';
 import { PositionLegend } from '@/graphs/Legend';
-import { betterThan, formatDate, formatStat, ordinal, rankText } from '@/lib/format';
+import { betterPct, betterThan, formatDate, formatStat, ordinal, rankText } from '@/lib/format';
 import { useLinks } from '@/lib/usePlayerLink';
 import { CATALOG, isStatId, type StatId } from '@/stats/catalog';
 import { groupNoun, POSITION_GROUPS, positionGroup, type PositionGroup } from '@/stats/views';
@@ -108,7 +108,7 @@ export default function DistributionScreen() {
         {/* The answer first: his number and where it ranks. */}
         {player && inPool && better != null ? (
           <AppText variant="bodyStrong" style={styles.answer}>
-            {formatStat(stat, player.s[stat])}, {def.neutral ? 'higher' : 'better'} than {Math.round(better)}% of
+            {formatStat(stat, player.s[stat])}, {def.neutral ? 'higher' : 'better'} than {betterPct(better)}% of
             qualified {noun}
             {rank != null ? ` (${rankText(stat, rank, pool.length)})` : ''}
           </AppText>
