@@ -21,6 +21,9 @@ ESPN_BYTEAM_URL = (
     "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byteam"
 )
 ESPN_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings"
+# Box scores: one scoreboard per US Eastern game date, one summary per game.
+ESPN_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+ESPN_SUMMARY_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary"
 ESPN_PAGE_LIMIT = 500  # one page covers the whole league
 # Be polite to an unofficial API: about 4 requests per second.
 ESPN_REQUESTS_PER_SECOND = float(os.environ.get("ESPN_RPS", "4"))

@@ -1,0 +1,190 @@
+{
+ "leagues": [
+  {
+   "season": {
+    "year": 2027,
+    "startDate": "2026-09-30T07:00Z",
+    "endDate": "2027-06-26T06:59Z",
+    "displayName": "2026-27",
+    "type": {
+     "id": "2",
+     "type": 2,
+     "name": "Regular Season",
+     "abbreviation": "reg"
+    }
+   },
+   "calendar": [
+    "2026-10-16T07:00Z",
+    "2026-11-01T07:00Z",
+    "2026-11-02T07:00Z",
+    "2026-11-04T07:00Z"
+   ]
+  }
+ ],
+ "events": [
+  {
+   "id": "401909920",
+   "date": "2026-11-03T03:00Z",
+   "season": {
+    "year": 2027,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "status": {
+    "type": {
+     "name": "STATUS_FINAL",
+     "state": "post",
+     "completed": true
+    }
+   },
+   "competitions": [
+    {
+     "id": "401909920",
+     "type": {
+      "id": "1",
+      "abbreviation": "STD"
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "score": "118",
+       "team": {
+        "abbreviation": "LAC"
+       }
+      },
+      {
+       "homeAway": "away",
+       "score": "125",
+       "team": {
+        "abbreviation": "TOR"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909921",
+   "date": "2026-11-03T03:00Z",
+   "season": {
+    "year": 2027,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "status": {
+    "type": {
+     "name": "STATUS_FINAL",
+     "state": "post",
+     "completed": true
+    }
+   },
+   "competitions": [
+    {
+     "id": "401909921",
+     "type": {
+      "id": "1",
+      "abbreviation": "STD"
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "score": "138",
+       "team": {
+        "abbreviation": "LAL"
+       }
+      },
+      {
+       "homeAway": "away",
+       "score": "117",
+       "team": {
+        "abbreviation": "MIA"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401800001",
+   "date": "2026-11-03T03:00Z",
+   "season": {
+    "year": 2027,
+    "type": 1,
+    "slug": "preseason"
+   },
+   "status": {
+    "type": {
+     "name": "STATUS_FINAL",
+     "state": "post",
+     "completed": true
+    }
+   },
+   "competitions": [
+    {
+     "id": "401909920",
+     "type": {
+      "id": "1",
+      "abbreviation": "STD"
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "score": "118",
+       "team": {
+        "abbreviation": "LAC"
+       }
+      },
+      {
+       "homeAway": "away",
+       "score": "125",
+       "team": {
+        "abbreviation": "TOR"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909999",
+   "date": "2026-11-03T03:00Z",
+   "season": {
+    "year": 2027,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "status": {
+    "type": {
+     "name": "STATUS_IN_PROGRESS",
+     "state": "in",
+     "completed": false
+    }
+   },
+   "competitions": [
+    {
+     "id": "401909921",
+     "type": {
+      "id": "1",
+      "abbreviation": "STD"
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "score": "138",
+       "team": {
+        "abbreviation": "LAL"
+       }
+      },
+      {
+       "homeAway": "away",
+       "score": "117",
+       "team": {
+        "abbreviation": "MIA"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

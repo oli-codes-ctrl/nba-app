@@ -21,9 +21,9 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import config, espn, freshness, puzzles, recent, teamstats
+from . import config, espn, freshness, games, puzzles, recent, teamstats
 from .aggregate import attempt_minimums, mark_qualified
-from .http_client import JsonClient
+from .http_client import FetchError, JsonClient
 from .publish import (
     PublishError,
     build_player_records,
@@ -72,6 +72,7 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
     today = args.today or datetime.now(ZoneInfo(config.PUZZLE_TIMEZONE)).date()
     season = config.current_season(today)
     cached_splits = espn.load_splits(args.state)
+    game_state = games.load_state(args.state, season)
 
     if args.command == "nightly":
         games_through = today - timedelta(days=1)
@@ -102,6 +103,12 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
             client, season, [ln.pid for ln in lines], cached_splits)
         if lines and missing / len(lines) > config.MAX_REBOUND_SPLIT_MISSING_SHARE:
             raise PublishError(f"Rebound split missing for {missing} of {len(lines)} players")
+
+        # Box scores are extra: a failure here never blocks the season stats.
+        try:
+            games.update(client, game_state, games_through)
+        except (FetchError, games.GameFormatError) as exc:
+            log.error("Box scores not updated (publishing the ones already saved): %s", exc)
     else:
         bulk = espn.load_bulk(args.state)
         if bulk is None:
@@ -132,16 +139,29 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
     history = puzzles.load_history(args.state)
     window = puzzles.ensure_window(today, season, records, history)
 
+    game_doc = games.games_doc(game_state, games_through) if game_state.games else None
+    if game_doc is not None:
+        off = games.totals_mismatch(
+            game_doc,
+            {ln.pid: int(ln.totals.get("pts", 0)) for ln in lines},
+            {ln.pid: ln.gp for ln in lines},
+        )
+        if off:
+            log.warning("Box scores disagree with ESPN's season totals for %d of %d players (e.g. %s)",
+                        len(off), len(lines), off[:5])
+
     v_dir = write_outputs(
         args.out, season, records, pool_size, window, games_through.isoformat(),
         min_players=args.min_players,
         extra={"minAttempts": attempt_minimums(lines), **doc_extras(records, priors), **recent_info},
         teams=teamstats.teams_doc(teams) if teams else None,
         v1=v1_records(records, lines),
+        games=game_doc,
     )
     # Save state only after a successful publish build.
     espn.save_state(args.state, bulk, splits)
     puzzles.save_history(args.state, history)
+    games.save_state(args.state, game_state)
     if args.command == "nightly":
         recent.record(totals_history, games_through, lines)
         recent.save_history(args.state, totals_history)

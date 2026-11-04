@@ -239,6 +239,7 @@ def _write_version(
     generated: datetime,
     extra: dict[str, Any] | None,
     teams: dict[str, Any] | None,
+    games: dict[str, Any] | None = None,
 ) -> Path:
     v_dir = out_dir / f"v{version}"
     v_dir.mkdir(parents=True, exist_ok=True)
@@ -256,6 +257,10 @@ def _write_version(
     if teams is not None:
         files["teams"] = _write_hashed(v_dir, "teams", {
             "schemaVersion": version, "season": season, "gamesThrough": as_of, **teams,
+        })
+    if games is not None:
+        files["games"] = _write_hashed(v_dir, "games", {
+            "schemaVersion": version, "season": season, "gamesThrough": as_of, **games,
         })
     manifest = {
         "schemaVersion": version,
@@ -285,12 +290,14 @@ def write_outputs(
     extra: dict[str, Any] | None = None,
     teams: dict[str, Any] | None = None,
     v1: tuple[list[dict[str, Any]], dict[str, int]] | None = None,
+    games: dict[str, Any] | None = None,
 ) -> Path:
-    """Write /v2/ (and the /v1/ copy when `v1` is given). Returns the /v2/ path."""
+    """Write /v2/ (and the /v1/ copy when `v1` is given). Returns the /v2/ path.
+    Game logs (`games`) are published in /v2/ only."""
     validate(records, min_players)
     generated = now or datetime.now(timezone.utc)
     v_dir = _write_version(out_dir, config.SCHEMA_VERSION, season, records, pool_size,
-                           puzzles, as_of, generated, extra, teams)
+                           puzzles, as_of, generated, extra, teams, games)
     if v1 is not None:
         v1_recs, v1_pool = v1
         _write_version(out_dir, V1, season, v1_recs, {**pool_size, **v1_pool},
