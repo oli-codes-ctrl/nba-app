@@ -19,6 +19,7 @@ import type { Player } from '@/data/types';
 import { formatStat } from '@/lib/format';
 import { queryPlayers, SORT_STATS } from '@/players/query';
 import { CATALOG, type StatId } from '@/stats/catalog';
+import { attemptsShort, attemptsText, sampleFor, type AttemptRules } from '@/stats/samples';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
 
@@ -30,10 +31,12 @@ export default function PlayersScreen() {
   const [qualifiedOnly, setQualifiedOnly] = useState(true);
 
   const players = snapshot?.players.players;
+  const rules = snapshot?.players.minAttempts;
   const rows = useMemo(
-    () => (players ? queryPlayers(players, { search, sort, qualifiedOnly }) : []),
-    [players, search, sort, qualifiedOnly],
+    () => (players ? queryPlayers(players, { search, sort, qualifiedOnly, rules }) : []),
+    [players, search, sort, qualifiedOnly, rules],
   );
+  const rule = rules?.[sort];
 
   if (!snapshot) return <FirstLoad />;
 
@@ -87,7 +90,11 @@ export default function PlayersScreen() {
         <View style={styles.toggleText}>
           <AppText variant="small">Qualified players only</AppText>
           <AppText variant="caption" color="textSecondary">
-            {search ? 'Search covers every player.' : 'At least 10 minutes a game and enough games played.'}
+            {search
+              ? 'Search covers every player.'
+              : `At least 10 minutes a game and enough games played.${
+                  rule ? ` ${CATALOG[sort].short} also needs ${attemptsText(rule.min, rule.by)}.` : ''
+                }`}
           </AppText>
         </View>
         <Switch
@@ -116,22 +123,40 @@ export default function PlayersScreen() {
       }
       refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.accent} />}
       ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
-      renderItem={({ item, index }) => <PlayerRow player={item} position={index + 1} sort={sort} />}
+      renderItem={({ item, index }) => <PlayerRow player={item} position={index + 1} sort={sort} rules={rules} />}
       style={{ backgroundColor: colors.background }}
     />
   );
 }
 
-function PlayerRow({ player, position, sort }: { player: Player; position: number; sort: StatId }) {
+function PlayerRow({
+  player,
+  position,
+  sort,
+  rules,
+}: {
+  player: Player;
+  position: number;
+  sort: StatId;
+  rules: AttemptRules | undefined;
+}) {
   const colors = useColors();
+  // Sorted by a shooting percentage: show the attempts behind it, and give
+  // no position to players without enough of them.
+  const sample = sampleFor(player, sort, rules);
+  const unranked = sample != null && !sample.enough;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${player.name}, ${CATALOG[sort].label} ${formatStat(sort, player.s[sort])}`}
+      accessibilityLabel={
+        `${player.name}, ${CATALOG[sort].label} ${formatStat(sort, player.s[sort])}` +
+        (sample ? `, on ${attemptsText(sample.have, sample.by)}` : '') +
+        (unranked ? ', too few to rank' : '')
+      }
       onPress={() => router.push({ pathname: '/players/player/[id]', params: { id: String(player.id) } })}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
       <AppText variant="caption" color="textSecondary" style={styles.position}>
-        {position}
+        {unranked ? '–' : position}
       </AppText>
       <View style={styles.nameBlock}>
         <AppText variant="bodyStrong" numberOfLines={1}>
@@ -139,13 +164,16 @@ function PlayerRow({ player, position, sort }: { player: Player; position: numbe
         </AppText>
         <View style={styles.meta}>
           <TeamChip abbr={player.team} />
-          <AppText variant="caption" color="textSecondary">
+          <AppText variant="caption" color="textSecondary" numberOfLines={1} style={styles.metaText}>
             {player.pos} · {player.s.gp} GP{player.q ? '' : ' · not qualified'}
+            {sample ? ` · ${attemptsShort(sample.have, sample.by)}` : ''}
           </AppText>
         </View>
       </View>
       <View style={styles.value}>
-        <AppText variant="number">{formatStat(sort, player.s[sort])}</AppText>
+        <AppText variant="number" color={unranked ? 'textSecondary' : 'text'}>
+          {formatStat(sort, player.s[sort])}
+        </AppText>
         <AppText variant="caption" color="textSecondary">
           {CATALOG[sort].short}
         </AppText>
@@ -185,6 +213,7 @@ const styles = StyleSheet.create({
   position: { width: 24, textAlign: 'right', fontVariant: ['tabular-nums'] },
   nameBlock: { flex: 1, gap: spacing.xs },
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  metaText: { flexShrink: 1 },
   value: { alignItems: 'flex-end', minWidth: 56 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: spacing.lg + 24 + spacing.md },
   empty: { padding: spacing.xl, textAlign: 'center' },

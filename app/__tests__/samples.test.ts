@@ -2,7 +2,7 @@ import type { Player } from '@/data/types';
 import { buildPoints, leftOut } from '@/graphs/points';
 import { versusRows } from '@/players/versus';
 import { STAT_IDS, type StatId } from '@/stats/catalog';
-import { attemptsText, hasSample, minimumsText, sampleFor, type AttemptRules } from '@/stats/samples';
+import { attemptsShort, attemptsText, hasSample, minimumsText, sampleFor, type AttemptRules } from '@/stats/samples';
 import { teamLeader } from '@/teams/team';
 import { leaders } from '@/today/feed';
 
@@ -28,6 +28,7 @@ describe('sample sizes', () => {
     expect(attemptsText(1, 'fg3a')).toBe('1 three-point attempt');
     expect(attemptsText(29, 'fga')).toBe('29 shots');
     expect(attemptsText(12, 'fta')).toBe('12 free throw attempts');
+    expect(attemptsShort(60, 'fg3a')).toBe('60 3PA');
   });
 
   it('reports the sample behind a shooting percentage, and nothing for other stats', () => {

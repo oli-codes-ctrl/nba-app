@@ -1,6 +1,7 @@
 import type { Player } from '@/data/types';
 import { queryPlayers } from '@/players/query';
 import { STAT_IDS, type StatId } from '@/stats/catalog';
+import type { AttemptRules } from '@/stats/samples';
 
 function player(id: number, name: string, searchName: string, q: boolean, stats: Partial<Record<StatId, number | null>>): Player {
   const s = Object.fromEntries(STAT_IDS.map((sid) => [sid, stats[sid] ?? 0])) as Record<StatId, number | null>;
@@ -37,6 +38,36 @@ describe('queryPlayers', () => {
   it('puts missing values last', () => {
     const result = queryPlayers(players, { search: '', sort: 'fg3_pct', qualifiedOnly: true });
     expect(result[result.length - 1].name).toBe('Nikola Jokić');
+  });
+
+  describe('sorted by a shooting percentage', () => {
+    const rules: AttemptRules = { fg3_pct: { by: 'fg3a', min: 12 } };
+    const att = (fg3a: number) => ({ fga: 100, fg2a: 100 - fg3a, fg3a, fta: 20 });
+    // A center who is 1 for 1 from three, and two real shooters.
+    const shooters = [
+      { ...player(10, 'Big Man', 'big man', true, { fg3_pct: 100 }), att: att(1) },
+      { ...player(11, 'Shooter', 'shooter', true, { fg3_pct: 41 }), att: att(60) },
+      { ...player(12, 'Wing', 'wing', true, { fg3_pct: 38 }), att: att(45) },
+      { ...player(13, 'Bench Gunner', 'bench gunner', false, { fg3_pct: 45 }), att: att(30) },
+    ];
+
+    it('ranks only players with enough attempts in the qualified list', () => {
+      expect(names(queryPlayers(shooters, { search: '', sort: 'fg3_pct', qualifiedOnly: true, rules }))).toEqual([
+        'Shooter', 'Wing',
+      ]);
+    });
+
+    it('lists everyone with the filter off, small samples after real ones', () => {
+      expect(names(queryPlayers(shooters, { search: '', sort: 'fg3_pct', qualifiedOnly: false, rules }))).toEqual([
+        'Bench Gunner', 'Shooter', 'Wing', 'Big Man',
+      ]);
+    });
+
+    it('still finds a small-sample player by name', () => {
+      expect(names(queryPlayers(shooters, { search: 'big', sort: 'fg3_pct', qualifiedOnly: true, rules }))).toEqual([
+        'Big Man',
+      ]);
+    });
   });
 
   it('searches every player, accent-insensitive', () => {

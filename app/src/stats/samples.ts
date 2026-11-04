@@ -24,6 +24,13 @@ export function attemptsText(n: number, by: AttemptKey): string {
   return `${n} ${WORDS[by][n === 1 ? 0 : 1]}`;
 }
 
+const SHORT: Record<AttemptKey, string> = { fga: 'FGA', fg2a: '2PA', fg3a: '3PA', fta: 'FTA' };
+
+/** "60 3PA": for dense lists that already use stat abbreviations. */
+export function attemptsShort(n: number, by: AttemptKey): string {
+  return `${n} ${SHORT[by]}`;
+}
+
 /** The sample behind one of a player's shooting percentages; null for other stats or older data. */
 export function sampleFor(p: Player, stat: StatId, rules: AttemptRules | undefined): Sample | null {
   const rule = rules?.[stat];
