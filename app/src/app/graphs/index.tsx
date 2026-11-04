@@ -11,8 +11,9 @@ import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
 import { classBreaks, countRanges, type ChartPoint } from '@/graphs/math';
-import { buildPoints, GRAPH_MODES, type GraphMode } from '@/graphs/points';
+import { buildPoints, GRAPH_MODES, leftOut, type GraphMode } from '@/graphs/points';
 import { RAMP_CLASSES, ScatterChart, useChartScales } from '@/graphs/ScatterChart';
+import { minimumsText } from '@/stats/samples';
 import { betterThan, formatStat, rankText } from '@/lib/format';
 import { CATALOG, isStatId, type StatId } from '@/stats/catalog';
 import { radius, spacing } from '@/theme/tokens';
@@ -48,9 +49,10 @@ export default function GraphsScreen() {
   const [showList, setShowList] = useState(false);
 
   const players = snapshot?.players.players;
+  const rules = snapshot?.players.minAttempts;
   const points = useMemo(
-    () => (players ? buildPoints(players, x, y, mode === 'color' ? z : null) : []),
-    [players, x, y, z, mode],
+    () => (players ? buildPoints(players, x, y, mode === 'color' ? z : null, rules) : []),
+    [players, x, y, z, mode, rules],
   );
   const scales = useChartScales(points, mode, bins);
 
@@ -59,7 +61,9 @@ export default function GraphsScreen() {
   const highlight = highlightId == null ? undefined : playerById.get(highlightId);
   const highlightOnChart = highlight != null && points.some((p) => p.id === highlight.id);
   const modeInfo = GRAPH_MODES.find((m) => m.id === mode)!;
-  const dropped = snapshot.manifest.qualifiedCount - points.length;
+  const used = mode === 'color' ? [x, y, z] : [x, y];
+  const missing = leftOut(players, used, rules);
+  const under = minimumsText(used, rules);
 
   return (
     <ScrollView
@@ -123,7 +127,8 @@ export default function GraphsScreen() {
         </AppText>
         <AppText variant="caption" color="textSecondary">
           {points.length} qualified players
-          {dropped > 0 ? ` · ${dropped} without a value left out` : ''}. {modeInfo.help}
+          {missing.smallSample > 0 && under ? ` · ${missing.smallSample} left out with ${under}` : ''}
+          {missing.noValue > 0 ? ` · ${missing.noValue} without a value left out` : ''}. {modeInfo.help}
         </AppText>
       </View>
 

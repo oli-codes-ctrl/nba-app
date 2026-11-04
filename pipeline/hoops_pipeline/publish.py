@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from . import config
-from .aggregate import SeasonLine, fold_name
+from .aggregate import SeasonLine, attempt_minimums, attempts, fold_name
 from .metrics import LOWER_IS_BETTER, PERCENTILE_STATS, compute_stats
 from .percentiles import compute_percentiles
 
@@ -24,7 +24,13 @@ class PublishError(RuntimeError):
 def build_player_records(lines: list[SeasonLine]) -> tuple[list[dict[str, Any]], dict[str, int]]:
     stats = {ln.pid: compute_stats(ln) for ln in lines}
     qualified = {ln.pid for ln in lines if ln.qualified}
-    pct, rank, pool_size = compute_percentiles(stats, qualified, PERCENTILE_STATS)
+    att = {ln.pid: attempts(ln) for ln in lines}
+    # Shooting percentages are ranked only among players with enough attempts.
+    pools = {
+        stat: {pid for pid in qualified if att[pid][str(rule["by"])] >= int(rule["min"])}
+        for stat, rule in attempt_minimums(lines).items()
+    }
+    pct, rank, pool_size = compute_percentiles(stats, qualified, PERCENTILE_STATS, pools)
     records = []
     for ln in lines:
         rec: dict[str, Any] = {
@@ -37,6 +43,7 @@ def build_player_records(lines: list[SeasonLine]) -> tuple[list[dict[str, Any]],
             "pos": ln.position,
             "q": ln.qualified,
             "s": stats[ln.pid],
+            "att": att[ln.pid],
         }
         if ln.qualified:
             rec["pct"] = pct[ln.pid]
@@ -99,7 +106,9 @@ def write_outputs(
         "schemaVersion": config.SCHEMA_VERSION,
         "season": season,
         "generatedAt": (now or datetime.now(timezone.utc)).isoformat(timespec="seconds"),
+        # The last day whose games are all included (US Eastern date).
         "asOf": as_of,
+        "gamesThrough": as_of,
         "source": "ESPN",
         "playerCount": len(records),
         "qualifiedCount": sum(1 for r in records if r["q"]),

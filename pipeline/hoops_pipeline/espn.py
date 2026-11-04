@@ -119,6 +119,66 @@ def parse_bulk(raw: dict[str, Any]) -> list[SeasonLine]:
     return lines
 
 
+# ------------------------------------------------- team totals and standings
+
+def fetch_byteam(client: JsonClient, season: int) -> dict[str, Any]:
+    """Season totals for all 30 teams, own (splitId 0) and opponent (900)."""
+    year = config.espn_year(season)
+    raw = client.get(config.ESPN_BYTEAM_URL, {
+        "region": "us", "lang": "en", "contentorigin": "espn",
+        "season": year, "seasontype": 2,
+    })
+    requested = raw.get("requestedSeason") or {}
+    if requested.get("year") != year or (requested.get("type") or {}).get("type") != 2:
+        raise EspnFormatError(f"ESPN team feed returned {requested.get('displayName')!r}, expected {year} regular season")
+    return raw
+
+
+def parse_team_feed(raw: dict[str, Any]) -> tuple[dict[str, int], float]:
+    """Return ({team: games played}, league total points) from the team feed."""
+    names: dict[str, list[str]] = {}
+    for cat in raw.get("categories", []):
+        if cat.get("names"):
+            names.setdefault(cat["name"], cat["names"])
+    for cat, stat in (("general", "gamesPlayed"), ("offensive", "points")):
+        if stat not in names.get(cat, []):
+            raise EspnFormatError(f"ESPN team feed no longer has {cat}.{stat}")
+    games: dict[str, int] = {}
+    points = 0.0
+    for entry in raw.get("teams", []):
+        abbr = standard_abbr((entry.get("team") or {}).get("abbreviation"))
+        for cat in entry.get("categories", []):
+            if str(cat.get("splitId")) != "0":
+                continue  # opponent and differential splits
+            values = dict(zip(names.get(cat["name"], []), cat.get("values", [])))
+            if cat["name"] == "general":
+                games[abbr] = int(values["gamesPlayed"] or 0)
+            elif cat["name"] == "offensive":
+                points += float(values["points"] or 0)
+    if len(games) != 30:
+        raise EspnFormatError(f"ESPN team feed has {len(games)} teams, expected 30")
+    return games, points
+
+
+def fetch_standings(client: JsonClient, season: int) -> dict[str, Any]:
+    return client.get(config.ESPN_STANDINGS_URL, {"season": config.espn_year(season)})
+
+
+def parse_standings(raw: dict[str, Any]) -> dict[str, int]:
+    """Return {team: games played} (wins + losses) from the standings."""
+    games: dict[str, int] = {}
+    for group in raw.get("children", []):
+        for entry in (group.get("standings") or {}).get("entries", []):
+            stats = {s.get("name"): s.get("value") for s in entry.get("stats", [])}
+            if stats.get("wins") is None or stats.get("losses") is None:
+                raise EspnFormatError("ESPN standings no longer have wins and losses")
+            abbr = standard_abbr((entry.get("team") or {}).get("abbreviation"))
+            games[abbr] = int(stats["wins"]) + int(stats["losses"])
+    if len(games) != 30:
+        raise EspnFormatError(f"ESPN standings have {len(games)} teams, expected 30")
+    return games
+
+
 # ------------------------------------------------------ rebound split (core)
 
 def parse_core_rebounds(raw: dict[str, Any]) -> tuple[int, int] | None:

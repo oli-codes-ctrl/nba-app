@@ -14,7 +14,7 @@ export function DataStatusLine() {
   const { manifest } = snapshot;
   return (
     <AppText variant="caption" color={stale ? 'danger' : 'textSecondary'}>
-      {seasonLabel(manifest.season)} season · stats through {formatDate(manifest.asOf)}
+      {seasonLabel(manifest.season)} season · games through {formatDate(manifest.gamesThrough ?? manifest.asOf)}
       {stale ? ' · offline, showing saved copy' : ''}
     </AppText>
   );

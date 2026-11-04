@@ -13,13 +13,14 @@ export function roster(players: readonly Player[], abbr: string): Player[] {
 }
 
 /**
- * The team's best in a stat. Qualified players only, so a two-game
- * call-up can't lead in shooting percentage.
+ * The team's best in a stat. Only players ranked in it count (qualified,
+ * and with enough attempts for a shooting percentage), so a two-game
+ * call-up can't lead in shooting.
  */
 export function teamLeader(team: readonly Player[], stat: StatId): Player | null {
   const sign = CATALOG[stat].lowerIsBetter ? 1 : -1;
   const ranked = team
-    .filter((p) => p.q && p.s[stat] != null)
+    .filter((p) => p.pct?.[stat] != null && p.s[stat] != null)
     .sort((a, b) => sign * ((a.s[stat] ?? 0) - (b.s[stat] ?? 0)) || a.id - b.id);
   return ranked[0] ?? null;
 }

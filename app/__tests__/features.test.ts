@@ -11,7 +11,10 @@ import { roster, teamLeader, teamsByConference } from '@/teams/team';
 function player(id: number, stats: Partial<Record<StatId, number | null>> = {}, extra: Partial<Player> = {}): Player {
   const s = Object.fromEntries(STAT_IDS.map((sid) => [sid, 10])) as Record<StatId, number | null>;
   Object.assign(s, { mpg: 30 }, stats);
-  return { id, name: `P${id}`, searchName: `p${id}`, team: 'BOS', teams: ['BOS'], conf: 'East', pos: 'G', q: true, s, ...extra };
+  // Like published data: qualified players carry a percentile for each stat they have.
+  const q = extra.q ?? true;
+  const pct = q ? (Object.fromEntries(STAT_IDS.filter((sid) => s[sid] != null).map((sid) => [sid, 50])) as Record<StatId, number>) : undefined;
+  return { id, name: `P${id}`, searchName: `p${id}`, team: 'BOS', teams: ['BOS'], conf: 'East', pos: 'G', q: true, s, pct, ...extra };
 }
 
 describe('Box Score Mystery', () => {

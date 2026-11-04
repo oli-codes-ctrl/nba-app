@@ -1,5 +1,6 @@
 import type { Player } from '@/data/types';
 import type { StatId } from '@/stats/catalog';
+import { hasSample, type AttemptRules } from '@/stats/samples';
 
 import type { ChartPoint } from './math';
 
@@ -25,9 +26,17 @@ export const GRAPH_MODES: { id: GraphMode; label: string; help: string }[] = [
 
 /**
  * Qualified players with values for every stat in use. Players missing a
- * value (for example 3P% with no attempts) are left out, never filled in.
+ * value are left out, never filled in, and so are players with too few
+ * attempts for a shooting percentage on either axis.
  */
-export function buildPoints(players: readonly Player[], x: StatId, y: StatId, z: StatId | null): ChartPoint[] {
+export function buildPoints(
+  players: readonly Player[],
+  x: StatId,
+  y: StatId,
+  z: StatId | null,
+  rules?: AttemptRules,
+): ChartPoint[] {
+  const used = z ? [x, y, z] : [x, y];
   const out: ChartPoint[] = [];
   for (const p of players) {
     if (!p.q) continue;
@@ -35,7 +44,24 @@ export function buildPoints(players: readonly Player[], x: StatId, y: StatId, z:
     const yv = p.s[y];
     const zv = z ? p.s[z] : null;
     if (xv == null || yv == null || (z && zv == null)) continue;
+    if (!used.every((s) => hasSample(p, s, rules))) continue;
     out.push({ id: p.id, name: p.name, x: xv, y: yv, z: zv });
   }
   return out;
+}
+
+/** Why qualified players are missing from a chart, for its caption. */
+export function leftOut(
+  players: readonly Player[],
+  stats: readonly StatId[],
+  rules?: AttemptRules,
+): { noValue: number; smallSample: number } {
+  let noValue = 0;
+  let smallSample = 0;
+  for (const p of players) {
+    if (!p.q) continue;
+    if (stats.some((s) => p.s[s] == null)) noValue++;
+    else if (!stats.every((s) => hasSample(p, s, rules))) smallSample++;
+  }
+  return { noValue, smallSample };
 }

@@ -1,6 +1,7 @@
 /** Head-to-head: two players stat by stat. */
 import type { Player } from '@/data/types';
 import { CATALOG, type StatId } from '@/stats/catalog';
+import { hasSample, type AttemptRules } from '@/stats/samples';
 
 export const VERSUS_STATS: readonly StatId[] = [
   'game_score', 'off_score', 'def_score',
@@ -10,19 +11,27 @@ export const VERSUS_STATS: readonly StatId[] = [
 ];
 
 export type Side = 'a' | 'b';
-export type VersusRow = { stat: StatId; a: number | null; b: number | null; winner: Side | 'tie' | null };
+export type VersusRow = {
+  stat: StatId;
+  a: number | null;
+  b: number | null;
+  winner: Side | 'tie' | null;
+  /** A shooting percentage where either player has too few attempts: shown, not scored. */
+  smallSample: boolean;
+};
 
-export function versusRows(a: Player, b: Player): VersusRow[] {
+export function versusRows(a: Player, b: Player, rules?: AttemptRules): VersusRow[] {
   return VERSUS_STATS.map((stat) => {
     const va = a.s[stat] ?? null;
     const vb = b.s[stat] ?? null;
+    const smallSample = !hasSample(a, stat, rules) || !hasSample(b, stat, rules);
     let winner: VersusRow['winner'] = null;
-    if (va != null && vb != null) {
+    if (va != null && vb != null && !smallSample) {
       const sign = CATALOG[stat].lowerIsBetter ? -1 : 1;
       const d = sign * (va - vb);
       winner = Math.abs(d) < 1e-9 ? 'tie' : d > 0 ? 'a' : 'b';
     }
-    return { stat, a: va, b: vb, winner };
+    return { stat, a: va, b: vb, winner, smallSample };
   });
 }
 

@@ -11,8 +11,10 @@ export type Manifest = {
   /** Start year: 2026 means 2026-27. */
   season: number;
   generatedAt: string;
-  /** Date the stats cover, YYYY-MM-DD. */
+  /** Last day whose games are all included (US Eastern), YYYY-MM-DD. */
   asOf: string;
+  /** Same as asOf, named for what it means. Older files lack it. */
+  gamesThrough?: string;
   source: string;
   playerCount: number;
   qualifiedCount: number;
@@ -34,7 +36,12 @@ export type Player = {
   /** Qualified for percentiles and games. */
   q: boolean;
   s: StatLine;
-  /** Present only for qualified players. */
+  /** Season attempt totals: the sample behind each shooting percentage. */
+  att?: Attempts;
+  /**
+   * Present only for qualified players. Shooting percentages are missing
+   * when the player is below that stat's attempt minimum.
+   */
   pct?: Partial<Record<StatId, number>>;
   rank?: Partial<Record<StatId, number>>;
   /** Averages over the recent window (PlayersDoc.recent). Absent if no games in it. */
@@ -42,6 +49,11 @@ export type Player = {
   /** Box line of the player's latest game, when exactly one game was played since PlayersDoc.latest.since. */
   g?: GameLine;
 };
+
+export type AttemptKey = 'fga' | 'fg2a' | 'fg3a' | 'fta';
+export type Attempts = Record<AttemptKey, number>;
+/** Attempts a shooting percentage needs before it is ranked. */
+export type AttemptRule = { by: AttemptKey; min: number };
 
 /** Averages over the recent window. Percentages are from the window's totals. */
 export type RecentLine = { gp: number } & Partial<Record<StatId, number | null>>;
@@ -54,6 +66,8 @@ export type PlayersDoc = {
   season: number;
   poolSize: Partial<Record<StatId, number>>;
   lowerIsBetter: StatId[];
+  /** Attempt minimums for shooting percentages, scaled to the season so far. */
+  minAttempts?: Partial<Record<StatId, AttemptRule>>;
   /** Present once the pipeline has an earlier night to compare with. */
   latest?: { since: string };
   /** Present once the pipeline has at least a few days of history. */

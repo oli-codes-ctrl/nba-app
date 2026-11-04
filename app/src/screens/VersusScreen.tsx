@@ -29,7 +29,8 @@ export default function VersusScreen() {
 
   const a = params.a ? playerById.get(Number(params.a)) : undefined;
   const b = params.b ? playerById.get(Number(params.b)) : undefined;
-  const rows = useMemo(() => (a && b ? versusRows(a, b) : []), [a, b]);
+  const rules = snapshot?.players.minAttempts;
+  const rows = useMemo(() => (a && b ? versusRows(a, b, rules) : []), [a, b, rules]);
   const pairKey = a && b ? `${a.id}-${b.id}` : null;
 
   // Count each matchup toward the Debate Club trophy.
@@ -74,7 +75,8 @@ export default function VersusScreen() {
             ))}
           </View>
           <AppText variant="caption" color="textSecondary" style={styles.center}>
-            Bars show where each ranks among qualified players. For turnovers, fewer wins.
+            Bars show where each ranks among qualified players. For turnovers, fewer wins. Shooting
+            percentages only count with enough attempts.
           </AppText>
 
           <View style={styles.actions}>
@@ -161,6 +163,7 @@ function Row({ row, a, b, first }: { row: VersusRow; a: Player; b: Player; first
       style={[styles.row, !first && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
       <AppText variant="caption" color="textSecondary" style={styles.center} numberOfLines={1}>
         {def.label}
+        {row.smallSample ? ' · too few attempts to score' : ''}
       </AppText>
       <View style={styles.rowMain}>
         <AppText

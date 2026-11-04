@@ -2,8 +2,21 @@ name: Nightly data
 
 on:
   schedule:
-    - cron: "0 10 * * *" # 5-6am US Eastern, after every game is final
+    # ESPN's stats feeds finish updating some hours after the last game. The
+    # pipeline publishes only once they have caught up (exit 75 = not yet,
+    # exit 76 = already published), so later attempts are cheap no-ops. The
+    # last attempt fails loudly if ESPN still hasn't caught up. All four run
+    # before the earliest weekend tip-off (noon US Eastern).
+    - cron: "15 10 * * *"
+    - cron: "15 12 * * *"
+    - cron: "15 14 * * *"
+    - cron: "45 15 * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Publish even if these games were already published"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -32,21 +45,27 @@ jobs:
       - uses: astral-sh/setup-uv@v5
 
       - name: Run pipeline
+        id: run
         working-directory: pipeline
-        run: uv run --python 3.12 python -m hoops_pipeline nightly --state ../.state --out ../out
-
-      - name: Save pipeline state
-        # Single force-pushed commit so the branch never grows.
-        working-directory: .state
         run: |
-          git init -q -b pipeline-state
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Pipeline state $(date -u +%F)"
-          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:pipeline-state
+          set +e
+          uv run --python 3.12 python -m hoops_pipeline nightly --state ../.state --out ../out ${{ inputs.force && '--force' || '' }}
+          code=$?
+          set -e
+          case $code in
+            0) echo "publish=true" >> "$GITHUB_OUTPUT" ;;
+            76) echo "::notice::Last night's games are already published." ;;
+            75)
+              if [ "$(date -u +%H)" -ge 15 ]; then
+                echo "::error::ESPN's stats still haven't caught up with last night's games after the last attempt."
+                exit 1
+              fi
+              echo "::notice::ESPN's stats haven't caught up yet; the next scheduled attempt will retry." ;;
+            *) exit $code ;;
+          esac
 
       - name: Publish JSON to gh-pages
+        if: steps.run.outputs.publish == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -56,3 +75,16 @@ jobs:
           user_name: "github-actions[bot]"
           user_email: "41898282+github-actions[bot]@users.noreply.github.com"
           commit_message: "Data refresh"
+
+      - name: Save pipeline state
+        # After publishing, so a failed publish can't mark these games as done.
+        # Single force-pushed commit so the branch never grows.
+        if: steps.run.outputs.publish == 'true'
+        working-directory: .state
+        run: |
+          git init -q -b pipeline-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Pipeline state $(date -u +%F)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:pipeline-state

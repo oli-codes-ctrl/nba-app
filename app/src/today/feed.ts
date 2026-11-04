@@ -47,11 +47,15 @@ export function formChanges(players: readonly Player[], n = 5): { hot: FormChang
   };
 }
 
-/** Top qualified players in a stat, best first (fewest for turnovers and fouls). */
+/**
+ * Top players in a stat, best first (fewest for turnovers and fouls). Only
+ * players ranked in it count: qualified, and with enough attempts for a
+ * shooting percentage.
+ */
 export function leaders(players: readonly Player[], stat: StatId, n = 3): Player[] {
   const sign = CATALOG[stat].lowerIsBetter ? 1 : -1;
   return players
-    .filter((p) => p.q && p.s[stat] != null)
+    .filter((p) => p.pct?.[stat] != null && p.s[stat] != null)
     .sort((a, b) => sign * ((a.s[stat] ?? 0) - (b.s[stat] ?? 0)) || a.id - b.id)
     .slice(0, n);
 }

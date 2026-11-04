@@ -13,6 +13,7 @@ import { betterThan, formatDate, formatStat, rankText } from '@/lib/format';
 import { tapFeedback } from '@/lib/haptics';
 import { useLinks } from '@/lib/usePlayerLink';
 import { similarPlayers } from '@/players/similar';
+import { attemptsText, sampleFor, type Sample } from '@/stats/samples';
 import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatId } from '@/stats/catalog';
 import { teamInfo } from '@/theme/teams';
 import { radius, spacing } from '@/theme/tokens';
@@ -28,6 +29,8 @@ export default function PlayerScreen() {
   const player = playerById.get(Number(id));
   const all = snapshot?.players.players;
   const similar = useMemo(() => (player && all ? similarPlayers(player, all, 3) : []), [player, all]);
+  // Roughly how many games teams have played: the most any player has.
+  const mostGames = useMemo(() => (all ? Math.max(0, ...all.map((p) => p.s.gp ?? 0)) : 0), [all]);
 
   if (!snapshot) return <FirstLoad />;
   if (!player) {
@@ -39,6 +42,7 @@ export default function PlayerScreen() {
   }
 
   const poolSize = snapshot.players.poolSize;
+  const rules = snapshot.players.minAttempts;
   const earlierTeams = player.teams.slice(1);
 
   return (
@@ -176,6 +180,12 @@ export default function PlayerScreen() {
           without percentiles.
         </AppText>
       )}
+      {player.q && mostGames > 0 && mostGames < EARLY_SEASON_GAMES && (
+        <AppText variant="small" color="textSecondary">
+          Early season: teams have played about {mostGames} games, so these ranks can swing a lot from night to
+          night.
+        </AppText>
+      )}
 
       {GROUPS.map((group) => (
         <View key={group.id} style={styles.group}>
@@ -187,21 +197,30 @@ export default function PlayerScreen() {
           )}
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             {statsInGroup(group.id).map((def, i) => (
-              <StatRow key={def.id} def={def} player={player} poolSize={poolSize[def.id]} first={i === 0} />
+              <StatRow
+                key={def.id}
+                def={def}
+                player={player}
+                poolSize={poolSize[def.id]}
+                sample={sampleFor(player, def.id, rules)}
+                first={i === 0}
+              />
             ))}
           </View>
         </View>
       ))}
 
       <AppText variant="caption" color="textSecondary" style={styles.footnote}>
-        Percentiles compare against the {snapshot.manifest.qualifiedCount} qualified players. For
-        turnovers and fouls, fewer counts as better.
+        Percentiles compare against the {snapshot.manifest.qualifiedCount} qualified players. Shooting
+        percentages rank only players with enough attempts. For turnovers and fouls, fewer counts as better.
       </AppText>
     </ScrollView>
   );
 }
 
 const RECENT_STATS: readonly StatId[] = ['pts', 'reb', 'ast', 'fg3m', 'ts_pct'];
+/** Below this many team games, the page warns that ranks are volatile. */
+const EARLY_SEASON_GAMES = 20;
 
 function FollowButton({ following, onPress }: { following: boolean; onPress: () => void }) {
   const colors = useColors();
@@ -269,17 +288,25 @@ function StatRow({
   def,
   player,
   poolSize,
+  sample,
   first,
 }: {
   def: StatDef;
   player: Player;
   poolSize: number | undefined;
+  /** Attempts behind a shooting percentage; null for other stats. */
+  sample: Sample | null;
   first: boolean;
 }) {
   const colors = useColors();
   const pct = player.pct?.[def.id];
   const rank = player.rank?.[def.id];
   const better = pct == null ? null : betterThan(def.id, pct);
+  // Qualified, but too few attempts for this percentage to be ranked yet.
+  const waiting = better == null && player.q && sample != null && !sample.enough;
+  const sampleLine = sample
+    ? `On ${attemptsText(sample.have, sample.by)}` + (waiting ? ` · ranked from ${sample.need}` : '')
+    : null;
 
   return (
     <View
@@ -287,21 +314,34 @@ function StatRow({
       accessible
       accessibilityLabel={
         `${def.label}: ${formatStat(def.id, player.s[def.id])}` +
-        (better == null ? '' : `, better than ${Math.round(better)} percent of qualified players`)
+        (better == null ? '' : `, better than ${Math.round(better)} percent of qualified players`) +
+        (waiting ? ', not ranked yet' : '') +
+        (sampleLine ? `. ${sampleLine}` : '')
       }>
       <View style={styles.statTop}>
         <AppText variant="small" style={styles.statLabel} numberOfLines={1}>
           {def.label}
         </AppText>
-        <AppText variant="number">{formatStat(def.id, player.s[def.id])}</AppText>
+        <AppText variant="number" color={waiting ? 'textSecondary' : 'text'}>
+          {formatStat(def.id, player.s[def.id])}
+        </AppText>
       </View>
-      {better != null && (
+      {(better != null || waiting) && (
         <View style={styles.statBottom}>
-          <PercentileBar value={better} />
+          {better != null ? (
+            <PercentileBar value={better} />
+          ) : (
+            <View style={[styles.emptyTrack, { backgroundColor: colors.scaleTrack }]} />
+          )}
           <AppText variant="caption" color="textSecondary" style={styles.rank}>
-            {rank != null && poolSize ? rankText(def.id, rank, poolSize) : ''}
+            {waiting ? 'Not ranked yet' : rank != null && poolSize ? rankText(def.id, rank, poolSize) : ''}
           </AppText>
         </View>
+      )}
+      {sampleLine && (
+        <AppText variant="caption" color="textSecondary" style={styles.sampleLine}>
+          {sampleLine}
+        </AppText>
       )}
     </View>
   );
@@ -350,5 +390,8 @@ const styles = StyleSheet.create({
   statLabel: { flex: 1 },
   statBottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   rank: { minWidth: 96, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  emptyTrack: { flex: 1, height: 6, borderRadius: radius.pill },
+  // Sits closer to the bar it qualifies than the rows around it.
+  sampleLine: { marginTop: -spacing.xs, fontVariant: ['tabular-nums'] },
   footnote: { textAlign: 'center' },
 });

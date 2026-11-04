@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 
 def mid_rank_percentile(value: float, sorted_values: Sequence[float]) -> float:
@@ -25,18 +25,24 @@ def compute_percentiles(
     stats_by_player: dict[int, dict[str, float | int | None]],
     qualified: set[int],
     stat_ids: Sequence[str],
+    pools: Mapping[str, set[int]] | None = None,
 ) -> tuple[dict[int, dict[str, float]], dict[int, dict[str, int]], dict[str, int]]:
-    """Return (pct, rank, pool_size). Only qualified players get entries."""
+    """Return (pct, rank, pool_size). Only qualified players get entries.
+
+    `pools` narrows the pool for some stats (for example shooting
+    percentages need enough attempts); other stats use every qualified
+    player."""
     pct: dict[int, dict[str, float]] = {pid: {} for pid in qualified}
     rank: dict[int, dict[str, int]] = {pid: {} for pid in qualified}
     pool_size: dict[str, int] = {}
     for stat in stat_ids:
+        members = qualified & pools[stat] if pools and stat in pools else qualified
         pool = sorted(
-            v for pid in qualified
+            v for pid in members
             if (v := stats_by_player[pid].get(stat)) is not None
         )
         pool_size[stat] = len(pool)
-        for pid in qualified:
+        for pid in members:
             v = stats_by_player[pid].get(stat)
             if v is None:
                 continue
