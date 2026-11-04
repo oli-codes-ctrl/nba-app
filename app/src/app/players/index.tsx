@@ -13,6 +13,7 @@ import {
 
 import { AppText } from '@/components/AppText';
 import { DataStatusLine, FirstLoad } from '@/components/DataStatus';
+import { Segmented } from '@/components/Segmented';
 import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
@@ -20,8 +21,24 @@ import { formatStat } from '@/lib/format';
 import { queryPlayers, SORT_STATS } from '@/players/query';
 import { CATALOG, type StatId } from '@/stats/catalog';
 import { attemptsShort, attemptsText, sampleFor, type AttemptRules } from '@/stats/samples';
+import {
+  hasVariants,
+  normalized,
+  NORMALIZATIONS,
+  POSITION_GROUPS,
+  groupNoun,
+  type Normalization,
+  type PositionGroup,
+} from '@/stats/views';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
+
+type PositionFilter = 'all' | PositionGroup;
+
+const POSITION_OPTIONS: readonly { id: PositionFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  ...POSITION_GROUPS.map((g) => ({ id: g, label: groupNoun(g).replace(/^./, (c) => c.toUpperCase()) })),
+];
 
 export default function PlayersScreen() {
   const { snapshot, loading, refresh } = useData();
@@ -29,14 +46,28 @@ export default function PlayersScreen() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<StatId>('game_score');
   const [qualifiedOnly, setQualifiedOnly] = useState(true);
+  const [norm, setNorm] = useState<Normalization>('game');
+  const [position, setPosition] = useState<PositionFilter>('all');
 
+  // The stat actually listed: PTS becomes PTS/36 or PTS/100 when scaled.
+  const view = normalized(sort, norm);
   const players = snapshot?.players.players;
   const rules = snapshot?.players.minAttempts;
   const rows = useMemo(
-    () => (players ? queryPlayers(players, { search, sort, qualifiedOnly, rules }) : []),
-    [players, search, sort, qualifiedOnly, rules],
+    () =>
+      players
+        ? queryPlayers(players, {
+            search,
+            sort: view,
+            qualifiedOnly,
+            rules,
+            position: position === 'all' ? null : position,
+          })
+        : [],
+    [players, search, view, qualifiedOnly, rules, position],
   );
-  const rule = rules?.[sort];
+  const rule = rules?.[view];
+  const scalable = hasVariants(sort);
 
   if (!snapshot) return <FirstLoad />;
 
@@ -66,7 +97,7 @@ export default function PlayersScreen() {
               onPress={() => setSort(id)}
               style={[
                 styles.chip,
-                { backgroundColor: selected ? colors.accent : colors.surface },
+                { backgroundColor: selected ? colors.accentFill : colors.surface },
               ]}>
               <AppText variant="small" color={selected ? 'textOnAccent' : 'text'} style={styles.chipText}>
                 {CATALOG[id].short}
@@ -75,6 +106,13 @@ export default function PlayersScreen() {
           );
         })}
       </ScrollView>
+      <Segmented
+        accessibilityLabel="Scale stats"
+        options={NORMALIZATIONS.map((n) => ({ ...n, disabled: n.id !== 'game' && !scalable }))}
+        value={scalable ? norm : 'game'}
+        onChange={setNorm}
+      />
+      <Segmented accessibilityLabel="Position" options={POSITION_OPTIONS} value={position} onChange={setPosition} />
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push('/players/teams')}
@@ -93,7 +131,7 @@ export default function PlayersScreen() {
             {search
               ? 'Search covers every player.'
               : `At least 10 minutes a game and enough games played.${
-                  rule ? ` ${CATALOG[sort].short} also needs ${attemptsText(rule.min, rule.by)}.` : ''
+                  rule ? ` ${CATALOG[view].short} also needs ${attemptsText(rule.min, rule.by)}.` : ''
                 }`}
           </AppText>
         </View>
@@ -118,12 +156,12 @@ export default function PlayersScreen() {
       ListHeaderComponent={header}
       ListEmptyComponent={
         <AppText color="textSecondary" style={styles.empty}>
-          No players match “{search}”.
+          {search ? `No players match “${search}”.` : 'No players match these filters yet.'}
         </AppText>
       }
       refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.accent} />}
       ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
-      renderItem={({ item, index }) => <PlayerRow player={item} position={index + 1} sort={sort} rules={rules} />}
+      renderItem={({ item, index }) => <PlayerRow player={item} position={index + 1} sort={view} rules={rules} />}
       style={{ backgroundColor: colors.background }}
     />
   );

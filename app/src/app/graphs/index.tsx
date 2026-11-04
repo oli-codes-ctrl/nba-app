@@ -6,6 +6,7 @@ import { AppText } from '@/components/AppText';
 import { FirstLoad } from '@/components/DataStatus';
 import { PercentileBar } from '@/components/PercentileBar';
 import { PlayerPicker } from '@/components/PlayerPicker';
+import { Segmented } from '@/components/Segmented';
 import { StatPicker } from '@/components/StatPicker';
 import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
@@ -211,37 +212,6 @@ function PickerButton({ label, value, onPress }: { label: string; value: string;
       </AppText>
       <AppText variant="bodyStrong">{value} ▾</AppText>
     </Pressable>
-  );
-}
-
-function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { id: T; label: string }[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
-  const colors = useColors();
-  return (
-    <View accessibilityRole="tablist" style={[styles.segmented, { backgroundColor: colors.surface }]}>
-      {options.map((o) => {
-        const selected = o.id === value;
-        return (
-          <Pressable
-            key={o.id}
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            onPress={() => onChange(o.id)}
-            style={[styles.segment, selected && { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-            <AppText variant="small" style={selected ? styles.bold : undefined}>
-              {o.label}
-            </AppText>
-          </Pressable>
-        );
-      })}
-    </View>
   );
 }
 
@@ -479,15 +449,6 @@ const styles = StyleSheet.create({
   controls: { gap: spacing.sm },
   axisRow: { flexDirection: 'row', gap: spacing.sm },
   pickerButton: { flex: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  segmented: { flexDirection: 'row', borderRadius: radius.md, padding: 2 },
-  segment: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-  },
   stepper: {
     flex: 1,
     flexDirection: 'row',

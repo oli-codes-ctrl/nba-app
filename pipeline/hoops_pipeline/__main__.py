@@ -24,7 +24,14 @@ from zoneinfo import ZoneInfo
 from . import config, espn, freshness, puzzles, recent, teamstats
 from .aggregate import attempt_minimums, mark_qualified
 from .http_client import JsonClient
-from .publish import PublishError, build_player_records, v1_records, write_outputs
+from .publish import (
+    PublishError,
+    build_player_records,
+    doc_extras,
+    fit_shrinkage,
+    v1_records,
+    write_outputs,
+)
 
 log = logging.getLogger("hoops_pipeline")
 
@@ -114,7 +121,8 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
         ot = teamstats.overtime_factor(sum(ln.minutes for ln in lines),
                                        sum(t["gp"] for t in team_totals.values()))
         teams = teamstats.build_teams(team_totals, team_records, ot)
-    records, pool_size = build_player_records(lines, teams)
+    priors = fit_shrinkage(lines)
+    records, pool_size = build_player_records(lines, teams, priors)
 
     totals_history = recent.load_history(args.state)
     recent_info, recent_by_player = recent.compute(totals_history, games_through, lines)
@@ -127,7 +135,7 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
     v_dir = write_outputs(
         args.out, season, records, pool_size, window, games_through.isoformat(),
         min_players=args.min_players,
-        extra={"minAttempts": attempt_minimums(lines), **recent_info},
+        extra={"minAttempts": attempt_minimums(lines), **doc_extras(records, priors), **recent_info},
         teams=teamstats.teams_doc(teams) if teams else None,
         v1=v1_records(records, lines),
     )

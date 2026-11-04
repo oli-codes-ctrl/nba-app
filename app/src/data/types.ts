@@ -3,6 +3,7 @@
  * Source: pipeline/hoops_pipeline/publish.py and puzzles.py.
  */
 import type { StatId } from '@/stats/catalog';
+import type { PositionGroup } from '@/stats/views';
 
 /** 2: Off/Def scores retired, team context and the teams file added. */
 export const SCHEMA_VERSION = 2;
@@ -45,6 +46,17 @@ export type Player = {
    */
   pct?: Partial<Record<StatId, number>>;
   rank?: Partial<Record<StatId, number>>;
+  /** Percentile and rank among qualified players at his position (G, F or C). */
+  pctPos?: Partial<Record<StatId, number>>;
+  rankPos?: Partial<Record<StatId, number>>;
+  /** 95% Wilson range, in whole percent, for makes-over-attempts stats. */
+  ci?: Partial<Record<StatId, [number, number]>>;
+  /**
+   * Sample-adjusted estimate (pulled toward the league rate by how few
+   * attempts there are). Only for 3P% and FT%, and only once the season's
+   * data can tell shooters apart.
+   */
+  adj?: Partial<Record<StatId, number>>;
   /** Averages over the recent window (PlayersDoc.recent). Absent if no games in it. */
   r?: RecentLine;
   /** Box line of the player's latest game, when exactly one game was played since PlayersDoc.latest.since. */
@@ -69,6 +81,12 @@ export type PlayersDoc = {
   lowerIsBetter: StatId[];
   /** Attempt minimums for shooting percentages, scaled to the season so far. */
   minAttempts?: Partial<Record<StatId, AttemptRule>>;
+  /** Pool sizes for percentiles within each position. */
+  poolSizePos?: Partial<Record<PositionGroup, Partial<Record<StatId, number>>>>;
+  /** Medians among ranked players: all, and by position. */
+  medians?: Partial<Record<'all' | PositionGroup, Partial<Record<StatId, number | null>>>>;
+  /** League priors behind `adj`: mean (percent) and strength (equivalent attempts). */
+  shrinkage?: Partial<Record<StatId, { mean: number; strength: number }>>;
   /** Present once the pipeline has an earlier night to compare with. */
   latest?: { since: string };
   /** Present once the pipeline has at least a few days of history. */

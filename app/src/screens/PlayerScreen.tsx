@@ -1,10 +1,11 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { FirstLoad } from '@/components/DataStatus';
 import { PercentileBar } from '@/components/PercentileBar';
+import { Segmented } from '@/components/Segmented';
 import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
@@ -14,6 +15,7 @@ import { tapFeedback } from '@/lib/haptics';
 import { useLinks } from '@/lib/usePlayerLink';
 import { similarPlayers } from '@/players/similar';
 import { attemptsText, sampleFor, type Sample } from '@/stats/samples';
+import { groupNoun, positionGroup, positionName } from '@/stats/views';
 import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatGroup, type StatId } from '@/stats/catalog';
 import { teamInfo } from '@/theme/teams';
 import { radius, spacing } from '@/theme/tokens';
@@ -31,6 +33,9 @@ export default function PlayerScreen() {
   const similar = useMemo(() => (player && all ? similarPlayers(player, all, 3) : []), [player, all]);
   // Roughly how many games teams have played: the most any player has.
   const mostGames = useMemo(() => (all ? Math.max(0, ...all.map((p) => p.s.gp ?? 0)) : 0), [all]);
+  // Percentiles against his position by default: comparing a center's
+  // assists with every guard's says little.
+  const [pool, setPool] = useState<'pos' | 'all'>('pos');
 
   if (!snapshot) return <FirstLoad />;
   if (!player) {
@@ -41,9 +46,14 @@ export default function PlayerScreen() {
     );
   }
 
-  const poolSize = snapshot.players.poolSize;
   const rules = snapshot.players.minAttempts;
   const earlierTeams = player.teams.slice(1);
+  const group = positionGroup(player.pos);
+  const byPosition = pool === 'pos' && group != null && player.pctPos != null;
+  const noun = byPosition && group ? groupNoun(group) : 'players';
+  const ranks = byPosition
+    ? { pct: player.pctPos, rank: player.rankPos, size: snapshot.players.poolSizePos?.[group!] ?? {} }
+    : { pct: player.pct, rank: player.rank, size: snapshot.players.poolSize };
 
   return (
     <ScrollView
@@ -187,24 +197,44 @@ export default function PlayerScreen() {
         </AppText>
       )}
 
-      {GROUPS.map((group) => (
-        <View key={group.id} style={styles.group}>
-          <AppText variant="title">{group.title}</AppText>
-          {group.note && (
+      {player.q && group && player.pctPos && (
+        <View style={styles.poolRow}>
+          <AppText variant="caption" color="textSecondary">
+            Ranks compare him with
+          </AppText>
+          <Segmented
+            accessibilityLabel="Compare with"
+            options={[
+              { id: 'pos', label: groupNoun(group).replace(/^./, (c) => c.toUpperCase()) },
+              { id: 'all', label: 'All players' },
+            ]}
+            value={pool}
+            onChange={setPool}
+          />
+        </View>
+      )}
+
+      {GROUPS.map((g) => (
+        <View key={g.id} style={styles.group}>
+          <AppText variant="title">{g.title}</AppText>
+          {g.note && (
             <AppText variant="caption" color="textSecondary">
-              {group.note}
-              {TEAM_BASED_GROUPS.has(group.id) && earlierTeams.length > 0
+              {g.note}
+              {TEAM_BASED_GROUPS.has(g.id) && earlierTeams.length > 0
                 ? ' Traded this season, so these use the average of his teams.'
                 : ''}
             </AppText>
           )}
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
-            {statsInGroup(group.id).map((def, i) => (
+            {statsInGroup(g.id).map((def, i) => (
               <StatRow
                 key={def.id}
                 def={def}
                 player={player}
-                poolSize={poolSize[def.id]}
+                pct={ranks.pct?.[def.id]}
+                rank={ranks.rank?.[def.id]}
+                poolSize={ranks.size[def.id]}
+                noun={noun}
                 sample={sampleFor(player, def.id, rules)}
                 first={i === 0}
               />
@@ -214,8 +244,12 @@ export default function PlayerScreen() {
       ))}
 
       <AppText variant="caption" color="textSecondary" style={styles.footnote}>
-        Percentiles compare against the {snapshot.manifest.qualifiedCount} qualified players. Shooting
-        percentages rank only players with enough attempts. For turnovers and fouls, fewer counts as better.
+        {byPosition
+          ? `Percentiles compare him with the ${ranks.size.pts ?? 0} qualified ${noun}.`
+          : `Percentiles compare against the ${snapshot.manifest.qualifiedCount} qualified players.`}{' '}
+        Shooting percentages rank only players with enough attempts. “Skill” is where his long-run percentage
+        probably falls (95% range); a skill estimate also weighs how the league’s shooters usually do, so a hot or
+        cold start counts for less. For turnovers and fouls, fewer counts as better.
       </AppText>
     </ScrollView>
   );
@@ -292,26 +326,44 @@ function Summary({ label, value }: { label: string; value: string }) {
 function StatRow({
   def,
   player,
+  pct,
+  rank,
   poolSize,
+  noun,
   sample,
   first,
 }: {
   def: StatDef;
   player: Player;
+  pct: number | undefined;
+  rank: number | undefined;
   poolSize: number | undefined;
+  /** Who the rank is among: "guards" or "players". */
+  noun: string;
   /** Attempts behind a shooting percentage; null for other stats. */
   sample: Sample | null;
   first: boolean;
 }) {
   const colors = useColors();
-  const pct = player.pct?.[def.id];
-  const rank = player.rank?.[def.id];
   const better = pct == null ? null : betterThan(def.id, pct);
   // Qualified, but too few attempts for this percentage to be ranked yet.
   const waiting = better == null && player.q && sample != null && !sample.enough;
   const sampleLine = sample
     ? `On ${attemptsText(sample.have, sample.by)}` + (waiting ? ` · ranked from ${sample.need}` : '')
     : null;
+  // Long-run skill: the 95% range, plus the sample-adjusted estimate when published.
+  // Worded as skill, since a cold or hot start can sit outside it.
+  const ci = player.ci?.[def.id];
+  const adj = player.adj?.[def.id];
+  const rangeLine = ci
+    ? adj != null
+      ? `Skill estimate ${adj.toFixed(1)}% · likely ${ci[0]}–${ci[1]}%`
+      : `Skill likely ${ci[0]}–${ci[1]}%`
+    : null;
+  const rangeSpoken = ci
+    ? (adj != null ? `. Skill estimate ${adj.toFixed(1)} percent` : '. Skill') +
+      `, likely between ${ci[0]} and ${ci[1]} percent`
+    : '';
 
   return (
     <View
@@ -321,9 +373,10 @@ function StatRow({
         `${def.label}: ${formatStat(def.id, player.s[def.id])}` +
         (better == null
           ? ''
-          : `, ${def.neutral ? 'higher' : 'better'} than ${Math.round(better)} percent of qualified players`) +
+          : `, ${def.neutral ? 'higher' : 'better'} than ${Math.round(better)} percent of qualified ${noun}`) +
         (waiting ? ', not ranked yet' : '') +
-        (sampleLine ? `. ${sampleLine}` : '')
+        (sampleLine ? `. ${sampleLine}` : '') +
+        rangeSpoken
       }>
       <View style={styles.statTop}>
         <AppText variant="small" style={styles.statLabel} numberOfLines={1}>
@@ -341,21 +394,28 @@ function StatRow({
             <View style={[styles.emptyTrack, { backgroundColor: colors.scaleTrack }]} />
           )}
           <AppText variant="caption" color="textSecondary" style={styles.rank}>
-            {waiting ? 'Not ranked yet' : rank != null && poolSize ? rankText(def.id, rank, poolSize) : ''}
+            {waiting
+              ? 'Not ranked yet'
+              : rank != null && poolSize
+                ? `${rankText(def.id, rank, poolSize)}${noun === 'players' ? '' : ` ${noun}`}`
+                : ''}
           </AppText>
         </View>
       )}
       {sampleLine && (
-        <AppText variant="caption" color="textSecondary" style={styles.sampleLine}>
-          {sampleLine}
-        </AppText>
+        <View style={styles.sampleBlock}>
+          <AppText variant="caption" color="textSecondary" style={styles.tabular}>
+            {sampleLine}
+          </AppText>
+          {rangeLine && (
+            <AppText variant="caption" color="textSecondary" style={styles.tabular}>
+              {rangeLine}
+            </AppText>
+          )}
+        </View>
       )}
     </View>
   );
-}
-
-function positionName(pos: string): string {
-  return { G: 'Guard', F: 'Forward', C: 'Center' }[pos] ?? pos;
 }
 
 const styles = StyleSheet.create({
@@ -399,6 +459,7 @@ const styles = StyleSheet.create({
   rank: { minWidth: 96, textAlign: 'right', fontVariant: ['tabular-nums'] },
   emptyTrack: { flex: 1, height: 6, borderRadius: radius.pill },
   // Sits closer to the bar it qualifies than the rows around it.
-  sampleLine: { marginTop: -spacing.xs, fontVariant: ['tabular-nums'] },
+  sampleBlock: { marginTop: -spacing.xs, gap: 1 },
+  poolRow: { gap: spacing.xs },
   footnote: { textAlign: 'center' },
 });

@@ -50,6 +50,8 @@ Design every screen as a senior design engineer would. Concretely:
 - Formulas: every one lives in `pipeline/hoops_pipeline/formulas.py` with its source (Basketball-Reference glossary, Oliver, Hollinger, Morey). Team context and team pages are in `teamstats.py`. Traded players come as one combined line, so their team-based stats (usage, the other shares, per-100) use the average of their teams scaled to one game; box scores in milestone 9 will make this exact.
 - Game Score (Hollinger) is the one composite. The old homemade Offensive/Defensive Score split is retired and survives only in `/v1/`.
 - Neutral stats (roles and volumes: usage, shot attempts, shot diet) are ranked but never colored as good or bad; `neutral` in the catalog.
+- Honest samples (`samples.py`): makes-over-attempts stats get a 95% range (`ci`, whole percent). 3P% and FT% also get a sample-adjusted "skill estimate" (`adj`) from a beta-binomial prior fitted by maximum likelihood to qualified players; then the range is the matching posterior interval so the estimate always sits inside it, otherwise it is the Wilson interval. No estimate is published while the season's data cannot separate shooters (the fit hits its strength ceiling; 3P% early on). The app words ranges as long-run skill, never as the observed percentage. FG% and 2P% are never shrunk: shot location dominates them.
+- Percentiles and ranks are also published within position (`pctPos`, `rankPos`; ESPN gives only G/F/C), with `poolSizePos` and `medians` (all and by position). The player page defaults to his position.
 - Published JSON is versioned (`/v2/`, `schemaVersion` 2: players, puzzles and teams files). Any breaking field change bumps the version; keep the old version published until the app has switched. `/v1/` is still written as a compatibility copy in the old format; drop it once no client reads it (before the first App Store build at the latest).
 - Live stats are a future phase. All app reads go through the `DataSource` interface in `app/src/data/` so a live source can overlay in-progress games later.
 
@@ -69,7 +71,7 @@ Design every screen as a senior design engineer would. Concretely:
 Foundations:
 1. [x] Trustworthy numbers: fresh data (retry until ESPN's totals include last night), "games through" date, attempt minimums for percentage stats, sample sizes shown.
 2. [x] Team data + formulas module: team totals and standings, usage/AST%/TOV%/REB%, per-36 and per-100, team ratings and pace, drop the Off/Def split (schema v2), reference tests.
-3. [ ] Honest samples + position percentiles: Wilson ranges, shrinkage for low-volume shooting, G/F/C percentile pools, medians, leaderboard toggles.
+3. [x] Honest samples + position percentiles: Wilson ranges, shrinkage for low-volume shooting, G/F/C percentile pools, medians, leaderboard toggles.
 4. [ ] Design system, tabs (Explore / Players / Teams / Play) and search; cut Who Has More?
 5. [ ] Glossary and first-launch onboarding.
 
