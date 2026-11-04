@@ -12,7 +12,7 @@ import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
 import { classBreaks, countRanges, type ChartPoint } from '@/graphs/math';
-import { buildPoints, GRAPH_MODES, leftOut, type GraphMode } from '@/graphs/points';
+import { buildPoints, chartColumns, GRAPH_MODES, leftOut, type GraphMode } from '@/graphs/points';
 import { RAMP_CLASSES, ScatterChart, useChartScales } from '@/graphs/ScatterChart';
 import { minimumsText } from '@/stats/samples';
 import { betterThan, formatStat, rankText } from '@/lib/format';
@@ -148,7 +148,7 @@ export default function GraphsScreen() {
       {highlight && (
         <SelectedCard
           player={highlight}
-          stats={mode === 'color' ? [y, x, z] : [y, x]}
+          stats={chartColumns(x, y, mode === 'color' ? z : null).map((c) => c.stat)}
           poolSize={snapshot.players.poolSize}
           onChart={highlightOnChart}
         />
@@ -400,15 +400,16 @@ function ValueTable({
     () => [...points].sort((a, b) => b.y - a.y || a.name.localeCompare(b.name)),
     [points],
   );
+  const columns = chartColumns(x, y, z);
   return (
     <View style={[styles.table, { borderColor: colors.border }]}>
       <View style={[styles.tableRow, { backgroundColor: colors.surface }]}>
         <AppText variant="caption" color="textSecondary" style={styles.flex}>
           Player
         </AppText>
-        {[y, x, ...(z ? [z] : [])].map((id) => (
-          <AppText key={id} variant="caption" color="textSecondary" style={styles.tableNum}>
-            {CATALOG[id].short}
+        {columns.map((c) => (
+          <AppText key={c.stat} variant="caption" color="textSecondary" style={styles.tableNum}>
+            {CATALOG[c.stat].short}
           </AppText>
         ))}
       </View>
@@ -425,17 +426,11 @@ function ValueTable({
           <AppText variant="small" style={styles.flex} numberOfLines={1}>
             {p.name}
           </AppText>
-          <AppText variant="small" style={styles.tableNum}>
-            {formatStat(y, p.y)}
-          </AppText>
-          <AppText variant="small" style={styles.tableNum}>
-            {formatStat(x, p.x)}
-          </AppText>
-          {z && (
-            <AppText variant="small" style={styles.tableNum}>
-              {formatStat(z, p.z)}
+          {columns.map((c) => (
+            <AppText key={c.stat} variant="small" style={styles.tableNum}>
+              {formatStat(c.stat, p[c.axis])}
             </AppText>
-          )}
+          ))}
         </Pressable>
       ))}
     </View>

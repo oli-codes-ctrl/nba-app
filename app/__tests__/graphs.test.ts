@@ -13,7 +13,7 @@ import {
   ticks,
   type ChartPoint,
 } from '@/graphs/math';
-import { buildPoints } from '@/graphs/points';
+import { buildPoints, chartColumns } from '@/graphs/points';
 import { STAT_IDS, type StatId } from '@/stats/catalog';
 
 const pt = (id: number, x: number, y: number, z: number | null = null): ChartPoint => ({ id, name: `P${id}`, x, y, z });
@@ -129,5 +129,17 @@ describe('buildPoints', () => {
     expect(buildPoints(players, 'age', 'pts', null).map((p) => p.id)).toEqual([1, 3]);
     expect(buildPoints(players, 'age', 'pts', 'fg3_pct').map((p) => [p.id, p.z])).toEqual([[1, 40]]);
     expect(buildPoints(players, 'age', 'fg3_pct', null).map((p) => p.id)).toEqual([1]);
+  });
+});
+
+describe('chart columns', () => {
+  it('lists each stat once, Y first, even when two axes share a stat', () => {
+    expect(chartColumns('age', 'pts', 'reb')).toEqual([
+      { stat: 'pts', axis: 'y' },
+      { stat: 'age', axis: 'x' },
+      { stat: 'reb', axis: 'z' },
+    ]);
+    expect(chartColumns('pts', 'pts', null)).toEqual([{ stat: 'pts', axis: 'y' }]);
+    expect(chartColumns('age', 'pts', 'pts').map((c) => c.stat)).toEqual(['pts', 'age']);
   });
 });

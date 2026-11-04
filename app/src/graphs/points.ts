@@ -50,6 +50,25 @@ export function buildPoints(
   return out;
 }
 
+export type Axis = 'x' | 'y' | 'z';
+
+/**
+ * The stats on a chart in reading order (Y, then X, then color), each once.
+ * The same stat can sit on two axes; lists keyed by stat must not repeat it.
+ */
+export function chartColumns(x: StatId, y: StatId, z: StatId | null): { stat: StatId; axis: Axis }[] {
+  const out: { stat: StatId; axis: Axis }[] = [];
+  const candidates: [StatId | null, Axis][] = [
+    [y, 'y'],
+    [x, 'x'],
+    [z, 'z'],
+  ];
+  for (const [stat, axis] of candidates) {
+    if (stat && !out.some((c) => c.stat === stat)) out.push({ stat, axis });
+  }
+  return out;
+}
+
 /** Why qualified players are missing from a chart, for its caption. */
 export function leftOut(
   players: readonly Player[],
