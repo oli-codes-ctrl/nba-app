@@ -17,7 +17,7 @@ from typing import Any
 
 from . import config
 from .aggregate import SeasonLine, attempt_minimums, attempts, fold_name
-from .metrics import LOWER_IS_BETTER, PERCENTILE_STATS, V1_ONLY_STATS, compute_stats, v1_stats
+from .metrics import LOWER_IS_BETTER, PERCENTILE_STATS, V1_ONLY_STATS, compute_ranges, compute_stats, v1_stats
 from .percentiles import compute_percentiles
 from .samples import (
     BetaPrior,
@@ -83,10 +83,8 @@ def build_player_records(
     other shares and per-100 stats."""
     if priors is None:
         priors = fit_shrinkage(lines)
-    stats = {
-        ln.pid: compute_stats(ln, player_context(teams, ln.teams) if teams else None)
-        for ln in lines
-    }
+    contexts = {ln.pid: player_context(teams, ln.teams) if teams else None for ln in lines}
+    stats = {ln.pid: compute_stats(ln, contexts[ln.pid]) for ln in lines}
     qualified = {ln.pid for ln in lines if ln.qualified}
     att = {ln.pid: attempts(ln) for ln in lines}
     # Shooting percentages are ranked only among players with enough attempts.
@@ -129,6 +127,10 @@ def build_player_records(
             if interval is not None:
                 # Whole percentages: a range this wide has no meaningful tenths.
                 ci[stat] = [round(interval[0]), round(interval[1])]
+        if ln.qualified:
+            # Counts, points, efficiency and shares: only ranked players
+            # need them (rank bands and gated insights in the app).
+            ci.update(compute_ranges(ln, contexts[ln.pid]))
         if ci:
             rec["ci"] = ci
         adj: dict[str, float] = {}
@@ -189,6 +191,9 @@ def v1_records(
     out = []
     for r in records:
         rec = {**r, "s": {**r["s"], **extra[r["id"]]}}
+        if "ci" in r:
+            # Old clients word every range as a shooting percentage.
+            rec["ci"] = {k: v for k, v in r["ci"].items() if k in PROPORTIONS}
         if r["q"]:
             rec["pct"] = {**r["pct"], **pct[r["id"]]}
             rec["rank"] = {**r["rank"], **rank[r["id"]]}

@@ -6,8 +6,11 @@ the inputs (season totals, per-game averages, team context) and rounds.
 
 from __future__ import annotations
 
+import math
+
 from . import formulas as f
 from .aggregate import SeasonLine
+from .samples import made_points_variance, normal_interval, points_sd, poisson_interval, wilson
 from .teamstats import Context
 
 # Every stat id published under player["s"]. Percent stats are 0-100.
@@ -72,23 +75,103 @@ def compute_stats(line: SeasonLine, ctx: Context | None = None) -> dict[str, flo
     for k in PER_MINUTE:
         s[f"{k}36"] = f.per_36(t[k], mp)
 
-    team = ctx.own if ctx else None
-    opp = ctx.opp if ctx else None
-    tm_min = ctx.minutes if ctx else 0.0
-    poss = f.player_possessions(mp, ctx.poss, tm_min) if ctx else None
-    s.update({
-        "usg_pct": f.usg_pct(t, mp, team, tm_min) if team else None,
-        "ast_pct": f.ast_pct(t, mp, team, tm_min) if team else None,
-        "oreb_pct": f.oreb_pct(t, mp, team, opp, tm_min) if team and opp and has_split else None,
-        "dreb_pct": f.dreb_pct(t, mp, team, opp, tm_min) if team and opp and has_split else None,
-        "reb_pct": f.reb_pct(t, mp, team, opp, tm_min) if team and opp else None,
-        "stl_pct": f.stl_pct(t, mp, ctx.poss, tm_min) if ctx else None,
-        "blk_pct": f.blk_pct(t, mp, opp, tm_min) if opp else None,
-    })
+    poss = f.player_possessions(mp, ctx.poss, ctx.minutes) if ctx else None
+    s.update(share_stats(t, mp, ctx))
     for k in PER_MINUTE:
         s[f"{k}100"] = f.per_100(t[k], poss)
 
     return {k: (round(v, 1) if isinstance(v, float) else v) for k, v in ((k, s[k]) for k in STAT_IDS)}
+
+
+def share_stats(t: f.Totals, mp: float, ctx: Context | None) -> dict[str, float | None]:
+    """Usage and the other shares of team or opponent plays while he is on
+    the court. None without team context, or without the rebound split for
+    the offensive and defensive rebound shares."""
+    if ctx is None:
+        return dict.fromkeys(("usg_pct", *SHARE_COUNTS))
+    team, opp, tm_min = ctx.own, ctx.opp, ctx.minutes
+    has_split = "oreb" in t and "dreb" in t
+    return {
+        "usg_pct": f.usg_pct(t, mp, team, tm_min),
+        "ast_pct": f.ast_pct(t, mp, team, tm_min),
+        "oreb_pct": f.oreb_pct(t, mp, team, opp, tm_min) if has_split else None,
+        "dreb_pct": f.dreb_pct(t, mp, team, opp, tm_min) if has_split else None,
+        "reb_pct": f.reb_pct(t, mp, team, opp, tm_min),
+        "stl_pct": f.stl_pct(t, mp, ctx.poss, tm_min),
+        "blk_pct": f.blk_pct(t, mp, opp, tm_min),
+    }
+
+
+# Counts with a published range per game, per 36 and per 100 (Poisson).
+RANGE_COUNTS = ("reb", "oreb", "dreb", "ast", "stl", "blk", "tov", "fg3m")
+# Each share stat and the count it is a share of (Wilson on the opportunities).
+SHARE_COUNTS = {
+    "ast_pct": "ast", "oreb_pct": "oreb", "dreb_pct": "dreb", "reb_pct": "reb",
+    "stl_pct": "stl", "blk_pct": "blk",
+}
+
+
+def compute_ranges(line: SeasonLine, ctx: Context | None = None) -> dict[str, list[float]]:
+    """95% ranges for the long-run value of counting stats, points, true
+    shooting and effective field goal percentage, and the shares of team
+    plays, in each stat's units rounded to 0.1. The models are in samples.py;
+    minutes, games and team context are held fixed."""
+    t = line.totals
+    gp, mp = line.gp, line.minutes
+    poss = f.player_possessions(mp, ctx.poss, ctx.minutes) if ctx else None
+    out: dict[str, list[float]] = {}
+
+    def put(stat: str, lo: float | None, hi: float | None) -> None:
+        if lo is not None and hi is not None:
+            out[stat] = [round(max(0.0, lo), 1), round(hi, 1)]
+
+    def scaled(stat: str, lo_total: float, hi_total: float) -> None:
+        # Per game, per 36 and per 100 are the season total over a fixed
+        # exposure, so the range of the total scales the same way.
+        if gp > 0:
+            put(stat, lo_total / gp, hi_total / gp)
+        if stat in PER_MINUTE:
+            put(f"{stat}36", f.per_36(lo_total, mp), f.per_36(hi_total, mp))
+            put(f"{stat}100", f.per_100(lo_total, poss), f.per_100(hi_total, poss))
+
+    for k in RANGE_COUNTS:
+        if k in t:
+            scaled(k, *poisson_interval(t[k]))
+
+    twos_made = t["fgm"] - t["fg3m"]
+    twos = t["fga"] - t["fg3a"]
+    scaled("pts", *normal_interval(t["pts"], points_sd(twos_made, t["fg3m"], t["ftm"])))
+
+    # Shooting efficiency given his attempts: luck is in the makes.
+    field_var = made_points_variance(twos_made, twos, 2) + made_points_variance(t["fg3m"], t["fg3a"], 3)
+    if t["fga"] > 0:
+        lo, hi = normal_interval(2 * twos_made + 3 * t["fg3m"], math.sqrt(field_var))
+        put("efg_pct", f.ratio(lo, 2 * t["fga"], 100), f.ratio(hi, 2 * t["fga"], 100))
+    shots = t["fga"] + f.FT_POSSESSION_FACTOR * t["fta"]
+    if shots > 0:
+        sd = math.sqrt(field_var + made_points_variance(t["ftm"], t["fta"], 1))
+        lo, hi = normal_interval(t["pts"], sd)
+        put("ts_pct", f.ratio(lo, 2 * shots, 100), f.ratio(hi, 2 * shots, 100))
+
+    # Turnover percentage: his turnovers out of his own plays.
+    plays = shots + t["tov"]
+    if plays > 0:
+        put("tov_pct", *(wilson(t["tov"], plays) or (None, None)))
+
+    if ctx is not None:
+        shares = share_stats(t, mp, ctx)
+        for stat, count in SHARE_COUNTS.items():
+            if count not in t:
+                continue
+            # A share is linear in its count, so the share of a single one
+            # gives the opportunities: 100 / (percent per event).
+            one = share_stats({**t, count: 1}, mp, ctx)[stat]
+            if one:
+                put(stat, *(wilson(t[count], 100 / one) or (None, None)))
+        usage = shares["usg_pct"]
+        if usage and plays > 0:
+            put("usg_pct", *(wilson(plays, 100 * plays / usage) or (None, None)))
+    return out
 
 
 def v1_stats(line: SeasonLine) -> dict[str, float | None]:

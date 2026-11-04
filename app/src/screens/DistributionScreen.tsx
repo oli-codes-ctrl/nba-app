@@ -155,6 +155,7 @@ export default function DistributionScreen() {
           <AppText variant="caption" color="textSecondary">
             Median {formatStat(stat, quantile(sorted, 0.5))}; the shaded band holds the middle half (
             {formatStat(stat, quantile(sorted, 0.25))} to {formatStat(stat, quantile(sorted, 0.75))}).{' '}
+            {band ? 'The bracket is where his long-run number likely sits (95%), allowing for luck. ' : ''}
             {def.neutral
               ? 'A role, not a ranking: neither end is better.'
               : def.lowerIsBetter

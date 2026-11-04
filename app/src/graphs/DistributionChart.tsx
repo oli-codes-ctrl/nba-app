@@ -13,7 +13,7 @@ import { extent, nearestIndex, paddedDomain, scale, tickLabel, ticks } from './m
 const FONT = Platform.OS === 'web' ? 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' : undefined;
 const PAD = { left: 12, right: 12, top: 28, bottom: 56 };
 const BAND = 150;
-const RANGE_LABEL = 'Likely skill range';
+const RANGE_LABEL = 'His likely range';
 
 export type DistributionDot = { id: number; value: number; color: string };
 

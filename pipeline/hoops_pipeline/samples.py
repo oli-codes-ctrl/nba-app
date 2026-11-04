@@ -26,6 +26,33 @@ Sources
 When a stat has a sample-adjusted estimate, its range is the matching
 posterior interval, so the estimate always sits inside its range. Without
 one (3P% early in a season) the range is the Wilson interval.
+
+Ranges for other stats (qualified players only; metrics.compute_ranges
+picks the inputs). Minutes, games and team context are held fixed, and only
+the player's own events are treated as luck:
+- Counts (rebounds, assists, steals, blocks, turnovers, threes made) per
+  game, per 36 and per 100: the 95% Poisson interval for the season count
+  [Garwood], by Byar's approximation [Byar], scaled like the stat.
+- Points come in ones, twos and threes, so a Poisson count does not fit.
+  Each made shot type is treated as its own Poisson count (a compound
+  Poisson sum), whose variance is the sum of value squared times makes
+  [Ross]; the range is the normal interval around the season total.
+- True shooting and effective field goal percentage, given his attempts:
+  makes of each shot type are binomial, so the variance of the points they
+  produce is the sum of value squared times n p (1 - p), with p adjusted as
+  in [Agresti-Coull] so a 0-for or perfect sample still has some spread.
+- Shares of team or opponent plays while he is on the court (usage, assist,
+  turnover, rebound, steal and block percentage): Wilson intervals on his
+  count out of those opportunities.
+
+- [Garwood] F. Garwood, "Fiducial limits for the Poisson distribution",
+  Biometrika 28 (1936).
+- [Byar] Byar's approximation, as given in N. Breslow and N. Day,
+  "Statistical Methods in Cancer Research, Vol. II" (1987). The upper limit
+  is close to exact at any count; the lower one is within about 1% from a
+  count of 5 up (a few percent low for counts of 2-4).
+- [Ross] S. Ross, "Introduction to Probability Models", compound Poisson
+  random variables: Var = rate * E[X^2].
 """
 
 from __future__ import annotations
@@ -42,8 +69,9 @@ MIN_STRENGTH = 2.0
 MAX_STRENGTH = 2000.0
 
 
-def wilson(makes: int, attempts: int, z: float = Z95) -> tuple[float, float] | None:
-    """95% Wilson score interval for makes / attempts, in percent."""
+def wilson(makes: float, attempts: float, z: float = Z95) -> tuple[float, float] | None:
+    """95% Wilson score interval for makes / attempts, in percent. Works for
+    non-whole opportunity counts too (estimated team plays while on court)."""
     if attempts <= 0:
         return None
     n = attempts
@@ -176,3 +204,37 @@ def separates_shooters(prior: BetaPrior) -> bool:
 def shrink(makes: int, attempts: int, prior: BetaPrior) -> float:
     """Sample-adjusted estimate of a player's true rate, in percent."""
     return 100 * (makes + prior.a) / (attempts + prior.strength)
+
+
+# ------------------------------------------------- ranges for other stats
+
+
+def poisson_interval(count: float, z: float = Z95) -> tuple[float, float]:
+    """95% range for the long-run mean of a count over the same exposure
+    (his season's games or minutes) [Garwood], by Byar's approximation [Byar].
+    A count of 0 still has an upper end: no steals yet is not proof of none."""
+    k = max(0.0, count)
+    lower = 0.0 if k == 0 else k * (1 - 1 / (9 * k) - z / (3 * math.sqrt(k))) ** 3
+    k1 = k + 1
+    upper = k1 * (1 - 1 / (9 * k1) + z / (3 * math.sqrt(k1))) ** 3
+    return max(0.0, lower), upper
+
+
+def normal_interval(value: float, sd: float, z: float = Z95) -> tuple[float, float]:
+    """value +/- z standard deviations, floored at zero."""
+    return max(0.0, value - z * sd), value + z * sd
+
+
+def points_sd(twos_made: float, threes_made: float, free_throws_made: float) -> float:
+    """Standard deviation of a season's points, treating each made shot type
+    as a Poisson count (a compound Poisson sum) [Ross]."""
+    return math.sqrt(4 * twos_made + 9 * threes_made + free_throws_made)
+
+
+def made_points_variance(makes: float, attempts: float, value: float) -> float:
+    """Variance of the points from one shot type given its attempts: binomial
+    makes, with p adjusted toward 50% as in [Agresti-Coull]."""
+    if attempts <= 0:
+        return 0.0
+    p = (makes + 2) / (attempts + 4)
+    return value * value * attempts * p * (1 - p)

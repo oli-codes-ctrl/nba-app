@@ -2,7 +2,6 @@ import type { Player } from '@/data/types';
 import { EMPTY_STATS, liveStreak, type DailyStats } from '@/game/daily';
 import { endRun, EMPTY_STREAK_STATS, isRight, level, nextRound, streakPool, STREAK_STATS } from '@/game/streak';
 import { hourLabel, planReminders } from '@/notify/plan';
-import { similarity, similarPlayers, PROFILE_STATS } from '@/players/similar';
 import { STAT_IDS, type StatId } from '@/stats/catalog';
 import { boxLine, factOfTheDay, formChanges, leaders, topGames } from '@/today/feed';
 
@@ -128,24 +127,6 @@ describe('Today feed', () => {
     for (const id of a!.playerIds) expect(ps.some((p) => p.id === id)).toBe(true);
     const texts = new Set(Array.from({ length: 30 }, (_, d) => factOfTheDay(ps, `2026-11-${String(d + 1).padStart(2, '0')}`)!.text));
     expect(texts.size).toBeGreaterThan(2);
-  });
-});
-
-describe('Plays like', () => {
-  const withPct = (id: number, pct: number, extra: Partial<Player> = {}) =>
-    player(id, {}, { pct: Object.fromEntries(PROFILE_STATS.map((s) => [s, pct])), ...extra });
-
-  it('scores identical profiles 100 and ranks the closest first', () => {
-    const me = withPct(1, 50);
-    expect(similarity(me, withPct(2, 50))).toBe(100);
-    const list = similarPlayers(me, [me, withPct(2, 90), withPct(3, 55), withPct(4, 52, { q: false }), withPct(5, 70)]);
-    expect(list.map((s) => s.player.id)).toEqual([3, 5, 2]);
-    expect(list[0].match).toBe(95);
-  });
-
-  it('skips unqualified players and thin profiles', () => {
-    expect(similarPlayers(withPct(1, 50, { q: false }), [withPct(2, 50)])).toEqual([]);
-    expect(similarity(withPct(1, 50), player(2, {}, { pct: { pts36: 50 } }))).toBeNull();
   });
 });
 

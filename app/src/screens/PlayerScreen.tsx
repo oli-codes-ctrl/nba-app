@@ -14,7 +14,10 @@ import { useFollows } from '@/follow/FollowProvider';
 import { betterThan, formatDate, formatStat, rankText } from '@/lib/format';
 import { tapFeedback } from '@/lib/haptics';
 import { useLinks } from '@/lib/usePlayerLink';
-import { similarPlayers } from '@/players/similar';
+import { shortName } from '@/graphs/analysis';
+import { cardInsights, cardRows } from '@/players/card';
+import { PercentileCard } from '@/players/PercentileCard';
+import { comps, styleVectors } from '@/players/similar';
 import { attemptsText, sampleFor, type Sample } from '@/stats/samples';
 import { groupNoun, positionGroup, positionName } from '@/stats/views';
 import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatGroup, type StatId } from '@/stats/catalog';
@@ -31,12 +34,25 @@ export default function PlayerScreen() {
   const openPlayer = links.player;
   const player = playerById.get(Number(id));
   const all = snapshot?.players.players;
-  const similar = useMemo(() => (player && all ? similarPlayers(player, all, 3) : []), [player, all]);
+  const rules = snapshot?.players.minAttempts;
+  const vectors = useMemo(() => (all ? styleVectors(all, rules) : null), [all, rules]);
+  const similar = useMemo(
+    () => (player && all && vectors ? comps(player, all, rules, 3, vectors) : []),
+    [player, all, rules, vectors],
+  );
   // Roughly how many games teams have played: the most any player has.
   const mostGames = useMemo(() => (all ? Math.max(0, ...all.map((p) => p.s.gp ?? 0)) : 0), [all]);
   // Percentiles against his position by default: comparing a center's
   // assists with every guard's says little.
   const [pool, setPool] = useState<'pos' | 'all'>('pos');
+  const group = player ? positionGroup(player.pos) : null;
+  const byPosition = pool === 'pos' && group != null && player?.pctPos != null;
+  const cardGroup = byPosition ? group : null;
+  const rows = useMemo(
+    () => (player?.q && all ? cardRows(player, all, cardGroup) : []),
+    [player, all, cardGroup],
+  );
+  const insights = useMemo(() => cardInsights(rows), [rows]);
 
   if (!snapshot) return <FirstLoad shape="page" />;
   if (!player) {
@@ -47,10 +63,7 @@ export default function PlayerScreen() {
     );
   }
 
-  const rules = snapshot.players.minAttempts;
   const earlierTeams = player.teams.slice(1);
-  const group = positionGroup(player.pos);
-  const byPosition = pool === 'pos' && group != null && player.pctPos != null;
   const noun = byPosition && group ? groupNoun(group) : 'players';
   const ranks = byPosition
     ? { pct: player.pctPos, rank: player.rankPos, size: snapshot.players.poolSizePos?.[group!] ?? {} }
@@ -109,6 +122,47 @@ export default function PlayerScreen() {
         <Summary label="Minutes" value={formatStat('mpg', player.s.mpg)} />
       </View>
 
+      {!player.q && (
+        <AppText variant="small" color="textSecondary">
+          Not enough games or minutes yet to rank against qualified players. Season averages are shown
+          without percentiles.
+        </AppText>
+      )}
+      {player.q && mostGames > 0 && mostGames < EARLY_SEASON_GAMES && (
+        <AppText variant="small" color="textSecondary">
+          Early season: teams have played about {mostGames} games, so these ranks can swing a lot from night to
+          night.
+        </AppText>
+      )}
+
+      {player.q && group && player.pctPos && (
+        <View style={styles.poolRow}>
+          <AppText variant="caption" color="textSecondary">
+            Ranks compare him with
+          </AppText>
+          <Segmented
+            accessibilityLabel="Compare with"
+            options={[
+              { id: 'pos', label: groupNoun(group).replace(/^./, (c) => c.toUpperCase()) },
+              { id: 'all', label: 'All players' },
+            ]}
+            value={pool}
+            onChange={setPool}
+          />
+        </View>
+      )}
+
+      {player.q && rows.length > 0 && (
+        <PercentileCard
+          title={`How good is ${shortName(player.name)}, really?`}
+          poolText={`${ranks.size.pts ?? 0} qualified ${noun}`}
+          through={formatDate(snapshot.manifest.gamesThrough ?? snapshot.manifest.asOf)}
+          rows={rows}
+          insights={insights}
+          onOpen={(row) => links.stat(row.stat, player.id, byPosition && group ? group : 'all')}
+        />
+      )}
+
       <Pressable
         accessibilityRole="button"
         onPress={() => links.versus(player.id)}
@@ -161,58 +215,43 @@ export default function PlayerScreen() {
 
       {similar.length > 0 && (
         <View style={styles.group}>
-          <AppText variant="title">Plays like</AppText>
+          <AppText variant="title">Who’s he like?</AppText>
           <AppText variant="caption" color="textSecondary">
-            Closest statistical profile: scoring, boards and passing per 36 minutes, defense, shot diet and efficiency.
+            Closest style this season: usage, shot diet, efficiency, passing, boards and defense, each compared
+            with the league average. 100 means the same style.
           </AppText>
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
-            {similar.map(({ player: other, match }, i) => (
+            {similar.map(({ player: other, match, drivers }, i) => (
               <Pressable
                 key={other.id}
                 accessibilityRole="button"
-                accessibilityLabel={`${other.name}, ${Math.round(match)} percent match`}
+                accessibilityLabel={
+                  `${other.name}, ${Math.round(100 * match)} percent match` +
+                  (drivers.length ? `. Both: ${drivers.map((d) => d.text).join(', ')}` : '')
+                }
                 onPress={() => openPlayer(other.id)}
-                style={[styles.simRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
-                <AppText variant="bodyStrong" numberOfLines={1} style={styles.flex}>
-                  {other.name}
-                </AppText>
-                <TeamChip abbr={other.team} />
+                style={({ pressed }) => [
+                  styles.simRow,
+                  i > 0 && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
+                  pressed && { backgroundColor: colors.border },
+                ]}>
+                <Avatar name={other.name} team={other.team} size={36} />
+                <View style={styles.flex}>
+                  <AppText variant="bodyStrong" numberOfLines={1}>
+                    {other.name}
+                  </AppText>
+                  {drivers.length > 0 && (
+                    <AppText variant="caption" color="textSecondary" numberOfLines={2}>
+                      Both: {drivers.map((d) => d.text).join(' · ')}
+                    </AppText>
+                  )}
+                </View>
                 <AppText variant="number" style={styles.match}>
-                  {Math.round(match)}%
+                  {Math.round(100 * match)}
                 </AppText>
               </Pressable>
             ))}
           </View>
-        </View>
-      )}
-
-      {!player.q && (
-        <AppText variant="small" color="textSecondary">
-          Not enough games or minutes yet to rank against qualified players. Season averages are shown
-          without percentiles.
-        </AppText>
-      )}
-      {player.q && mostGames > 0 && mostGames < EARLY_SEASON_GAMES && (
-        <AppText variant="small" color="textSecondary">
-          Early season: teams have played about {mostGames} games, so these ranks can swing a lot from night to
-          night.
-        </AppText>
-      )}
-
-      {player.q && group && player.pctPos && (
-        <View style={styles.poolRow}>
-          <AppText variant="caption" color="textSecondary">
-            Ranks compare him with
-          </AppText>
-          <Segmented
-            accessibilityLabel="Compare with"
-            options={[
-              { id: 'pos', label: groupNoun(group).replace(/^./, (c) => c.toUpperCase()) },
-              { id: 'all', label: 'All players' },
-            ]}
-            value={pool}
-            onChange={setPool}
-          />
         </View>
       )}
 
@@ -361,7 +400,9 @@ function StatRow({
     : null;
   // Long-run skill: the 95% range, plus the sample-adjusted estimate when published.
   // Worded as skill, since a cold or hot start can sit outside it.
-  const ci = player.ci?.[def.id];
+  // Written out only for shot-based stats; other ranges show on the card
+  // and in the distribution view.
+  const ci = sample ? player.ci?.[def.id] : undefined;
   const adj = player.adj?.[def.id];
   const rangeLine = ci
     ? adj != null

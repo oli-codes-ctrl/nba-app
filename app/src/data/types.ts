@@ -49,7 +49,12 @@ export type Player = {
   /** Percentile and rank among qualified players at his position (G, F or C). */
   pctPos?: Partial<Record<StatId, number>>;
   rankPos?: Partial<Record<StatId, number>>;
-  /** 95% Wilson range, in whole percent, for makes-over-attempts stats. */
+  /**
+   * 95% range for the long-run value, in the stat's units. Shooting
+   * percentages (makes over attempts, whole percent) for every player; for
+   * qualified players also counts, points, TS%, eFG% and the team shares
+   * (0.1). See pipeline samples.py for the models.
+   */
   ci?: Partial<Record<StatId, [number, number]>>;
   /**
    * Sample-adjusted estimate (pulled toward the league rate by how few
