@@ -22,6 +22,8 @@ const palette = {
     scaleMid: '#F08C00',
     scaleHigh: '#2F9E44',
     scaleTrack: '#E4E6EA',
+    /** Bars for roles and volumes, where higher is neither good nor bad. */
+    scaleNeutral: '#898781',
     shadow: '#000000',
   },
   dark: {
@@ -39,6 +41,7 @@ const palette = {
     scaleMid: '#FCC419',
     scaleHigh: '#51CF66',
     scaleTrack: '#2A2E34',
+    scaleNeutral: '#898781',
     shadow: '#000000',
   },
 } as const;

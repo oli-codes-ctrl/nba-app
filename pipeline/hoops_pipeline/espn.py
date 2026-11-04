@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 
 BULK_STATE_FILE = "espn_bulk.json.gz"
 SPLIT_STATE_FILE = "rebound_splits.json"
+TEAM_STATE_FILE = "team_totals.json"
 
 # (category, ESPN stat name) -> our total key
 BULK_TOTALS = {
@@ -134,49 +135,89 @@ def fetch_byteam(client: JsonClient, season: int) -> dict[str, Any]:
     return raw
 
 
-def parse_team_feed(raw: dict[str, Any]) -> tuple[dict[str, int], float]:
-    """Return ({team: games played}, league total points) from the team feed."""
+# (category, ESPN stat name) -> our total key, for team and opponent totals.
+TEAM_TOTALS = {
+    ("general", "gamesPlayed"): "gp",
+    ("general", "rebounds"): "reb",
+    ("general", "fouls"): "pf",
+    ("offensive", "points"): "pts",
+    ("offensive", "fieldGoalsMade"): "fgm",
+    ("offensive", "fieldGoalsAttempted"): "fga",
+    ("offensive", "threePointFieldGoalsMade"): "fg3m",
+    ("offensive", "threePointFieldGoalsAttempted"): "fg3a",
+    ("offensive", "freeThrowsMade"): "ftm",
+    ("offensive", "freeThrowsAttempted"): "fta",
+    ("offensive", "offensiveRebounds"): "oreb",
+    ("offensive", "assists"): "ast",
+    ("offensive", "turnovers"): "tov",
+    ("defensive", "defensiveRebounds"): "dreb",
+    ("defensive", "steals"): "stl",
+    ("defensive", "blocks"): "blk",
+}
+OWN_SPLIT, OPPONENT_SPLIT = "0", "900"
+
+
+def parse_team_totals(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return {team: {"gp": games, "own": totals, "opp": opponents' totals}}."""
     names: dict[str, list[str]] = {}
     for cat in raw.get("categories", []):
         if cat.get("names"):
             names.setdefault(cat["name"], cat["names"])
-    for cat, stat in (("general", "gamesPlayed"), ("offensive", "points")):
+    for (cat, stat) in TEAM_TOTALS:
         if stat not in names.get(cat, []):
             raise EspnFormatError(f"ESPN team feed no longer has {cat}.{stat}")
-    games: dict[str, int] = {}
-    points = 0.0
+    out: dict[str, dict[str, Any]] = {}
     for entry in raw.get("teams", []):
         abbr = standard_abbr((entry.get("team") or {}).get("abbreviation"))
+        sides: dict[str, dict[str, float]] = {OWN_SPLIT: {}, OPPONENT_SPLIT: {}}
         for cat in entry.get("categories", []):
-            if str(cat.get("splitId")) != "0":
-                continue  # opponent and differential splits
-            values = dict(zip(names.get(cat["name"], []), cat.get("values", [])))
-            if cat["name"] == "general":
-                games[abbr] = int(values["gamesPlayed"] or 0)
-            elif cat["name"] == "offensive":
-                points += float(values["points"] or 0)
-    if len(games) != 30:
-        raise EspnFormatError(f"ESPN team feed has {len(games)} teams, expected 30")
-    return games, points
+            side = sides.get(str(cat.get("splitId")))
+            if side is None:
+                continue  # the differential split
+            for name, value in zip(names.get(cat["name"], []), cat.get("values", [])):
+                key = TEAM_TOTALS.get((cat["name"], name))
+                if key is not None:
+                    side[key] = float(value or 0)
+        own, opp = sides[OWN_SPLIT], sides[OPPONENT_SPLIT]
+        missing = [k for k in TEAM_TOTALS.values() if k not in own or (k != "gp" and k not in opp)]
+        if missing:
+            raise EspnFormatError(f"ESPN team feed is missing {missing} for {abbr}")
+        gp = int(own.pop("gp"))
+        opp.pop("gp", None)
+        out[abbr] = {"gp": gp, "own": own, "opp": opp}
+    return out
+
+
+def parse_team_feed(raw: dict[str, Any]) -> tuple[dict[str, int], float]:
+    """Return ({team: games played}, league total points) from the team feed."""
+    totals = parse_team_totals(raw)
+    if len(totals) != 30:
+        raise EspnFormatError(f"ESPN team feed has {len(totals)} teams, expected 30")
+    return {abbr: t["gp"] for abbr, t in totals.items()}, sum(t["own"]["pts"] for t in totals.values())
 
 
 def fetch_standings(client: JsonClient, season: int) -> dict[str, Any]:
     return client.get(config.ESPN_STANDINGS_URL, {"season": config.espn_year(season)})
 
 
-def parse_standings(raw: dict[str, Any]) -> dict[str, int]:
-    """Return {team: games played} (wins + losses) from the standings."""
-    games: dict[str, int] = {}
+def parse_standings(raw: dict[str, Any]) -> dict[str, dict[str, int]]:
+    """Return {team: {"w": wins, "l": losses}} from the standings."""
+    records: dict[str, dict[str, int]] = {}
     for group in raw.get("children", []):
         for entry in (group.get("standings") or {}).get("entries", []):
             stats = {s.get("name"): s.get("value") for s in entry.get("stats", [])}
             if stats.get("wins") is None or stats.get("losses") is None:
                 raise EspnFormatError("ESPN standings no longer have wins and losses")
             abbr = standard_abbr((entry.get("team") or {}).get("abbreviation"))
-            games[abbr] = int(stats["wins"]) + int(stats["losses"])
-    if len(games) != 30:
-        raise EspnFormatError(f"ESPN standings have {len(games)} teams, expected 30")
-    return games
+            records[abbr] = {"w": int(stats["wins"]), "l": int(stats["losses"])}
+    if len(records) != 30:
+        raise EspnFormatError(f"ESPN standings have {len(records)} teams, expected 30")
+    return records
+
+
+def standings_games(records: dict[str, dict[str, int]]) -> dict[str, int]:
+    """Games played (wins + losses) per team."""
+    return {abbr: r["w"] + r["l"] for abbr, r in records.items()}
 
 
 # ------------------------------------------------------ rebound split (core)
@@ -260,3 +301,19 @@ def load_bulk(state_dir: Path) -> dict[str, Any] | None:
 def load_splits(state_dir: Path) -> dict[str, list[int]]:
     path = state_dir / SPLIT_STATE_FILE
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def save_team_state(state_dir: Path, totals: dict[str, dict[str, Any]],
+                    records: dict[str, dict[str, int]]) -> None:
+    state_dir.mkdir(parents=True, exist_ok=True)
+    (state_dir / TEAM_STATE_FILE).write_text(
+        json.dumps({"totals": totals, "records": records}, separators=(",", ":"), sort_keys=True),
+        encoding="utf-8")
+
+
+def load_team_state(state_dir: Path) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, int]]] | None:
+    path = state_dir / TEAM_STATE_FILE
+    if not path.exists():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return data["totals"], data["records"]

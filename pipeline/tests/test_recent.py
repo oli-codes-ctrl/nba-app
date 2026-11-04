@@ -1,7 +1,7 @@
 from datetime import date
 
 from hoops_pipeline import recent
-from hoops_pipeline.metrics import defensive_score, offensive_score
+from hoops_pipeline import formulas
 
 
 def _line(make_line, pid, gp, **totals):
@@ -29,7 +29,7 @@ def test_latest_game_is_the_difference_of_one_game(make_line):
     # Game Score is the Hollinger formula on that one game.
     t = {k: g[k] for k in ("pts", "fgm", "fga", "fta", "ftm", "ast", "tov", "stl", "blk")}
     t.update(oreb=1, dreb=4, pf=2)
-    assert g["game_score"] == round(offensive_score(t) + defensive_score(t), 1)
+    assert g["game_score"] == round(formulas.game_score(t), 1)
 
 
 def test_two_games_since_last_run_is_not_a_single_game(make_line):

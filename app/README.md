@@ -14,7 +14,7 @@ Scan the QR code with Expo Go on your iPhone.
 ## Test against local data
 
 ```sh
-EXPO_PUBLIC_DATA_URL=http://localhost:8130/v1/ npx expo start
+EXPO_PUBLIC_DATA_URL=http://localhost:8130/v2/ npx expo start
 ```
 
 Serve the pipeline's `--out` folder at that address with CORS allowed.

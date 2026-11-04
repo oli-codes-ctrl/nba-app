@@ -20,9 +20,11 @@ def _load(name):
 
 def test_standings_and_team_feed_parse_all_30_teams():
     # Both fixtures were captured from ESPN at the same moment (2026-11-04).
-    standings = espn.parse_standings(_load("espn_standings_sample.json"))
+    records = espn.parse_standings(_load("espn_standings_sample.json"))
+    standings = espn.standings_games(records)
     games, points = espn.parse_team_feed(_load("espn_byteam_sample.json"))
     assert len(standings) == 30 and len(games) == 30
+    assert records["DAL"]["w"] + records["DAL"]["l"] == 7
     assert standings == games
     assert standings["DAL"] == 7 and standings["GSW"] == 8  # GS mapped to GSW
     assert points == 24266  # equals the players' points at the same moment
@@ -151,14 +153,23 @@ def test_nightly_publishes_games_through_yesterday(tmp_path, espn_fake):
     state.mkdir()
     (state / "totals_history.json").write_text("{}", encoding="utf-8")  # legacy file
     assert _run(tmp_path, espn_fake) == 0
-    out = tmp_path / "out" / "v1"
+    out = tmp_path / "out" / "v2"
     manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["gamesThrough"] == "2026-11-03" == manifest["asOf"]
+    assert manifest["schemaVersion"] == 2 and "teams" in manifest["files"]
+    teams = json.loads((out / manifest["files"]["teams"]).read_text(encoding="utf-8"))
+    assert len(teams["teams"]) == 30
+    # The /v1/ compatibility copy still carries the retired Off/Def scores.
+    v1 = json.loads((tmp_path / "out" / "v1" / "manifest.json").read_text(encoding="utf-8"))
+    v1_players = json.loads((tmp_path / "out" / "v1" / v1["files"]["players"]).read_text(encoding="utf-8"))
+    assert v1["schemaVersion"] == 1 and "teams" not in v1["files"]
+    assert all("off_score" in p["s"] for p in v1_players["players"])
     doc = json.loads((out / manifest["files"]["players"]).read_text(encoding="utf-8"))
     assert doc["minAttempts"]["fg3_pct"]["by"] == "fg3a"
     assert all("att" in p for p in doc["players"])
     assert json.loads((state / "published.json").read_text(encoding="utf-8")) == {"gamesThrough": "2026-11-03"}
     assert "2026-11-03" in recent.load_history(state)
+    assert espn.load_team_state(state) is not None
     assert not (state / "totals_history.json").exists()
 
 

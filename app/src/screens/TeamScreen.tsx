@@ -9,7 +9,8 @@ import { Section } from '@/components/Section';
 import { useData } from '@/data/DataProvider';
 import { updateCareer } from '@/game/storage';
 import { useTrophies } from '@/game/TrophyProvider';
-import { formatStat } from '@/lib/format';
+import type { TeamSeason } from '@/data/types';
+import { formatStat, ordinal } from '@/lib/format';
 import { usePlayerLink } from '@/lib/usePlayerLink';
 import { CATALOG } from '@/stats/catalog';
 import { roster, TEAM_LEADER_STATS, teamLeader } from '@/teams/team';
@@ -19,7 +20,7 @@ import { useColors } from '@/theme/useTokens';
 
 export default function TeamScreen() {
   const { abbr = '' } = useLocalSearchParams<{ abbr: string }>();
-  const { snapshot } = useData();
+  const { snapshot, teamByAbbr } = useData();
   const colors = useColors();
   const openPlayer = usePlayerLink();
   const { check } = useTrophies();
@@ -58,6 +59,8 @@ export default function TeamScreen() {
           {team.length} {team.length === 1 ? 'player' : 'players'} this season
         </AppText>
       </View>
+
+      {teamByAbbr.get(abbr) && <AtAGlance season={teamByAbbr.get(abbr)!} teams={teamByAbbr.size} />}
 
       {team.length === 0 ? (
         <AppText color="textSecondary">No players on this team in today’s data.</AppText>
@@ -126,6 +129,57 @@ export default function TeamScreen() {
   );
 }
 
+/** Signed to one decimal: "+2.1", "-3.4". */
+function signed(v: number): string {
+  return `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(1)}`;
+}
+
+function AtAGlance({ season, teams }: { season: TeamSeason; teams: number }) {
+  const colors = useColors();
+  const expectedW = season.pyth_w == null ? null : Math.round(season.pyth_w);
+  const rank = (stat: 'net' | 'ortg' | 'drtg') => {
+    const r = season.rank[stat];
+    return r == null ? '' : `${ordinal(r)} of ${teams}`;
+  };
+  return (
+    <View style={styles.glance}>
+      <View style={[styles.grid, { backgroundColor: colors.surface }]}>
+        <Tile
+          label="Record"
+          value={season.w != null && season.l != null ? `${season.w}–${season.l}` : '–'}
+          note={expectedW != null ? `Point differential says ${expectedW}–${season.gp - expectedW}` : ''}
+        />
+        <Tile label="Net rating" value={season.net == null ? '–' : signed(season.net)} note={rank('net')} />
+        <Tile label="Offense" value={season.ortg == null ? '–' : season.ortg.toFixed(1)} note={rank('ortg')} />
+        <Tile label="Defense" value={season.drtg == null ? '–' : season.drtg.toFixed(1)} note={rank('drtg')} />
+      </View>
+      <AppText variant="caption" color="textSecondary">
+        Offense and defense are points scored and allowed per 100 possessions, so fast and slow teams compare
+        fairly. Net rating is the gap.
+        {season.pace != null
+          ? ` They play at ${season.pace.toFixed(1)} possessions a game (${ordinal(season.rank.pace ?? 0)} fastest).`
+          : ''}
+      </AppText>
+    </View>
+  );
+}
+
+function Tile({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <View style={styles.tile} accessible accessibilityLabel={`${label}: ${value}. ${note}`}>
+      <AppText variant="caption" color="textSecondary" style={styles.tileLabel}>
+        {label.toUpperCase()}
+      </AppText>
+      <AppText variant="title" style={styles.tabular}>
+        {value}
+      </AppText>
+      <AppText variant="caption" color="textSecondary" numberOfLines={2}>
+        {note}
+      </AppText>
+    </View>
+  );
+}
+
 function Num({ value, label }: { value: string; label: string }) {
   return (
     <View style={styles.num}>
@@ -142,6 +196,10 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   tabular: { fontVariant: ['tabular-nums'] },
   hero: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.xs, borderWidth: StyleSheet.hairlineWidth },
+  glance: { gap: spacing.sm },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', borderRadius: radius.lg, paddingVertical: spacing.sm },
+  tile: { width: '50%', paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, gap: 2 },
+  tileLabel: { fontWeight: '700', letterSpacing: 0.8 },
   kicker: { fontWeight: '700', letterSpacing: 0.8 },
   leaderGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   leader: { width: '48.5%', borderRadius: radius.lg, padding: spacing.md, gap: 2, flexGrow: 1 },

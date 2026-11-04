@@ -390,7 +390,7 @@ function SelectedCard({
             </View>
             {pct != null && (
               <View style={styles.cardStatBottom}>
-                <PercentileBar value={betterThan(id, pct)} />
+                <PercentileBar value={betterThan(id, pct)} neutral={CATALOG[id].neutral} />
                 <AppText variant="caption" color="textSecondary" style={styles.rank}>
                   {rank != null && pool ? rankText(id, rank, pool) : ''}
                 </AppText>

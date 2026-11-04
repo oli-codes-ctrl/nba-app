@@ -3,11 +3,13 @@ import type { Player } from '@/data/types';
 import { CATALOG, type StatId } from '@/stats/catalog';
 import { hasSample, type AttemptRules } from '@/stats/samples';
 
+/** Stats where more (or fewer, for turnovers) is plainly better. Usage is a role, not a win. */
 export const VERSUS_STATS: readonly StatId[] = [
-  'game_score', 'off_score', 'def_score',
+  'game_score',
   'pts', 'reb', 'ast', 'stl', 'blk', 'tov',
   'fg3m', 'fg_pct', 'fg3_pct', 'ft_pct', 'ts_pct',
-  'pts36', 'ast36',
+  'ast_pct', 'reb_pct',
+  'pts100', 'ast100',
 ];
 
 export type Side = 'a' | 'b';

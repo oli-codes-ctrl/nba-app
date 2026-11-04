@@ -14,7 +14,7 @@ import { tapFeedback } from '@/lib/haptics';
 import { useLinks } from '@/lib/usePlayerLink';
 import { similarPlayers } from '@/players/similar';
 import { attemptsText, sampleFor, type Sample } from '@/stats/samples';
-import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatId } from '@/stats/catalog';
+import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatGroup, type StatId } from '@/stats/catalog';
 import { teamInfo } from '@/theme/teams';
 import { radius, spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
@@ -193,6 +193,9 @@ export default function PlayerScreen() {
           {group.note && (
             <AppText variant="caption" color="textSecondary">
               {group.note}
+              {TEAM_BASED_GROUPS.has(group.id) && earlierTeams.length > 0
+                ? ' Traded this season, so these use the average of his teams.'
+                : ''}
             </AppText>
           )}
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
@@ -219,6 +222,8 @@ export default function PlayerScreen() {
 }
 
 const RECENT_STATS: readonly StatId[] = ['pts', 'reb', 'ast', 'fg3m', 'ts_pct'];
+/** Groups measured against team totals: a traded player gets the average of his teams. */
+const TEAM_BASED_GROUPS: ReadonlySet<StatGroup> = new Set<StatGroup>(['rates', 'per100']);
 /** Below this many team games, the page warns that ranks are volatile. */
 const EARLY_SEASON_GAMES = 20;
 
@@ -314,7 +319,9 @@ function StatRow({
       accessible
       accessibilityLabel={
         `${def.label}: ${formatStat(def.id, player.s[def.id])}` +
-        (better == null ? '' : `, better than ${Math.round(better)} percent of qualified players`) +
+        (better == null
+          ? ''
+          : `, ${def.neutral ? 'higher' : 'better'} than ${Math.round(better)} percent of qualified players`) +
         (waiting ? ', not ranked yet' : '') +
         (sampleLine ? `. ${sampleLine}` : '')
       }>
@@ -329,7 +336,7 @@ function StatRow({
       {(better != null || waiting) && (
         <View style={styles.statBottom}>
           {better != null ? (
-            <PercentileBar value={better} />
+            <PercentileBar value={better} neutral={def.neutral} />
           ) : (
             <View style={[styles.emptyTrack, { backgroundColor: colors.scaleTrack }]} />
           )}

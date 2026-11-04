@@ -12,7 +12,7 @@ import {
 
 import type { DataSource } from './DataSource';
 import { createRemoteDataSource } from './remote';
-import type { Player, Snapshot } from './types';
+import type { Player, Snapshot, TeamSeason } from './types';
 
 type DataState = {
   snapshot: Snapshot | null;
@@ -22,6 +22,7 @@ type DataState = {
   error: string | null;
   refresh: () => Promise<void>;
   playerById: ReadonlyMap<number, Player>;
+  teamByAbbr: ReadonlyMap<string, TeamSeason>;
 };
 
 const DataContext = createContext<DataState | null>(null);
@@ -76,9 +77,14 @@ export function DataProvider({ source, children }: { source?: DataSource; childr
     [snapshot],
   );
 
+  const teamByAbbr = useMemo(
+    () => new Map((snapshot?.teams.teams ?? []).map((t) => [t.abbr, t])),
+    [snapshot],
+  );
+
   const value = useMemo(
-    () => ({ snapshot, stale, loading, error, refresh, playerById }),
-    [snapshot, stale, loading, error, refresh, playerById],
+    () => ({ snapshot, stale, loading, error, refresh, playerById, teamByAbbr }),
+    [snapshot, stale, loading, error, refresh, playerById, teamByAbbr],
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

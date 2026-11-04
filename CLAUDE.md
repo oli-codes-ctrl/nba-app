@@ -29,14 +29,14 @@ Design every screen as a senior design engineer would. Concretely:
 ## Layout
 - `pipeline/`: Python 3.12 package `hoops_pipeline`, managed with uv. Pulls ESPN season stats, computes derived stats, publishes JSON.
 - `app/`: Expo (TypeScript, expo-router). iOS first, plus a static web build. Built and submitted with EAS, no Mac.
-- `.github/workflows/nightly-data.yml`: tries the pipeline four times each morning (10:15-15:45 UTC) and publishes to the `gh-pages` branch under `/v1/` once ESPN has caught up. `nightly` exits 75 when ESPN is still behind (retry later) and 76 when those games are already published; only the last attempt fails loudly.
-- Pipeline state (last ESPN response, rebound splits, puzzle history, nightly totals, last published date) lives on the `pipeline-state` branch as one force-pushed commit. The app never reads it.
+- `.github/workflows/nightly-data.yml`: tries the pipeline four times each morning (10:15-15:45 UTC) and publishes to the `gh-pages` branch under `/v2/` (plus the `/v1/` compatibility copy) once ESPN has caught up. `nightly` exits 75 when ESPN is still behind (retry later) and 76 when those games are already published; only the last attempt fails loudly.
+- Pipeline state (last ESPN response, rebound splits, team totals and standings, puzzle history, nightly totals, last published date) lives on the `pipeline-state` branch as one force-pushed commit. The app never reads it.
 
 ## Data
 - Source: ESPN's public, unofficial, undocumented JSON feeds. No API key. The owner chose this over paid BallDontLie tiers; do not reintroduce paid sources without asking. The owner accepts the risk that ESPN's terms grant no republishing rights.
   - Bulk feed (`site.web.api.espn.com/.../statistics/byathlete`): one request returns every player's season totals, age, position (G/F/C only), debut year and team. Traded players come as one combined line, current team first in `teams`.
   - Core feed (`sports.core.api.espn.com/.../athletes/{id}/statistics`): one request per player, used for the offensive/defensive rebound split. Failures fall back to last night's split. It also carries games started, season plus/minus and ESPN's own usage/PER; use those only as test cross-checks, never as published metrics (formulas undocumented).
-  - Team totals (`.../statistics/byteam`, one request, own and opponent totals for all 30 teams) and standings (`site.api.espn.com/apis/v2/sports/basketball/nba/standings`, one request) currently feed the freshness gate.
+  - Team totals (`.../statistics/byteam`, one request, own and opponent totals for all 30 teams) and standings (`site.api.espn.com/apis/v2/sports/basketball/nba/standings`, one request) feed the freshness gate, team pages and every team-based player stat. Team totals are sums of player-credited stats (no team turnovers or team rebounds). ESPN publishes no team minutes: they are 240 per game times the league's overtime share.
   - Approved, not yet used: scoreboard (`site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD`, one per day) and game summaries (`.../summary?event={id}`, one per game: full box score with OREB/DREB and +/-, plus play-by-play with shot coordinates).
   - Not available: salaries, lineups/on-off, tracking data. Shot locations and clutch splits exist only via play-by-play (later).
   - Recent form currently comes from nightly season totals (`totals_history_v2.json` in pipeline state, keyed by games-through date): a single game since the previous snapshot becomes `g`; about a week back gives `r`. Box scores from game summaries replace this in milestone 9.
@@ -47,8 +47,10 @@ Design every screen as a senior design engineer would. Concretely:
 - Percentages come from season totals. Percentiles are empirical mid-rank over qualified players, computed in the pipeline. Never use a normal-distribution CDF.
 - Qualified = GP >= max(3, 20% of the most team games) and MPG >= 10.
 - Shooting percentages also need attempts before they rank (`ATTEMPT_MINIMUMS` in `config.py`, scaled to the season: max(floor, rate x most team games)). Players below it get no percentile for that stat and are left out of leaderboards, charts and head-to-head scoring. The app reads the rules from `minAttempts` and each player's `att` totals through `app/src/stats/samples.ts`.
-- Composites (until milestone 2 replaces them): Offensive Score and Defensive Score are the two halves of Hollinger Game Score and sum to it.
-- Published JSON is versioned (`/v1/`, `schemaVersion`). Any breaking field change bumps the version; keep the old version published until the app has switched.
+- Formulas: every one lives in `pipeline/hoops_pipeline/formulas.py` with its source (Basketball-Reference glossary, Oliver, Hollinger, Morey). Team context and team pages are in `teamstats.py`. Traded players come as one combined line, so their team-based stats (usage, the other shares, per-100) use the average of their teams scaled to one game; box scores in milestone 9 will make this exact.
+- Game Score (Hollinger) is the one composite. The old homemade Offensive/Defensive Score split is retired and survives only in `/v1/`.
+- Neutral stats (roles and volumes: usage, shot attempts, shot diet) are ranked but never colored as good or bad; `neutral` in the catalog.
+- Published JSON is versioned (`/v2/`, `schemaVersion` 2: players, puzzles and teams files). Any breaking field change bumps the version; keep the old version published until the app has switched. `/v1/` is still written as a compatibility copy in the old format; drop it once no client reads it (before the first App Store build at the latest).
 - Live stats are a future phase. All app reads go through the `DataSource` interface in `app/src/data/` so a live source can overlay in-progress games later.
 
 ## Conventions
@@ -66,7 +68,7 @@ Design every screen as a senior design engineer would. Concretely:
 ## Roadmap
 Foundations:
 1. [x] Trustworthy numbers: fresh data (retry until ESPN's totals include last night), "games through" date, attempt minimums for percentage stats, sample sizes shown.
-2. [ ] Team data + formulas module: team totals and standings, usage/AST%/TOV%/REB%, per-36 and per-100, team ratings and pace, drop the Off/Def split (schema v2), reference tests.
+2. [x] Team data + formulas module: team totals and standings, usage/AST%/TOV%/REB%, per-36 and per-100, team ratings and pace, drop the Off/Def split (schema v2), reference tests.
 3. [ ] Honest samples + position percentiles: Wilson ranges, shrinkage for low-volume shooting, G/F/C percentile pools, medians, leaderboard toggles.
 4. [ ] Design system, tabs (Explore / Players / Teams / Play) and search; cut Who Has More?
 5. [ ] Glossary and first-launch onboarding.
@@ -92,5 +94,5 @@ Cut: age curve, lineups/on-off, salaries, Who Has More?
 - Rebuild JSON from saved state without network: same with `build-only`.
 - App: `cd app && npx expo start` (scan the QR code with Expo Go)
 - App tests: `cd app && npx jest`
-- App against local data: serve the pipeline's `--out` folder with CORS, then `EXPO_PUBLIC_DATA_URL=http://localhost:PORT/v1/ npx expo start --web`.
+- App against local data: serve the pipeline's `--out` folder with CORS, then `EXPO_PUBLIC_DATA_URL=http://localhost:PORT/v2/ npx expo start --web`.
 - iOS build: `cd app && eas build -p ios --profile production`, then `eas submit -p ios`

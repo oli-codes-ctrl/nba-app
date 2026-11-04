@@ -73,7 +73,7 @@ def test_build_only_cli_end_to_end(tmp_path, bulk_sample):
     rc = main(["build-only", "--state", str(state), "--out", str(tmp_path / "out"),
                "--today", "2026-11-02", "--min-players", "3"])
     assert rc == 0
-    out = tmp_path / "out" / "v1"
+    out = tmp_path / "out" / "v2"
     manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
     players = json.loads((out / manifest["files"]["players"]).read_text(encoding="utf-8"))["players"]
     luka = next(p for p in players if p["name"] == "Luka Doncic")

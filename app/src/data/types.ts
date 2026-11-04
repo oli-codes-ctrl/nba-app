@@ -4,7 +4,8 @@
  */
 import type { StatId } from '@/stats/catalog';
 
-export const SCHEMA_VERSION = 1;
+/** 2: Off/Def scores retired, team context and the teams file added. */
+export const SCHEMA_VERSION = 2;
 
 export type Manifest = {
   schemaVersion: number;
@@ -18,7 +19,7 @@ export type Manifest = {
   source: string;
   playerCount: number;
   qualifiedCount: number;
-  files: { players: string; puzzles: string };
+  files: { players: string; puzzles: string; teams: string };
 };
 
 export type StatLine = Record<StatId, number | null>;
@@ -103,11 +104,53 @@ export type PuzzlesDoc = {
   puzzles: Puzzle[];
 };
 
+/** Team stats published per team, with league ranks (1 = best, or fastest for pace). */
+export type TeamStatId =
+  | 'ortg'
+  | 'drtg'
+  | 'net'
+  | 'pace'
+  | 'efg_pct'
+  | 'tov_pct'
+  | 'oreb_pct'
+  | 'ft_rate'
+  | 'fg3a_rate'
+  | 'opp_efg_pct'
+  | 'opp_tov_pct'
+  | 'dreb_pct'
+  | 'opp_ft_rate';
+
+/** One team's season. Formulas: pipeline/hoops_pipeline/formulas.py. */
+export type TeamSeason = Record<TeamStatId, number | null> & {
+  abbr: string;
+  gp: number;
+  w: number | null;
+  l: number | null;
+  /** Points for and against. */
+  pf: number;
+  pa: number;
+  poss: number | null;
+  /** Wins a point differential usually produces (Pythagorean expectation). */
+  pyth_w: number | null;
+  /** Wins above that expectation. */
+  luck: number | null;
+  rank: Partial<Record<TeamStatId, number>>;
+};
+
+export type TeamsDoc = {
+  schemaVersion: number;
+  season: number;
+  gamesThrough: string;
+  league: Partial<Record<TeamStatId, number | null>>;
+  teams: TeamSeason[];
+};
+
 /** Everything the app needs from one data refresh. */
 export type Snapshot = {
   manifest: Manifest;
   players: PlayersDoc;
   puzzles: PuzzlesDoc;
+  teams: TeamsDoc;
   /** When this device last fetched it (ISO time). */
   fetchedAt: string;
 };

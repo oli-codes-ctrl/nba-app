@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from .aggregate import SeasonLine
-from .metrics import defensive_score, offensive_score
+from . import formulas as f
 
 HISTORY_FILENAME = "totals_history_v2.json"
 # Keyed by run date, which mislabeled lagged data. Removed on the next save.
@@ -107,7 +107,7 @@ def _averages(d: dict[str, float]) -> dict[str, float | int | None]:
         **{k: round(per[k], 1) for k in ("pts", "reb", "ast", "stl", "blk", "fg3m", "tov")},
         "fg_pct": _pct(d["fgm"], d["fga"]),
         "ts_pct": _pct(d["pts"], 2 * (d["fga"] + 0.44 * d["fta"])),
-        "game_score": round(offensive_score(per) + defensive_score(per), 1),
+        "game_score": round(f.game_score(per), 1),
     }
 
 
@@ -115,7 +115,7 @@ def _game_line(d: dict[str, float]) -> dict[str, float | int]:
     line: dict[str, float | int] = {"mpg": round(d["min"])}
     line.update({k: int(d[k]) for k in ("pts", "reb", "ast", "stl", "blk", "tov",
                                          "fgm", "fga", "fg3m", "fg3a", "ftm", "fta")})
-    line["game_score"] = round(offensive_score(d) + defensive_score(d), 1)
+    line["game_score"] = round(f.game_score(d), 1)
     return line
 
 

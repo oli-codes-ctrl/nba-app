@@ -1,23 +1,24 @@
 import type { FetchFn, KeyValueStore } from '@/data/DataSource';
 import { CACHE_KEY, createRemoteDataSource, DataError } from '@/data/remote';
 
-const BASE = 'https://example.test/v1/';
+const BASE = 'https://example.test/v2/';
 
-function manifest(generatedAt: string, playersFile = 'players.aaa.json') {
+function manifest(generatedAt: string, playersFile = 'players.aaa.json', teamsFile = 'teams.aaa.json') {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     season: 2026,
     generatedAt,
     asOf: generatedAt.slice(0, 10),
     source: 'ESPN',
     playerCount: 1,
     qualifiedCount: 1,
-    files: { players: playersFile, puzzles: 'puzzles.json' },
+    files: { players: playersFile, puzzles: 'puzzles.json', teams: teamsFile },
   };
 }
 
-const playersDoc = { schemaVersion: 1, season: 2026, poolSize: {}, lowerIsBetter: ['pf', 'tov'], players: [] };
-const puzzlesDoc = { schemaVersion: 1, puzzles: [] };
+const playersDoc = { schemaVersion: 2, season: 2026, poolSize: {}, lowerIsBetter: ['pf', 'tov'], players: [] };
+const puzzlesDoc = { schemaVersion: 2, puzzles: [] };
+const teamsDoc = { schemaVersion: 2, season: 2026, gamesThrough: '2026-11-01', league: { ortg: 114 }, teams: [] };
 
 class MemoryStore implements KeyValueStore {
   data = new Map<string, string>();
@@ -69,14 +70,16 @@ describe('remote data source', () => {
     'manifest.json': manifest('2026-11-02T10:00:00+00:00'),
     'players.aaa.json': playersDoc,
     'puzzles.json': puzzlesDoc,
+    'teams.aaa.json': teamsDoc,
   };
 
   it('downloads all files on first launch and saves them', async () => {
     const { net, store, source } = setup({ ...initial });
     const { snapshot, stale } = await source.load();
     expect(stale).toBe(false);
-    expect(net.calls.sort()).toEqual(['manifest.json', 'players.aaa.json', 'puzzles.json']);
+    expect(net.calls.sort()).toEqual(['manifest.json', 'players.aaa.json', 'puzzles.json', 'teams.aaa.json']);
     expect(snapshot.manifest.asOf).toBe('2026-11-02');
+    expect(snapshot.teams.league.ortg).toBe(114);
     expect(store.data.has(CACHE_KEY)).toBe(true);
     expect(await source.cached()).toEqual(snapshot);
   });
@@ -88,6 +91,7 @@ describe('remote data source', () => {
     expect(byPath['manifest.json']).toBe(`v=${new Date('2026-11-02T12:00:00Z').getTime()}`);
     expect(byPath['puzzles.json']).toBe(`v=${encodeURIComponent('2026-11-02T10:00:00+00:00')}`);
     expect(byPath['players.aaa.json']).toBe('');
+    expect(byPath['teams.aaa.json']).toBe('');
   });
 
   it('only fetches the manifest when nothing changed', async () => {
@@ -96,6 +100,17 @@ describe('remote data source', () => {
     net.calls.length = 0;
     await source.load();
     expect(net.calls).toEqual(['manifest.json']);
+  });
+
+  it('downloads a new teams file only when its hash changes', async () => {
+    const { net, source } = setup({ ...initial });
+    await source.load();
+    net.calls.length = 0;
+    net.files['manifest.json'] = manifest('2026-11-03T10:00:00+00:00', 'players.aaa.json', 'teams.bbb.json');
+    net.files['teams.bbb.json'] = { ...teamsDoc, league: { ortg: 115 } };
+    const { snapshot } = await source.load();
+    expect(net.calls.sort()).toEqual(['manifest.json', 'puzzles.json', 'teams.bbb.json']);
+    expect(snapshot.teams.league.ortg).toBe(115);
   });
 
   it('skips the players file when its hash is unchanged', async () => {
@@ -134,7 +149,7 @@ describe('remote data source', () => {
   });
 
   it('rejects data from a different schema version', async () => {
-    const { source } = setup({ ...initial, 'manifest.json': { ...manifest('2026-11-02T10:00:00+00:00'), schemaVersion: 2 } });
+    const { source } = setup({ ...initial, 'manifest.json': { ...manifest('2026-11-02T10:00:00+00:00'), schemaVersion: 1 } });
     await expect(source.load()).rejects.toBeInstanceOf(DataError);
   });
 

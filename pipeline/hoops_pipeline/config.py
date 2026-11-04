@@ -5,7 +5,9 @@ from __future__ import annotations
 import os
 from datetime import date
 
-SCHEMA_VERSION = 1
+# /v2/ dropped the Offensive/Defensive Score and added team context. A /v1/
+# compatibility copy is still published (see publish.py).
+SCHEMA_VERSION = 2
 
 # ESPN's public (unofficial, undocumented) stats feeds. No key needed.
 ESPN_BULK_URL = (
@@ -42,6 +44,10 @@ ATTEMPT_MINIMUMS: dict[str, tuple[str, float, int]] = {
     "fg2_pct": ("fg2a", 2.0, 15),
     "fg3_pct": ("fg3a", 1.5, 10),
     "ft_pct": ("fta", 1.0, 10),
+    # Shot-diet and turnover rates share the field goal attempt rule.
+    "fg3a_rate": ("fga", 3.0, 20),
+    "fta_rate": ("fga", 3.0, 20),
+    "tov_pct": ("fga", 3.0, 20),
 }
 
 # Freshness gate. ESPN's stats feeds finish updating some hours after the

@@ -1,7 +1,8 @@
 import pytest
 
 from hoops_pipeline.aggregate import fold_name, mark_qualified
-from hoops_pipeline.metrics import compute_stats, defensive_score, offensive_score
+from hoops_pipeline import formulas
+from hoops_pipeline.metrics import compute_stats, v1_stats
 
 
 def test_percentages_come_from_totals(make_line):
@@ -18,12 +19,15 @@ def test_game_score_split_sums_to_hollinger():
     hollinger = (t["pts"] + 0.4 * t["fgm"] - 0.7 * t["fga"] - 0.4 * (t["fta"] - t["ftm"])
                  + 0.7 * t["oreb"] + 0.3 * t["dreb"] + t["stl"] + 0.7 * t["ast"]
                  + 0.7 * t["blk"] - 0.4 * t["pf"] - t["tov"])
-    assert offensive_score(t) + defensive_score(t) == pytest.approx(hollinger)
+    offense, defense = formulas.game_score_split(t)
+    assert offense + defense == pytest.approx(hollinger)
+    assert formulas.game_score(t) == pytest.approx(hollinger)
 
 
 def test_composites_are_none_without_rebound_split(make_line):
     stats = compute_stats(make_line(1, split=False))
-    assert stats["off_score"] is None and stats["game_score"] is None
+    assert stats["game_score"] is None and stats["oreb_pct"] is None
+    assert v1_stats(make_line(1, split=False)) == {"off_score": None, "def_score": None}
     assert stats["oreb"] is None
     assert stats["reb"] == 5.0
 

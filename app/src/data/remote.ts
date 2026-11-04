@@ -10,11 +10,12 @@ import {
   type PlayersDoc,
   type PuzzlesDoc,
   type Snapshot,
+  type TeamsDoc,
 } from './types';
 
 /** Override with EXPO_PUBLIC_DATA_URL to test against a local copy of the pipeline output. */
 export const DATA_BASE_URL =
-  process.env.EXPO_PUBLIC_DATA_URL || 'https://oli-codes-ctrl.github.io/nba-app/v1/';
+  process.env.EXPO_PUBLIC_DATA_URL || `https://oli-codes-ctrl.github.io/nba-app/v${SCHEMA_VERSION}/`;
 export const CACHE_KEY = `hoops:snapshot:v${SCHEMA_VERSION}`;
 
 export class DataError extends Error {}
@@ -42,7 +43,8 @@ export function parseManifest(value: unknown): Manifest {
     typeof m.generatedAt !== 'string' ||
     !isObject(files) ||
     typeof files.players !== 'string' ||
-    typeof files.puzzles !== 'string'
+    typeof files.puzzles !== 'string' ||
+    typeof files.teams !== 'string'
   ) {
     throw new DataError('Manifest is missing required fields');
   }
@@ -55,6 +57,12 @@ export function parsePlayers(value: unknown): PlayersDoc {
     throw new DataError('Players file is missing required fields');
   }
   return doc as unknown as PlayersDoc;
+}
+
+export function parseTeams(value: unknown): TeamsDoc {
+  const doc = checkSchema(value, 'Teams file');
+  if (!Array.isArray(doc.teams) || !isObject(doc.league)) throw new DataError('Teams file is missing required fields');
+  return doc as unknown as TeamsDoc;
 }
 
 export function parsePuzzles(value: unknown): PuzzlesDoc {
@@ -103,13 +111,16 @@ export function createRemoteDataSource({
     if (previous && previous.manifest.generatedAt === manifest.generatedAt) {
       return { ...previous, manifest, fetchedAt: now().toISOString() };
     }
+    // Players and teams files are named by content hash: reuse an unchanged one.
     const samePlayers = previous?.manifest.files.players === manifest.files.players;
-    const [players, puzzles] = await Promise.all([
+    const sameTeams = previous?.manifest.files.teams === manifest.files.teams;
+    const [players, puzzles, teams] = await Promise.all([
       samePlayers && previous ? previous.players : getJson(manifest.files.players).then(parsePlayers),
       // The puzzles file name has no hash, so tie it to this data refresh.
       getJson(manifest.files.puzzles, manifest.generatedAt).then(parsePuzzles),
+      sameTeams && previous ? previous.teams : getJson(manifest.files.teams).then(parseTeams),
     ]);
-    return { manifest, players, puzzles, fetchedAt: now().toISOString() };
+    return { manifest, players, puzzles, teams, fetchedAt: now().toISOString() };
   }
 
   async function load(): Promise<LoadResult> {
