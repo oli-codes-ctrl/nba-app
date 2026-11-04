@@ -14,10 +14,11 @@ import { updateCareer } from '@/game/storage';
 import { useTrophies } from '@/game/TrophyProvider';
 import { betterThan, formatStat } from '@/lib/format';
 import { usePlayerLink } from '@/lib/usePlayerLink';
-import { tally, versusRows, versusShareText, type Side, type VersusRow } from '@/players/versus';
+import { clearTally, tally, versusRows, versusShareText, type Side, type VersusRow } from '@/players/versus';
+import { shortName } from '@/graphs/analysis';
 import { CATALOG } from '@/stats/catalog';
 import { radius, spacing } from '@/theme/tokens';
-import { useColors } from '@/theme/useTokens';
+import { useChartColors, useColors } from '@/theme/useTokens';
 
 export default function VersusScreen() {
   const params = useLocalSearchParams<{ a?: string; b?: string }>();
@@ -42,6 +43,7 @@ export default function VersusScreen() {
   if (!snapshot) return <FirstLoad />;
   const players = snapshot.players.players;
   const t = tally(rows);
+  const c = clearTally(rows);
 
   return (
     <ScrollView
@@ -67,15 +69,33 @@ export default function VersusScreen() {
                 ? `Dead even across ${rows.length} stats.`
                 : `${t.a > t.b ? a.name : b.name} leads in ${Math.max(t.a, t.b)} of ${rows.length} stats.`}
             </AppText>
+            <AppText variant="bodyStrong" style={styles.center}>
+              Clear edges allowing for luck: {shortName(a.name)} {c.a}, {shortName(b.name)} {c.b}.
+              {c.close ? ` ${c.close} too close to call.` : ''}
+            </AppText>
           </View>
 
           <View style={[styles.list, { backgroundColor: colors.surface }]}>
-            {rows.map((r, i) => (
-              <Row key={r.stat} row={r} a={a} b={b} first={i === 0} />
+            <View style={styles.legend} accessible accessibilityLabel={`Filled dot: ${a.name}. Ring: ${b.name}.`}>
+              <View style={styles.legendItem}>
+                <Glyph side="a" />
+                <AppText variant="caption">{shortName(a.name)}</AppText>
+              </View>
+              <View style={styles.legendItem}>
+                <Glyph side="b" />
+                <AppText variant="caption">{shortName(b.name)}</AppText>
+              </View>
+              <AppText variant="caption" color="textSecondary" style={styles.legendNote}>
+                Percentile · right is better
+              </AppText>
+            </View>
+            {rows.map((r) => (
+              <Row key={r.stat} row={r} a={a} b={b} />
             ))}
           </View>
           <AppText variant="caption" color="textSecondary" style={styles.center}>
-            Bars show where each ranks among qualified players. For turnovers, fewer wins. Shooting
+            Dots show where each ranks among qualified players, so stats with different units line up. For
+            turnovers, fewer wins. An edge is clear when the gap holds allowing for luck (95%); shooting
             percentages only count with enough attempts.
           </AppText>
 
@@ -146,62 +166,74 @@ function Head({
   );
 }
 
-function Row({ row, a, b, first }: { row: VersusRow; a: Player; b: Player; first: boolean }) {
+const DOT = 12;
+const RING = 16;
+
+/** Player 1 is a filled dot, player 2 a ring: told apart by shape, in text color. */
+function Glyph({ side, size = 10 }: { side: Side; size?: number }) {
   const colors = useColors();
+  return side === 'a' ? (
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.text }} />
+  ) : (
+    <View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 2, borderColor: colors.text }} />
+  );
+}
+
+function Row({ row, a, b }: { row: VersusRow; a: Player; b: Player }) {
+  const colors = useColors();
+  const cc = useChartColors();
   const def = CATALOG[row.stat];
   const pa = a.pct?.[row.stat];
   const pb = b.pct?.[row.stat];
   const ba = pa == null ? null : betterThan(row.stat, pa);
   const bb = pb == null ? null : betterThan(row.stat, pb);
-  const label = `${def.label}: ${a.name} ${formatStat(row.stat, row.a)}, ${b.name} ${formatStat(row.stat, row.b)}${
-    row.winner === 'a' ? `, ${a.name} leads` : row.winner === 'b' ? `, ${b.name} leads` : ''
-  }`;
+  const status = row.smallSample
+    ? 'too few attempts to score'
+    : row.winner === 'tie'
+      ? 'tied'
+      : row.clear === false
+        ? 'too close to call'
+        : row.clear === true
+          ? `clear edge: ${shortName((row.winner === 'a' ? a : b).name)}`
+          : '';
+  // Bold only a win that holds (or one with no range to test).
+  const strong = (side: Side) => row.winner === side && row.clear !== false;
+  const label =
+    `${def.label}: ${a.name} ${formatStat(row.stat, row.a)}${ba != null ? `, better than ${Math.round(ba)} percent` : ''}; ` +
+    `${b.name} ${formatStat(row.stat, row.b)}${bb != null ? `, better than ${Math.round(bb)} percent` : ''}` +
+    (status ? `. ${status}` : '');
   return (
-    <View
-      accessible
-      accessibilityLabel={label}
-      style={[styles.row, !first && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
+    <View accessible accessibilityLabel={label} style={[styles.row, { borderTopColor: colors.border }]}>
       <AppText variant="caption" color="textSecondary" style={styles.center} numberOfLines={1}>
         {def.label}
-        {row.smallSample ? ' · too few attempts to score' : ''}
+        {status ? ` · ${status}` : ''}
       </AppText>
       <View style={styles.rowMain}>
-        <AppText
-          variant="number"
-          color={row.winner === 'b' ? 'textSecondary' : 'text'}
-          style={[styles.value, row.winner === 'a' && styles.win]}>
-          {row.winner === 'a' ? '◆ ' : ''}
-          {formatStat(row.stat, row.a)}
-        </AppText>
-        <View style={styles.bars}>
-          <MirrorBar value={ba} side="left" lead={row.winner === 'a'} />
-          <MirrorBar value={bb} side="right" lead={row.winner === 'b'} />
+        <View style={styles.valueLeft}>
+          <Glyph side="a" size={8} />
+          <AppText variant="number" color={strong('a') ? 'text' : 'textSecondary'} style={strong('a') && styles.win}>
+            {formatStat(row.stat, row.a)}
+          </AppText>
         </View>
-        <AppText
-          variant="number"
-          color={row.winner === 'a' ? 'textSecondary' : 'text'}
-          style={[styles.value, styles.right, row.winner === 'b' && styles.win]}>
-          {formatStat(row.stat, row.b)}
-          {row.winner === 'b' ? ' ◆' : ''}
-        </AppText>
+        <View style={styles.dotTrack}>
+          <View style={[styles.line, { backgroundColor: colors.scaleTrack }]} />
+          <View style={styles.inner} pointerEvents="none">
+            <View style={[styles.mid, { backgroundColor: cc.axis }]} />
+            {bb != null && (
+              <View style={[styles.ring, { left: `${bb}%`, borderColor: colors.text, backgroundColor: colors.surface }]} />
+            )}
+            {ba != null && (
+              <View style={[styles.dot, { left: `${ba}%`, backgroundColor: colors.text, borderColor: colors.surface }]} />
+            )}
+          </View>
+        </View>
+        <View style={styles.valueRight}>
+          <AppText variant="number" color={strong('b') ? 'text' : 'textSecondary'} style={strong('b') && styles.win}>
+            {formatStat(row.stat, row.b)}
+          </AppText>
+          <Glyph side="b" size={8} />
+        </View>
       </View>
-    </View>
-  );
-}
-
-function MirrorBar({ value, side, lead }: { value: number | null; side: 'left' | 'right'; lead: boolean }) {
-  const colors = useColors();
-  return (
-    <View style={[styles.track, { backgroundColor: colors.scaleTrack, flexDirection: side === 'left' ? 'row-reverse' : 'row' }]}>
-      {value != null && (
-        <View
-          style={{
-            width: `${Math.max(2, Math.round(value))}%`,
-            backgroundColor: lead ? colors.accent : colors.textSecondary,
-            borderRadius: 3,
-          }}
-        />
-      )}
     </View>
   );
 }
@@ -224,13 +256,29 @@ const styles = StyleSheet.create({
   },
   headTop: { alignItems: 'center', gap: spacing.xs },
   tally: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm, alignItems: 'center' },
-  list: { borderRadius: radius.lg, paddingHorizontal: spacing.md },
-  row: { paddingVertical: spacing.sm, gap: 4 },
+  list: { borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingBottom: spacing.sm },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  legendNote: { flex: 1, textAlign: 'right' },
+  row: { paddingVertical: spacing.sm, gap: 4, borderTopWidth: StyleSheet.hairlineWidth },
   rowMain: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  value: { width: 72 },
-  right: { textAlign: 'right' },
+  valueLeft: { width: 72, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  valueRight: { width: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs },
   win: { fontWeight: '800' },
-  bars: { flex: 1, flexDirection: 'row', gap: 4 },
-  track: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
+  dotTrack: { flex: 1, height: RING, justifyContent: 'center' },
+  line: { height: 2, borderRadius: 1 },
+  // Positions are percentages of the 0-100 line, inset so end dots stay inside.
+  inner: { position: 'absolute', left: RING / 2, right: RING / 2, top: 0, bottom: 0 },
+  mid: { position: 'absolute', left: '50%', width: 1, marginLeft: -0.5, top: 2, height: RING - 4 },
+  ring: { position: 'absolute', top: 0, width: RING, height: RING, marginLeft: -RING / 2, borderRadius: RING / 2, borderWidth: 2 },
+  dot: {
+    position: 'absolute',
+    top: (RING - DOT) / 2,
+    width: DOT,
+    height: DOT,
+    marginLeft: -DOT / 2,
+    borderRadius: DOT / 2,
+    borderWidth: 1.5,
+  },
   actions: { flexDirection: 'row', gap: spacing.sm },
 });

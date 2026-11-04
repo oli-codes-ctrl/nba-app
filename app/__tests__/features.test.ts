@@ -4,7 +4,7 @@ import { EMPTY_STATS } from '@/game/daily';
 import { EMPTY_MYSTERY_STATS, finishQuiz, makeQuiz, mysteryPool, mysteryShareText, QUIZ_LENGTH } from '@/game/mystery';
 import { EMPTY_STREAK_STATS } from '@/game/streak';
 import { EMPTY_CAREER, newlyUnlocked, progress, recordUnlocks, TROPHIES, type Facts } from '@/game/trophies';
-import { tally, versusRows, VERSUS_STATS } from '@/players/versus';
+import { clearTally, edgeZ, tally, versusRows, VERSUS_STATS } from '@/players/versus';
 import { STAT_IDS, type StatId } from '@/stats/catalog';
 import { roster, teamLeader, teamsByConference } from '@/teams/team';
 
@@ -67,6 +67,32 @@ describe('Head to head', () => {
   it('leaves missing values without a winner', () => {
     const rows = versusRows(player(1, { fg3_pct: null }), player(2));
     expect(rows.find((r) => r.stat === 'fg3_pct')!.winner).toBeNull();
+  });
+
+  it('calls an edge clear only when the ranges separate in the winner’s favor', () => {
+    // Clear: 30 (26-34) against 20 (17-23) points.
+    // Close: 9 (6-12) against 7 (5-9) assists.
+    // Fewer turnovers win: a's 2 (1-3) against b's 5 (4-6) is a clear edge for a.
+    const a = player(1, { pts: 30, ast: 9, tov: 2 }, { ci: { pts: [26, 34], ast: [6, 12], tov: [1, 3] } });
+    const b = player(2, { pts: 20, ast: 7, tov: 5 }, { ci: { pts: [17, 23], ast: [5, 9], tov: [4, 6] } });
+    const rows = versusRows(a, b);
+    const by = Object.fromEntries(rows.map((r) => [r.stat, r]));
+    expect(by.pts.clear).toBe(true);
+    expect(by.ast.clear).toBe(false);
+    expect(by.tov.winner).toBe('a');
+    expect(by.tov.clear).toBe(true);
+    expect(by.game_score.clear).toBeNull(); // no range published
+    expect(clearTally(rows)).toEqual({ a: 2, b: 0, close: 1 });
+    expect(edgeZ([26, 34], [17, 23])).toBeGreaterThan(1.96);
+  });
+
+  it('never calls a clear edge against the long-run estimates', () => {
+    // a shoots better so far, but the sample-adjusted ranges favor b.
+    const a = player(1, { ft_pct: 98 }, { ci: { ft_pct: [83, 95] } });
+    const b = player(2, { ft_pct: 92 }, { ci: { ft_pct: [90, 94] } });
+    const row = versusRows(a, b).find((r) => r.stat === 'ft_pct')!;
+    expect(row.winner).toBe('a');
+    expect(row.clear).toBe(false);
   });
 });
 

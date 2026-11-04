@@ -20,7 +20,28 @@ export type VersusRow = {
   winner: Side | 'tie' | null;
   /** A shooting percentage where either player has too few attempts: shown, not scored. */
   smallSample: boolean;
+  /**
+   * Whether the winner's edge holds allowing for luck: true when the two
+   * long-run estimates differ by 1.96 combined standard errors or more in
+   * the winner's favor, false when too close to call, null without ranges.
+   */
+  clear: boolean | null;
 };
+
+const Z95 = 1.96;
+
+/**
+ * Two players' 95% ranges compared as independent estimates: centers
+ * (the long-run estimates, sample-adjusted where published) and standard
+ * errors from the half-widths. Signed so positive favors a.
+ */
+export function edgeZ(ra: readonly [number, number], rb: readonly [number, number], lowerIsBetter = false): number {
+  const mid = (r: readonly [number, number]) => (r[0] + r[1]) / 2;
+  const se = Math.hypot((ra[1] - ra[0]) / (2 * Z95), (rb[1] - rb[0]) / (2 * Z95));
+  const d = (lowerIsBetter ? -1 : 1) * (mid(ra) - mid(rb));
+  if (se === 0) return d === 0 ? 0 : Math.sign(d) * Infinity;
+  return d / se;
+}
 
 export function versusRows(a: Player, b: Player, rules?: AttemptRules): VersusRow[] {
   return VERSUS_STATS.map((stat) => {
@@ -33,7 +54,14 @@ export function versusRows(a: Player, b: Player, rules?: AttemptRules): VersusRo
       const d = sign * (va - vb);
       winner = Math.abs(d) < 1e-9 ? 'tie' : d > 0 ? 'a' : 'b';
     }
-    return { stat, a: va, b: vb, winner, smallSample };
+    const ra = a.ci?.[stat];
+    const rb = b.ci?.[stat];
+    let clear: boolean | null = null;
+    if ((winner === 'a' || winner === 'b') && ra && rb) {
+      const z = edgeZ(ra, rb, CATALOG[stat].lowerIsBetter);
+      clear = winner === 'a' ? z >= Z95 : z <= -Z95;
+    }
+    return { stat, a: va, b: vb, winner, smallSample, clear };
   });
 }
 
@@ -44,7 +72,20 @@ export function tally(rows: readonly VersusRow[]): { a: number; b: number } {
   };
 }
 
+/** Edges that hold allowing for luck, and how many stats were tested and too close. */
+export function clearTally(rows: readonly VersusRow[]): { a: number; b: number; close: number } {
+  return {
+    a: rows.filter((r) => r.winner === 'a' && r.clear === true).length,
+    b: rows.filter((r) => r.winner === 'b' && r.clear === true).length,
+    close: rows.filter((r) => r.clear === false).length,
+  };
+}
+
 export function versusShareText(a: Player, b: Player, rows: readonly VersusRow[]): string {
   const t = tally(rows);
-  return `Head to head: ${a.name} ${t.a}–${t.b} ${b.name} across ${rows.length} stats (Hoops Analytics)`;
+  const c = clearTally(rows);
+  return (
+    `Head to head: ${a.name} ${t.a}–${t.b} ${b.name} across ${rows.length} stats` +
+    `; clear edges allowing for luck ${c.a}–${c.b} (Hoops Analytics)`
+  );
 }

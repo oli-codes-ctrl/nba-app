@@ -87,7 +87,7 @@ V1. [x] Scatter playground: question presets with named quadrants at the medians
 V2. [x] Distribution: one dot per player for any stat with median and quartiles and the player's range; tap any stat row on a player page to open it (`/stat?stat=&player=&pos=` in every tab).
 V3. [x] Player card (Savant style) with rank-uncertainty bands and gated insights, plus "Who's he like?" comps (cosine similarity on standardized rates, with the stats that drive each match). Pipeline ranges for counts, points, efficiency and shares.
 V4. [x] Team charts: offense vs. defense quadrant with net-rating lines and a noise note, luck meter with a noise band, four factors vs. league. On the Teams list ("Who's actually good?", "Who's been lucky?") and every team page ("Is X for real?", "Lucky or good?", "Where do they win and lose?"). Team quadrants split at the league average rating (the same for offense and defense), not medians; axes share one scale so net-rating diagonals run at 45 degrees.
-V5. [ ] Head-to-head as aligned percentile dots.
+V5. [x] Head-to-head as aligned percentile dots: player 1 a filled dot, player 2 a ring, both in text color (shape carries identity; no new hues). Each stat is a "clear edge" only when the two long-run estimates (range centers) differ by 1.96 combined standard errors in the raw winner's favor, else "too close to call"; the tally reports both raw wins and clear edges.
 V6. [ ] Box scores from game summaries, then trends (rolling 10-game lines with uncertainty bands), best performances, and a heat check that only flags changes bigger than noise.
 
 Then:
