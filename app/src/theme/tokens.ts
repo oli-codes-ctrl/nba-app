@@ -22,6 +22,7 @@ const palette = {
     scaleMid: '#F08C00',
     scaleHigh: '#2F9E44',
     scaleTrack: '#E4E6EA',
+    shadow: '#000000',
   },
   dark: {
     background: '#0B0C0E',
@@ -38,6 +39,7 @@ const palette = {
     scaleMid: '#FCC419',
     scaleHigh: '#51CF66',
     scaleTrack: '#2A2E34',
+    shadow: '#000000',
   },
 } as const;
 

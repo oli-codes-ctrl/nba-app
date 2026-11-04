@@ -47,10 +47,11 @@ The icon is drawn from an SVG basketball (no league marks) and lives in `assets/
 
 - `src/app/`: screens, one folder per tab, each with its own stack:
   - `(today)/`: the home feed: daily puzzle status, latest games, form changes, followed players, leaders.
-  - `players/`: player list.
+  - `players/`: player list and the teams index.
   - `graphs/`: scatter, color-by and density charts.
-  - `play/`: the games hub, Daily Guess, Higher or Lower and Who Has More?.
-  Each tab has a `player/[id].tsx` that re-exports `src/screens/PlayerScreen.tsx`; `usePlayerLink()` opens the one in the current tab.
+  - `play/`: the games hub, Daily Guess, Higher or Lower, Who Has More?, Box Score Mystery and Trophies.
+  Each tab has `player/[id].tsx`, `team/[abbr].tsx` and `versus.tsx`, which re-export the shared screens in `src/screens/`; `useLinks()` opens the one in the current tab.
+- `src/teams/`, `src/players/versus.ts`: team pages and head-to-head (tested).
 - `src/game/`: game rules as pure functions (tested), plus on-device saving.
 - `src/today/`, `src/players/similar.ts`: Today feed and "Plays like" logic (tested).
 - `src/notify/`: opt-in daily puzzle reminders (local notifications, no server).

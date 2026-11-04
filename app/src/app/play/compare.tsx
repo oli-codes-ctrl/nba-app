@@ -25,7 +25,8 @@ import {
   type Side,
   type StatResult,
 } from '@/game/compare';
-import { loadCompareScore, saveCompareScore } from '@/game/storage';
+import { loadCompareScore, saveCompareScore, updateCareer } from '@/game/storage';
+import { useTrophies } from '@/game/TrophyProvider';
 import { formatStat } from '@/lib/format';
 import { rightFeedback, tapFeedback, wrongFeedback } from '@/lib/haptics';
 import { usePlayerLink } from '@/lib/usePlayerLink';
@@ -37,6 +38,7 @@ export default function CompareScreen() {
   const { snapshot } = useData();
   const colors = useColors();
   const openPlayer = usePlayerLink();
+  const trophies = useTrophies();
   const players = snapshot?.players.players;
   const pool = useMemo(() => (players ? comparePool(players) : []), [players]);
 
@@ -81,7 +83,11 @@ export default function CompareScreen() {
     else wrongFeedback();
     const next = addRound(total, roundPoints(active, graded));
     setTotal(next);
-    saveCompareScore(AsyncStorage, next);
+    const perfect = graded.every((r) => r.correct);
+    Promise.all([
+      saveCompareScore(AsyncStorage, next),
+      perfect ? updateCareer(AsyncStorage, (c) => ({ ...c, comparePerfect: c.comparePerfect + 1 })) : null,
+    ]).then(() => trophies.check());
   }
 
   function nextRound() {

@@ -9,6 +9,7 @@ import { TeamChip } from '@/components/TeamChip';
 import { useData } from '@/data/DataProvider';
 import type { Player } from '@/data/types';
 import { loadStreakStats, saveStreakStats } from '@/game/storage';
+import { useTrophies } from '@/game/TrophyProvider';
 import {
   EMPTY_STREAK_STATS,
   endRun,
@@ -35,6 +36,7 @@ export default function StreakScreen() {
   const { snapshot } = useData();
   const colors = useColors();
   const openPlayer = usePlayerLink();
+  const trophies = useTrophies();
   const players = snapshot?.players.players;
   const pool = useMemo(() => (players ? streakPool(players) : []), [players]);
 
@@ -84,7 +86,7 @@ export default function StreakScreen() {
       const updated = endRun(stats, run);
       setNewBest(run > 0 && run > stats.best);
       setStats(updated);
-      saveStreakStats(AsyncStorage, updated);
+      saveStreakStats(AsyncStorage, updated).then(() => trophies.check());
       setPhase('wrong');
     }
   }

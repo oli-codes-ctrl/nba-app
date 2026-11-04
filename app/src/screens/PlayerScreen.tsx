@@ -11,7 +11,7 @@ import type { Player } from '@/data/types';
 import { useFollows } from '@/follow/FollowProvider';
 import { betterThan, formatDate, formatStat, rankText } from '@/lib/format';
 import { tapFeedback } from '@/lib/haptics';
-import { usePlayerLink } from '@/lib/usePlayerLink';
+import { useLinks } from '@/lib/usePlayerLink';
 import { similarPlayers } from '@/players/similar';
 import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatId } from '@/stats/catalog';
 import { teamInfo } from '@/theme/teams';
@@ -23,7 +23,8 @@ export default function PlayerScreen() {
   const { snapshot, playerById } = useData();
   const colors = useColors();
   const follows = useFollows();
-  const openPlayer = usePlayerLink();
+  const links = useLinks();
+  const openPlayer = links.player;
   const player = playerById.get(Number(id));
   const all = snapshot?.players.players;
   const similar = useMemo(() => (player && all ? similarPlayers(player, all, 3) : []), [player, all]);
@@ -61,10 +62,18 @@ export default function PlayerScreen() {
           />
         </View>
         <View style={styles.heroMeta}>
-          <TeamChip abbr={player.team} />
-          <AppText color="textSecondary">
-            {teamInfo(player.team).name} · {positionName(player.pos)}
-          </AppText>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`Open ${teamInfo(player.team).name}`}
+            onPress={() => links.team(player.team)}
+            hitSlop={8}
+            style={styles.heroMeta}>
+            <TeamChip abbr={player.team} />
+            <AppText color="accent" style={styles.bold}>
+              {teamInfo(player.team).name} ›
+            </AppText>
+          </Pressable>
+          <AppText color="textSecondary">{positionName(player.pos)}</AppText>
         </View>
         {earlierTeams.length > 0 && (
           <View style={styles.heroMeta}>
@@ -83,6 +92,15 @@ export default function PlayerScreen() {
         <Summary label="Games" value={String(player.s.gp ?? '–')} />
         <Summary label="Minutes" value={formatStat('mpg', player.s.mpg)} />
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => links.versus(player.id)}
+        style={({ pressed }) => [styles.versus, { borderColor: colors.border, backgroundColor: pressed ? colors.surface : 'transparent' }]}>
+        <AppText variant="bodyStrong" color="accent">
+          Head to head with another player ›
+        </AppText>
+      </Pressable>
 
       {(player.g || player.r) && (
         <View style={styles.group}>
@@ -312,6 +330,13 @@ const styles = StyleSheet.create({
   formBlock: { gap: spacing.xs },
   formRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 28 },
   diff: { width: 56, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  versus: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   simRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 48 },
   match: { width: 48, textAlign: 'right' },
   heroMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },

@@ -3,7 +3,9 @@ import type { KeyValueStore } from '@/data/DataSource';
 
 import { EMPTY_SCORE, type CompareScore } from './compare';
 import { EMPTY_STATS, newGame, type DailyStats, type GameState } from './daily';
+import { EMPTY_MYSTERY_STATS, type MysteryStats } from './mystery';
 import { EMPTY_STREAK_STATS, type StreakStats } from './streak';
+import { EMPTY_CAREER, type Career } from './trophies';
 
 const compareKey = 'hoops:compare:v1:score';
 
@@ -17,6 +19,36 @@ export async function saveCompareScore(store: KeyValueStore, score: CompareScore
   } catch {
     // A lost running score is not worth an error screen.
   }
+}
+
+const mysteryKey = 'hoops:mystery:v1:stats';
+
+export async function loadMysteryStats(store: KeyValueStore): Promise<MysteryStats> {
+  return { ...EMPTY_MYSTERY_STATS, ...(await readJson<MysteryStats>(store, mysteryKey)) };
+}
+
+export async function saveMysteryStats(store: KeyValueStore, stats: MysteryStats): Promise<void> {
+  await store.setItem(mysteryKey, JSON.stringify(stats)).catch(() => {});
+}
+
+const careerKey = 'hoops:career:v1';
+
+export async function loadCareer(store: KeyValueStore): Promise<Career> {
+  const saved = await readJson<Partial<Career>>(store, careerKey);
+  return { ...EMPTY_CAREER, ...saved, unlocked: { ...(saved?.unlocked ?? {}) } };
+}
+
+let careerQueue: Promise<unknown> = Promise.resolve();
+
+/** Read-modify-write the career counters. Calls are queued so none is lost. */
+export function updateCareer(store: KeyValueStore, change: (c: Career) => Career): Promise<Career> {
+  const next = careerQueue.then(async () => {
+    const updated = change(await loadCareer(store));
+    await store.setItem(careerKey, JSON.stringify(updated)).catch(() => {});
+    return updated;
+  });
+  careerQueue = next.catch(() => {});
+  return next;
 }
 
 const streakKey = 'hoops:streak:v1:stats';

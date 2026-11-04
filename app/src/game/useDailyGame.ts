@@ -7,6 +7,7 @@ import type { Puzzle } from '@/data/types';
 import {
   EMPTY_STATS,
   guess as applyGuess,
+  isDoublePoints,
   localDate,
   recordResult,
   revealClue as applyClue,
@@ -16,7 +17,8 @@ import {
 import { rightFeedback, tapFeedback, wrongFeedback } from '@/lib/haptics';
 import { refreshReminders } from '@/notify/reminders';
 
-import { loadGame, loadStats, saveGame, saveStats } from './storage';
+import { loadGame, loadStats, saveGame, saveStats, updateCareer } from './storage';
+import { useTrophies } from './TrophyProvider';
 
 /** The device's date, updated when the app comes back to the foreground. */
 export function useToday(): string {
@@ -50,6 +52,7 @@ export function useDailyGame(puzzle: Puzzle | null) {
   }, [date]);
 
   const state = loaded?.date === date ? loaded.state : null;
+  const trophies = useTrophies();
 
   const update = useCallback(
     (next: GameState) => {
@@ -68,11 +71,23 @@ export function useDailyGame(puzzle: Puzzle | null) {
           setStats(updated);
           saves.push(saveStats(AsyncStorage, updated));
         }
+        if (updated !== stats && next.status === 'won') {
+          saves.push(
+            updateCareer(AsyncStorage, (c) => ({
+              ...c,
+              dailyNoClueWins: c.dailyNoClueWins + (next.clues === 0 ? 1 : 0),
+              dailyDoubleWins: c.dailyDoubleWins + (isDoublePoints(next.date) ? 1 : 0),
+            })).then(() => {}),
+          );
+        }
         // Skip today's reminder and update the streak wording.
-        Promise.all(saves).then(refreshReminders);
+        Promise.all(saves).then(() => {
+          refreshReminders();
+          trophies.check();
+        });
       }
     },
-    [puzzle, state, stats],
+    [puzzle, state, stats, trophies],
   );
 
   return {

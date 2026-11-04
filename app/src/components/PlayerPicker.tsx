@@ -16,7 +16,12 @@ export function PlayerPicker({
   players,
   onSelect,
   onClose,
+  title = 'Highlight a player',
+  excludeId,
 }: {
+  title?: string;
+  /** Leave this player out of the list (for example, the one already chosen). */
+  excludeId?: number;
   visible: boolean;
   players: readonly Player[];
   onSelect: (id: number) => void;
@@ -24,14 +29,14 @@ export function PlayerPicker({
 }) {
   const colors = useColors();
   const [search, setSearch] = useState('');
-  const qualified = useMemo(() => players.filter((p) => p.q), [players]);
+  const qualified = useMemo(() => players.filter((p) => p.q && p.id !== excludeId), [players, excludeId]);
   const rows = useMemo(
     () => queryPlayers(qualified, { search, sort: 'game_score', qualifiedOnly: true }),
     [qualified, search],
   );
 
   return (
-    <Sheet visible={visible} title="Highlight a player" onClose={onClose}>
+    <Sheet visible={visible} title={title} onClose={onClose}>
       <View style={styles.searchWrap}>
         <TextInput
           value={search}

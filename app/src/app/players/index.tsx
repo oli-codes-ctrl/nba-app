@@ -72,6 +72,17 @@ export default function PlayersScreen() {
           );
         })}
       </ScrollView>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push('/players/teams')}
+        style={({ pressed }) => [styles.teamsLink, { backgroundColor: pressed ? colors.border : colors.surface }]}>
+        <AppText variant="bodyStrong" style={styles.toggleText}>
+          Browse by team
+        </AppText>
+        <AppText variant="bodyStrong" color="accent">
+          ›
+        </AppText>
+      </Pressable>
       <View style={styles.toggleRow}>
         <View style={styles.toggleText}>
           <AppText variant="small">Qualified players only</AppText>
@@ -154,6 +165,13 @@ const styles = StyleSheet.create({
   chips: { gap: spacing.sm },
   chip: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: radius.pill },
   chipText: { fontWeight: '600' },
+  teamsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    minHeight: 44,
+  },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   toggleText: { flex: 1 },
   row: {
