@@ -8,6 +8,7 @@ import { TrophyProvider } from '@/game/TrophyProvider';
 import { ThemePreferenceProvider } from '@/theme/ThemePreference';
 import { colors } from '@/theme/tokens';
 import { useScheme } from '@/theme/useTokens';
+import { useWebTabBarStyle, webTabColors } from '@/theme/WebTabBar';
 
 export default function RootLayout() {
   return (
@@ -21,6 +22,7 @@ export default function RootLayout() {
 function AppShell() {
   const scheme = useScheme();
   const c = colors[scheme];
+  useWebTabBarStyle(scheme);
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const navTheme = {
     ...base,
@@ -41,7 +43,7 @@ function AppShell() {
         <TrophyProvider>
           <ThemeProvider value={navTheme}>
             <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-            <NativeTabs tintColor={c.accent}>
+            <NativeTabs tintColor={c.accent} {...webTabColors(scheme)}>
               <NativeTabs.Trigger name="(today)">
                 <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
                 <NativeTabs.Trigger.Icon sf="sun.max.fill" md="today" />

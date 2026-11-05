@@ -261,9 +261,22 @@ export default function PlayerScreen() {
         </View>
       )}
 
+      {/* The reference list: one heading, smaller group labels, so it reads as detail under the card. */}
+      <View style={styles.everyHead}>
+        <AppText variant="title" accessibilityRole="header">
+          Every stat
+        </AppText>
+        <AppText variant="caption" color="textSecondary">
+          {player.q
+            ? `Season numbers with where he ranks among qualified ${noun}. Tap a stat to see everyone.`
+            : 'Season numbers. Ranks appear once he has enough games and minutes.'}
+        </AppText>
+      </View>
       {GROUPS.map((g) => (
         <View key={g.id} style={styles.group}>
-          <AppText variant="title">{g.title}</AppText>
+          <AppText variant="kicker" color="textSecondary">
+            {g.title}
+          </AppText>
           {g.note && (
             <AppText variant="caption" color="textSecondary">
               {g.note}
@@ -519,6 +532,7 @@ const styles = StyleSheet.create({
   summaryItem: { flex: 1, alignItems: 'center' },
   tabular: { fontVariant: ['tabular-nums'] },
   group: { gap: spacing.sm },
+  everyHead: { gap: 2, marginTop: spacing.md },
   card: { borderRadius: radius.lg, paddingHorizontal: spacing.md },
   statRow: { paddingVertical: spacing.md, gap: spacing.sm },
   statTop: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.md },

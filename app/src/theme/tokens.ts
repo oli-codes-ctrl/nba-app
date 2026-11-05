@@ -100,6 +100,11 @@ export type ChartColors = {
   positions: { G: string; F: string; C: string };
   /** Dashed league-median reference lines. */
   median: string;
+  /**
+   * Shaded ranges behind marks (middle half, likely range, normal luck): a
+   * region, not a mark, so a step above the grid rather than 3:1.
+   */
+  band: string;
 };
 
 export const chartColors: Record<ColorScheme, ChartColors> = {
@@ -115,6 +120,7 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
     ramp: ['#86B6EF', '#3987E5', '#256ABF', '#184F95', '#0D366B'],
     positions: { G: '#008300', F: '#6250D6', C: '#D0578A' },
     median: '#6B6A65',
+    band: '#E1E0D9',
   },
   dark: {
     grid: '#2C2C2A',
@@ -128,6 +134,7 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
     ramp: ['#184F95', '#256ABF', '#3987E5', '#86B6EF', '#CDE2FB'],
     positions: { G: '#008300', F: '#9085E9', C: '#D55181' },
     median: '#A9A79F',
+    band: '#383834',
   },
 };
 

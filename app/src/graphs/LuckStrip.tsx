@@ -112,7 +112,7 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
           }}>
           <Svg width={width} height={height} pointerEvents="none">
             {/* What luck alone produces: coin-flip close games. */}
-            <Rect x={sx(-noise)} y={PAD.top} width={Math.max(1, sx(noise) - sx(-noise))} height={BAND} fill={cc.grid} rx={4} />
+            <Rect x={sx(-noise)} y={PAD.top} width={Math.max(1, sx(noise) - sx(-noise))} height={BAND} fill={cc.band} rx={4} />
             <SvgText x={sx(0)} y={PAD.top - 8} fontSize={11} fontWeight="600" fill={ui.textSecondary} textAnchor="middle" fontFamily={FONT}>
               {`Normal luck: within ${noise.toFixed(1)} wins`}
             </SvgText>
@@ -120,7 +120,7 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
 
             {teams.map((t, i) =>
               i === hi ? null : (
-                <Circle key={t.abbr} cx={screen[i].sx} cy={screen[i].sy} r={swarm.radius} fill={cc.neutral} stroke={surface} strokeWidth={1.25} />
+                <Circle key={t.abbr} cx={screen[i].sx} cy={screen[i].sy} r={swarm.radius} fill={ui.textSecondary} stroke={surface} strokeWidth={1.25} />
               ),
             )}
             {hi >= 0 && (

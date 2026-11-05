@@ -79,7 +79,7 @@ export default function TeamScreen() {
           <LuckCard doc={snapshot.teams} highlight={abbr} onSelect={(other) => other !== abbr && links.team(other)} />
           <Section
             title="Where do they win and lose?"
-            note="Dean Oliver’s four factors decide most games. Bars run right when better than the league average, longer the further from it compared with the other teams.">
+            note="Dean Oliver’s four factors, on each end: shooting matters most (about 40%), then turnovers (25%), offensive boards (20%) and free throws (15%). Bars run right when better than the league average.">
             <FourFactors sides={factorRows(teamByAbbr.get(abbr)!, snapshot.teams.teams, snapshot.teams.league)} teams={snapshot.teams.teams.length} />
           </Section>
         </>

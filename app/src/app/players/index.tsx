@@ -118,10 +118,13 @@ export default function PlayersScreen() {
         accessibilityRole="button"
         onPress={() => router.push('/players/teams')}
         style={({ pressed }) => [styles.teamsLink, { backgroundColor: pressed ? colors.border : colors.surface }]}>
-        <AppText variant="bodyStrong" style={styles.toggleText}>
-          Browse by team
-        </AppText>
-        <AppText variant="bodyStrong" color="accent">
+        <View style={styles.toggleText}>
+          <AppText variant="bodyStrong">Teams</AppText>
+          <AppText variant="caption" color="textSecondary">
+            Who’s actually good, who’s been lucky, every roster
+          </AppText>
+        </View>
+        <AppText variant="title" color="textSecondary">
           ›
         </AppText>
       </Pressable>
@@ -163,6 +166,8 @@ export default function PlayersScreen() {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.accent} />}
       ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
       renderItem={({ item, index }) => <PlayerRow player={item} position={index + 1} sort={view} rules={rules} />}
+      // Room to scroll the last rows clear of the floating tab bar.
+      contentContainerStyle={styles.listEnd}
       style={{ backgroundColor: colors.background }}
     />
   );
@@ -224,6 +229,7 @@ function PlayerRow({
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md, gap: spacing.md },
+  listEnd: { paddingBottom: spacing.xxl * 2 },
   search: {
     height: 40,
     borderRadius: radius.md,
@@ -238,6 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     minHeight: 44,
   },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

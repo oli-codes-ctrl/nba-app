@@ -129,10 +129,13 @@ function Answer({ insights }: { insights: CardInsights }) {
       ))}
       {lines.length > 0 && (
         <AppText variant="caption" color="textSecondary">
-          {elite.length || weak.length
-            ? `Elite and weak spots hold even allowing for luck: his whole range ranks in the top or bottom ${100 - ELITE}%. `
-            : ''}
-          {unsettled.length ? 'Not settled: top or bottom 10% so far, but it could still be luck.' : ''}
+          {[
+            elite.length ? `Elite: top ${100 - ELITE}% even at the unlucky end of his range.` : '',
+            weak.length ? `Weak spot: bottom ${100 - ELITE}% even at the lucky end.` : '',
+            unsettled.length ? 'Not settled: top or bottom 10% so far, but it could still be luck.' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
         </AppText>
       )}
     </View>

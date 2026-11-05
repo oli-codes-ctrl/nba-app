@@ -78,7 +78,7 @@ function FactorBar({ row, teams }: { row: FactorRow; teams: number }) {
         <View style={[styles.mid, { backgroundColor: cc.axis }]} />
       </View>
       <AppText variant="caption" color="textSecondary">
-        League {show(row, row.league)} · about {row.weight} of what decides games
+        League {show(row, row.league)}
       </AppText>
     </View>
   );

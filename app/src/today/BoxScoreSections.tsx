@@ -85,11 +85,12 @@ export function BoxScoreSections({ doc, players, playerById, today, onOpen }: Pr
 
       <Section
         title="Heat check"
-        note={`Each player’s last ${recentGames} games against his earlier ones, by Game Score. Only changes bigger than his own game-to-game swings are shown.`}>
+        note={`Last ${recentGames} games against each player’s earlier ones, by Game Score. A streak counts only past ${HEAT_Z} standard errors of his own game-to-game swings, since ${checked} players are checked at once.`}>
         {hot.length + cold.length === 0 ? (
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
-            <AppText color="textSecondary">
-              No one is running hotter or colder than luck explains right now ({checked} players checked).
+            <AppText variant="bodyStrong">No real streaks right now.</AppText>
+            <AppText variant="small" color="textSecondary">
+              Every hot or cold run so far is within normal luck.
             </AppText>
           </View>
         ) : (
@@ -99,10 +100,6 @@ export function BoxScoreSections({ doc, players, playerById, today, onOpen }: Pr
             ))}
           </View>
         )}
-        <AppText variant="caption" color="textSecondary">
-          With {checked} players checked at once, a few would look streaky by chance, so the bar is {HEAT_Z} standard
-          errors (about 1 in 80), not the usual 2.
-        </AppText>
       </Section>
 
       {feed.season.length > 0 && (

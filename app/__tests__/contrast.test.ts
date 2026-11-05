@@ -4,7 +4,7 @@
  * A token change that breaks contrast fails here instead of on a phone.
  */
 import { chipTextColor, luminance, TEAMS } from '@/theme/teams';
-import { colors, percentileScale, type ColorScheme, type ColorToken } from '@/theme/tokens';
+import { chartColors, colors, percentileScale, type ColorScheme, type ColorToken } from '@/theme/tokens';
 
 function contrast(a: string, b: string): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
@@ -26,6 +26,13 @@ describe.each(SCHEMES)('%s mode', (scheme) => {
 
   it('white text is readable on filled accent buttons', () => {
     expect(contrast(c.textOnAccent, c.accentFill)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('chart dots and lines stand out on shaded bands', () => {
+    const band = chartColors[scheme].band;
+    expect(contrast(c.textSecondary, band)).toBeGreaterThanOrEqual(3);
+    expect(contrast(chartColors[scheme].trendLine, band)).toBeGreaterThanOrEqual(3);
+    expect(contrast(c.text, band)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('every percentile bar step stands out from its track and the card', () => {

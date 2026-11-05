@@ -32,24 +32,24 @@ export default function PlayHub() {
       <GameCard
         href="/play/streak"
         title="Higher or Lower"
-        blurb="One stat, two players. Is the next one higher or lower? Keep the chain going; it gets harder as you climb."
-        stat={streak && streak.runs > 0 ? `Best streak ${streak.best}` : 'New'}
+        blurb="Is the next player’s number higher or lower? Keep the chain going as the gaps get smaller."
+        stat={streak && streak.runs > 0 ? `Best streak ${streak.best}` : null}
       />
       <GameCard
         href="/play/compare"
         title="Who Has More?"
-        blurb="Two starters, five stats. Pick who has more of each. Right answers score, wrong ones cost."
-        stat={compare && compare.rounds > 0 ? `Score ${compare.score} · ${compare.rounds} rounds` : 'New'}
+        blurb="Two starters, five stats: pick who has more of each."
+        stat={compare && compare.rounds > 0 ? `Score ${compare.score} · ${compare.rounds} rounds` : null}
       />
       <GameCard
         href="/play/mystery"
         title="Box Score Mystery"
-        blurb="Ten stat lines, four names each. Whose line is it? Uses last night’s box scores when they’re in."
-        stat={facts && facts.mystery.played > 0 ? `Best ${facts.mystery.best}/10` : 'New'}
+        blurb="Ten stat lines, four names each. Whose line is it?"
+        stat={facts && facts.mystery.played > 0 ? `Best ${facts.mystery.best}/10` : null}
       />
       <GameCard
         href="/play/trophies"
-        title="🏆 Trophies"
+        title="Trophies"
         blurb="Milestones across every game, from your first solve to a 30-day streak."
         stat={facts ? `${TROPHIES.filter((t) => facts.career.unlocked[t.id]).length} of ${TROPHIES.length} earned` : ' '}
       />
@@ -61,28 +61,37 @@ export default function PlayHub() {
   );
 }
 
-function GameCard({ href, title, blurb, stat }: { href: Href; title: string; blurb: string; stat: string }) {
+/** A game: title, one line on how it plays, and your best so far (or a New badge before your first try). */
+function GameCard({ href, title, blurb, stat }: { href: Href; title: string; blurb: string; stat: string | null }) {
   const colors = useColors();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${title}. ${stat}`}
+      accessibilityLabel={`${title}. ${stat ?? 'New'}`}
       onPress={() => router.push(href)}
       style={({ pressed }) => [styles.card, { backgroundColor: pressed ? colors.border : colors.surface }]}>
       <View style={styles.cardTop}>
-        <AppText variant="title" style={styles.flex}>
-          {title}
-        </AppText>
-        <AppText variant="bodyStrong" color="accent">
+        <AppText variant="title">{title}</AppText>
+        {stat == null && (
+          <View style={[styles.badge, { borderColor: colors.accent }]}>
+            <AppText variant="kicker" color="accent">
+              New
+            </AppText>
+          </View>
+        )}
+        <View style={styles.flex} />
+        <AppText variant="title" color="textSecondary">
           ›
         </AppText>
       </View>
       <AppText variant="small" color="textSecondary">
         {blurb}
       </AppText>
-      <AppText variant="small" style={styles.bold}>
-        {stat}
-      </AppText>
+      {stat != null && (
+        <AppText variant="small" style={styles.bold}>
+          {stat}
+        </AppText>
+      )}
     </Pressable>
   );
 }
@@ -90,7 +99,8 @@ function GameCard({ href, title, blurb, stat }: { href: Href; title: string; blu
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl * 2 },
   card: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
-  cardTop: { flexDirection: 'row', alignItems: 'center' },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  badge: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   flex: { flex: 1 },
   bold: { fontWeight: '600' },
   footnote: { textAlign: 'center' },

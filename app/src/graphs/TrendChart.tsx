@@ -89,13 +89,13 @@ export function TrendChart({ values, dates, trailing, seasonMean, selected, surf
               </G>
             ))}
 
-            {band && <Path d={band} fill={cc.grid} opacity={0.9} />}
+            {band && <Path d={band} fill={cc.band} />}
             <Line x1={plot.x0} x2={plot.x1} y1={seasonY} y2={seasonY} stroke={cc.median} strokeWidth={1.5} strokeDasharray="4 4" />
             {line && <Path d={line} stroke={cc.trendLine} strokeWidth={2.5} fill="none" strokeLinejoin="round" strokeLinecap="round" />}
 
             {values.map((v, i) =>
               i === selected ? null : (
-                <Circle key={i} cx={sx(i)} cy={sy(v)} r={DOT} fill={cc.neutral} stroke={surface} strokeWidth={1.25} />
+                <Circle key={i} cx={sx(i)} cy={sy(v)} r={DOT} fill={ui.textSecondary} stroke={surface} strokeWidth={1.25} />
               ),
             )}
             {selected != null && selected < n && (

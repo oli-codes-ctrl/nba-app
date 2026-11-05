@@ -93,7 +93,7 @@ export function DistributionChart({ stat, dots, focusId = null, focusLabel, rang
           }}>
           <Svg width={width} height={height} pointerEvents="none">
             {/* The middle half of the pool, and its median. */}
-            <Rect x={iqrLeft} y={PAD.top} width={Math.max(1, iqrRight - iqrLeft)} height={BAND} fill={cc.grid} rx={4} />
+            <Rect x={iqrLeft} y={PAD.top} width={Math.max(1, iqrRight - iqrLeft)} height={BAND} fill={cc.band} rx={4} />
             <Line x1={sx(med)} x2={sx(med)} y1={PAD.top - 4} y2={PAD.top + BAND} stroke={cc.median} strokeWidth={1.5} strokeDasharray="4 4" />
             <SvgText x={sx(med)} y={PAD.top - 8} fontSize={11} fontWeight="600" fill={ui.textSecondary} textAnchor="middle" fontFamily={FONT}>
               {`Median ${formatStat(stat, med)}`}
