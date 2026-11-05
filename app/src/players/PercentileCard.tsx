@@ -9,7 +9,9 @@ import { useChartColors, useColors, useScheme } from '@/theme/useTokens';
 import { CARD_SECTIONS, ELITE, type CardInsights, type CardRow } from './card';
 
 const RING = 30;
-const BAND = 6;
+/** The likely-range bar under each ring. */
+const BAND = 4;
+const BAND_GAP = 3;
 const LIST = 3;
 
 type Props = {
@@ -24,8 +26,8 @@ type Props = {
 
 /**
  * Savant-style percentile card. Each stat is a ring at his percentile on a
- * 0-100 line (right is better), colored cold to hot; the thick part of the
- * line is where his rank could sit allowing for luck. Roles (usage) get a
+ * 0-100 line (right is better), colored cold to hot; the bar under it is
+ * where his rank could sit allowing for luck. Roles (usage) get a
  * gray ring: more is neither good nor bad.
  */
 export function PercentileCard({ title, poolText, through, rows, insights, onOpen }: Props) {
@@ -42,6 +44,8 @@ export function PercentileCard({ title, poolText, through, rows, insights, onOpe
 
       <Answer insights={insights} />
 
+      <Key />
+
       {CARD_SECTIONS.map((section) => (
         <View key={section.title} style={styles.section}>
           <AppText variant="kicker" color="textSecondary">
@@ -55,10 +59,31 @@ export function PercentileCard({ title, poolText, through, rows, insights, onOpe
       ))}
 
       <AppText variant="caption" color="textSecondary">
-        Each ring is his percentile: 100 is best, and for turnovers fewer counts as better. The thick line is
-        where his rank could sit allowing for luck (95%). Usage is a role, so it gets no color. Tap a stat to see
-        everyone.
+        100 is best; for turnovers, fewer counts as better. A short bar means his rank is settled. Game Score has
+        no bar: it adds up too many parts for a simple range. Usage is a role, so it gets no color. Tap a stat to
+        see everyone.
       </AppText>
+    </View>
+  );
+}
+
+/** What the two marks mean, before the rows. */
+function Key() {
+  const colors = useColors();
+  return (
+    <View style={styles.key} accessible accessibilityLabel="Ring: his percentile. Bar under it: where his rank could sit, allowing for luck.">
+      <View style={styles.keyItem}>
+        <View style={[styles.keyRing, { borderColor: colors.textSecondary }]} />
+        <AppText variant="caption" color="textSecondary">
+          His percentile
+        </AppText>
+      </View>
+      <View style={styles.keyItem}>
+        <View style={[styles.keyBar, { backgroundColor: colors.textSecondary }]} />
+        <AppText variant="caption" color="textSecondary">
+          Where it could be, allowing for luck (95%)
+        </AppText>
+      </View>
     </View>
   );
 }
@@ -145,6 +170,7 @@ function Row({ row, onPress }: { row: CardRow; onPress: () => void }) {
         <View style={[styles.line, { backgroundColor: colors.scaleTrack }]} />
         <View style={styles.inner} pointerEvents="none">
           <View style={[styles.mid, { backgroundColor: cc.axis }]} />
+          {/* The range sits under the ring, so a settled (short) one still shows as a dash. */}
           {ranked && row.band && (
             <View
               style={[
@@ -186,17 +212,18 @@ const styles = StyleSheet.create({
   answerLine: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
   answerKicker: { width: 112 },
   section: { gap: 0 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, minHeight: 44, paddingVertical: 2 },
   pressed: { opacity: 0.6 },
-  label: { width: 112 },
-  value: { width: 56, textAlign: 'right' },
-  track: { flex: 1, height: RING, justifyContent: 'center' },
-  line: { height: 2, borderRadius: 1 },
+  // Label and value centered on the ring (small text has a 20 line height, numbers 22).
+  label: { width: 112, marginTop: (RING - 20) / 2 },
+  value: { width: 56, textAlign: 'right', marginTop: (RING - 22) / 2 },
+  track: { flex: 1, height: RING + BAND_GAP + BAND },
+  line: { position: 'absolute', left: 0, right: 0, top: RING / 2 - 1, height: 2, borderRadius: 1 },
   // Positions inside are percentages of the 0-100 line, inset so a ring at
   // either end stays inside the track.
   inner: { position: 'absolute', left: RING / 2, right: RING / 2, top: 0, bottom: 0 },
   mid: { position: 'absolute', left: '50%', width: 1, marginLeft: -0.5, top: RING / 2 - 5, height: 10 },
-  band: { position: 'absolute', top: (RING - BAND) / 2, height: BAND, borderRadius: BAND / 2 },
+  band: { position: 'absolute', top: RING + BAND_GAP, height: BAND, minWidth: BAND, borderRadius: BAND / 2 },
   ring: {
     position: 'absolute',
     top: 0,
@@ -209,5 +236,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ringText: { fontWeight: '700', fontVariant: ['tabular-nums'] },
+  key: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, rowGap: spacing.xs },
+  keyItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  keyRing: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
+  keyBar: { width: 18, height: BAND, borderRadius: BAND / 2 },
   unranked: { position: 'absolute', alignSelf: 'center' },
 });
