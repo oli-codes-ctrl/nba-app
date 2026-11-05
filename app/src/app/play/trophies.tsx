@@ -42,9 +42,7 @@ export default function TrophiesScreen() {
                   accessible
                   accessibilityLabel={`${t.title}. ${t.description}. ${date ? `Earned ${formatDate(date)}` : `${current} of ${t.target}`}`}
                   style={[styles.row, i > 0 && { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
-                  <AppText variant="title" style={[styles.icon, !date && styles.locked]}>
-                    {date ? '🏆' : '🔒'}
-                  </AppText>
+                  <Medal earned={!!date} />
                   <View style={styles.flex}>
                     <AppText variant="bodyStrong" color={date ? 'text' : 'textSecondary'}>
                       {t.title}
@@ -75,6 +73,20 @@ export default function TrophiesScreen() {
   );
 }
 
+/** Earned: a filled accent medal with a check. Locked: an empty ring. Drawn, not emoji, so it matches the system in both modes. */
+function Medal({ earned }: { earned: boolean }) {
+  const colors = useColors();
+  return earned ? (
+    <View style={[styles.medal, { backgroundColor: colors.accentFill }]}>
+      <AppText variant="bodyStrong" color="textOnAccent">
+        ✓
+      </AppText>
+    </View>
+  ) : (
+    <View style={[styles.medal, styles.medalLocked, { borderColor: colors.textSecondary }]} />
+  );
+}
+
 function Bar({ value }: { value: number }) {
   const colors = useColors();
   return (
@@ -90,8 +102,8 @@ const styles = StyleSheet.create({
   summary: { borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
   list: { borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', gap: spacing.md, padding: spacing.md, alignItems: 'flex-start' },
-  icon: { width: 32, textAlign: 'center' },
-  locked: { opacity: 0.5 },
+  medal: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  medalLocked: { borderWidth: 2 },
   progress: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
   count: { minWidth: 40, textAlign: 'right', fontVariant: ['tabular-nums'] },
   track: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },

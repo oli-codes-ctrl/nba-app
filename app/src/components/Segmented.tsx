@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { radius, spacing } from '@/theme/tokens';
+import { radius, spacing, touchSlop } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
 
 import { AppText } from './AppText';
@@ -34,6 +34,7 @@ export function Segmented<T extends string>({
             accessibilityLabel={o.label}
             accessibilityState={{ selected, disabled: !!o.disabled }}
             disabled={o.disabled}
+            hitSlop={touchSlop}
             onPress={() => onChange(o.id)}
             style={[
               styles.segment,

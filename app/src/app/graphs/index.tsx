@@ -32,7 +32,7 @@ import { betterThan, formatDate, formatStat, rankText } from '@/lib/format';
 import { CATALOG, isStatId, type StatId } from '@/stats/catalog';
 import { minimumsText } from '@/stats/samples';
 import { groupNoun, POSITION_GROUPS, type PositionGroup } from '@/stats/views';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, spacing, touchSlop } from '@/theme/tokens';
 import { useChartColors, useColors } from '@/theme/useTokens';
 
 const MAX_HIGHLIGHTS = 3;
@@ -179,7 +179,7 @@ export default function GraphsScreen() {
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic">
       {/* Questions first: each chip is a chart an analyst would draw. */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed} contentContainerStyle={styles.chips}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.bleed, styles.chipRow]} contentContainerStyle={styles.chips}>
         {[...PRESETS.map((p) => ({ id: p.id, label: p.label })), { id: CUSTOM_ID, label: 'Custom' }].map((o) => {
           const on = o.id === presetId;
           return (
@@ -192,6 +192,7 @@ export default function GraphsScreen() {
                 setPresetId(o.id);
                 setSelectedId(null);
               }}
+              hitSlop={touchSlop}
               style={[styles.chip, { backgroundColor: on ? colors.accentFill : colors.surface }]}>
               <AppText variant="small" color={on ? 'textOnAccent' : 'text'} style={styles.bold}>
                 {o.label}
@@ -373,6 +374,7 @@ function HighlightRow({
           accessibilityRole="button"
           accessibilityLabel={`Remove ${nameOf(id)} from the chart`}
           onPress={() => onRemove(id)}
+          hitSlop={touchSlop}
           style={[styles.highlightChip, { borderColor: colors.border, backgroundColor: colors.surface }]}>
           <AppText variant="small" style={styles.bold} numberOfLines={1}>
             {nameOf(id)}
@@ -387,6 +389,7 @@ function HighlightRow({
           accessibilityRole="button"
           accessibilityLabel="Highlight a player"
           onPress={onAdd}
+          hitSlop={touchSlop}
           style={[styles.highlightChip, { borderColor: colors.border }]}>
           <AppText variant="small" color="accent" style={styles.bold}>
             {ids.length ? '+ Add player' : '+ Highlight players'}
@@ -594,7 +597,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   bold: { fontWeight: '600' },
   bleed: { marginHorizontal: -spacing.lg },
-  chips: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  chipRow: { marginVertical: -touchSlop.top },
+  // Vertical padding inside the scroller gives chips their full 44-pt touch area (touchSlop).
+  chips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: touchSlop.top },
   chip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.pill, minHeight: 36, justifyContent: 'center' },
   controls: { gap: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

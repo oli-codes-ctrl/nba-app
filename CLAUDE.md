@@ -20,7 +20,7 @@ Design every screen as a senior design engineer would. Concretely:
 - One accent color for actions. Team colors are identity accents only (chips, avatar rings), never text color or a data encoding.
 - Contrast meets WCAG AA in both modes (4.5:1 text, 3:1 large text and chart marks). Check it, don't eyeball it.
 - Charts follow the dataviz skill: one question per chart, plain-English title, axis labels and caption, validated colorblind-safe palettes (run the validator), never red vs. green, no dual axes, recessive grid, selective direct labels.
-- Touch targets at least 44 pt. One primary action per screen. Destructive actions confirm.
+- Touch targets at least 44 pt (compact chips and segments keep their look and get `touchSlop`; inside a horizontal scroller the slop needs matching padding, since touches outside a scroll view never reach it). One primary action per screen. Destructive actions confirm. No emoji as icons: draw them from tokens.
 - Design every state: skeletons shaped like the final layout, empty, offline, small-sample and error states. Never a blank screen or a lone spinner.
 - Motion is short (150-250 ms), purposeful, built with Reanimated, and respects Reduce Motion. Haptics only for game feedback.
 - Dark mode is the default with a System / Dark / Light setting; light mode is designed, not inverted.

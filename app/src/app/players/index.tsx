@@ -31,7 +31,7 @@ import {
   type Normalization,
   type PositionGroup,
 } from '@/stats/views';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, spacing, touchSlop } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
 
 type PositionFilter = 'all' | PositionGroup;
@@ -86,7 +86,7 @@ export default function PlayersScreen() {
         accessibilityLabel="Search players"
         style={[styles.search, { backgroundColor: colors.surface, color: colors.text }]}
       />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
         {SORT_STATS.map((id) => {
           const selected = id === sort;
           return (
@@ -96,6 +96,7 @@ export default function PlayersScreen() {
               accessibilityState={{ selected }}
               accessibilityLabel={`Sort by ${CATALOG[id].label}`}
               onPress={() => setSort(id)}
+              hitSlop={touchSlop}
               style={[
                 styles.chip,
                 { backgroundColor: selected ? colors.accentFill : colors.surface },
@@ -236,7 +237,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     fontSize: 16,
   },
-  chips: { gap: spacing.sm },
+  // Vertical padding inside the scroller gives chips their full 44-pt touch area (touchSlop);
+  // the negative margin keeps the row where it was.
+  chips: { gap: spacing.sm, paddingVertical: touchSlop.top },
+  chipRow: { marginVertical: -touchSlop.top },
   chip: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, borderRadius: radius.pill },
   chipText: { fontWeight: '600' },
   teamsLink: {

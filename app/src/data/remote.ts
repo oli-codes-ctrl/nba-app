@@ -164,7 +164,9 @@ export function createRemoteDataSource({
 
   async function games(manifest: Manifest): Promise<{ doc: GamesDoc; stale: boolean } | null> {
     const file = manifest.files.games;
-    const saved = await savedGames();
+    const kept = await savedGames();
+    // Last season's box scores are never shown as this season's.
+    const saved = kept && kept.doc.season === manifest.season ? kept : null;
     if (!file) return saved ? { doc: saved.doc, stale: true } : null;
     // Named by content hash: a saved copy of the same file is current.
     if (saved?.file === file) return { doc: saved.doc, stale: false };

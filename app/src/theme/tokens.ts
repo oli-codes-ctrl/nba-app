@@ -141,6 +141,12 @@ export const chartColors: Record<ColorScheme, ChartColors> = {
 /** Text colors that sit on a team chip, chosen by the chip's brightness. */
 export const chipText = { onLight: '#111316', onDark: '#FFFFFF' } as const;
 
+/**
+ * Extra touch area for compact controls drawn under 44 pt (chips 32-36 pt,
+ * segments 36 pt): vertical only, so neighbours in a row never overlap.
+ */
+export const touchSlop = { top: 6, bottom: 6, left: 0, right: 0 } as const;
+
 /** A 4-point grid. */
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const radius = { sm: 6, md: 10, lg: 16, pill: 999 } as const;

@@ -195,3 +195,15 @@ describe('box scores on demand', () => {
     await expect(source.games(withGames)).rejects.toBeInstanceOf(DataError);
   });
 });
+
+describe('box scores across seasons', () => {
+  it('never shows last season’s saved box scores as this season’s', async () => {
+    const lastSeason = { schemaVersion: 2, season: 2025, gamesThrough: '2026-04-12', boxScoresThrough: '2026-04-12', keys: ['min', 'pts', 'gmsc'], games: [], players: {} };
+    const { net, source } = setup({ 'games.old.json': lastSeason });
+    const oldManifest = { ...manifest('2026-04-13T10:00:00+00:00'), season: 2025, files: { ...manifest('x').files, games: 'games.old.json' } };
+    expect((await source.games(oldManifest))?.doc.season).toBe(2025);
+    net.goOffline();
+    // A new season's manifest with no games file yet: nothing, not last season's.
+    expect(await source.games(manifest('2026-10-21T10:00:00+00:00'))).toBeNull();
+  });
+});

@@ -25,7 +25,7 @@ import { ScatterChart } from '@/graphs/ScatterChart';
 import { fold } from '@/lib/fold';
 import { formatDate } from '@/lib/format';
 import { CATALOG, type StatId } from '@/stats/catalog';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, spacing, touchSlop } from '@/theme/tokens';
 import { useChartColors, useColors } from '@/theme/useTokens';
 
 const MAX_SUGGESTIONS = 6;
@@ -142,6 +142,7 @@ function Game({
               accessibilityState={{ selected }}
               accessibilityLabel={`Show ${CATALOG[id].label}`}
               onPress={() => setHint(id)}
+              hitSlop={touchSlop}
               style={[styles.chip, { backgroundColor: selected ? colors.accentFill : colors.surface }]}>
               <AppText variant="small" color={selected ? 'textOnAccent' : 'text'} style={styles.bold}>
                 {CATALOG[id].short}
