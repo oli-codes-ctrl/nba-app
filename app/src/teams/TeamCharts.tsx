@@ -6,7 +6,7 @@ import type { TeamSeason, TeamsDoc } from '@/data/types';
 import { LuckStrip } from '@/graphs/LuckStrip';
 import { median } from '@/graphs/analysis';
 import { TeamQuadrantChart } from '@/graphs/TeamQuadrantChart';
-import { formatDate } from '@/lib/format';
+import { formatDate, ordinal } from '@/lib/format';
 import { teamInfo } from '@/theme/teams';
 import { spacing } from '@/theme/tokens';
 import { useColors } from '@/theme/useTokens';
@@ -48,7 +48,10 @@ export function RatingsCard({ doc, highlight = null, onSelect }: CardProps) {
         ? `Yes: ${name} outscores opponents by ${focus.net.toFixed(1)} per 100 possessions${range}. Even allowing for luck, that beats an average team.`
         : v === 'below'
           ? `Not yet: ${name} is outscored by ${Math.abs(focus.net).toFixed(1)} per 100 possessions${range}. Even allowing for luck, that trails an average team.`
-          : `Too early to tell: after ${focus.gp} games, ${name}’s ${signed(focus.net)} net rating could be off by ±${(focus.net_noise ?? 0).toFixed(1)}, so ${name} could still be an average team.`;
+          : v === 'unclear'
+            ? `Too early to tell: after ${focus.gp} games, ${name}’s ${signed(focus.net)} net rating could be off by ±${(focus.net_noise ?? 0).toFixed(1)}, so ${name} could still be an average team.`
+            : // Older data has no noise estimate: state the number, claim nothing.
+              `${name} ${focus.net >= 0 ? 'outscores opponents by' : 'is outscored by'} ${Math.abs(focus.net).toFixed(1)} per 100 possessions${focus.rank.net ? ` (${ordinal(focus.rank.net)} of ${teams.length})` : ''}.`;
   } else {
     answer =
       `${teamInfo(best.abbr).name} leads at ${signed(best.net)} per 100 possessions.` +
