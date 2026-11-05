@@ -129,7 +129,7 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
                                        sum(t["gp"] for t in team_totals.values()))
         teams = teamstats.build_teams(team_totals, team_records, ot)
     priors = fit_shrinkage(lines)
-    records, pool_size = build_player_records(lines, teams, priors)
+    records, pool_size = build_player_records(lines, teams, priors, games.game_scores(game_state, games_through))
 
     totals_history = recent.load_history(args.state)
     recent_info, recent_by_player = recent.compute(totals_history, games_through, lines)

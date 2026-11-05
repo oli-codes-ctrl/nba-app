@@ -270,6 +270,19 @@ def games_doc(state: GameState, through: date) -> dict[str, Any]:
     }
 
 
+def game_scores(state: GameState, through: date) -> dict[int, list[float]]:
+    """Each player's Game Score in every stored game through `through`."""
+    end = through.isoformat()
+    at = 3 + STAT_KEYS.index("gmsc")  # after pid, side and starter
+    out: dict[int, list[float]] = {}
+    for g in state.games.values():
+        if g["date"] > end:
+            continue
+        for line in g["lines"]:
+            out.setdefault(int(line[0]), []).append(float(line[at]))
+    return out
+
+
 def totals_mismatch(doc: dict[str, Any], season_points: dict[int, int], season_games: dict[int, int]) -> list[int]:
     """Players whose box scores do not add up to ESPN's season totals (games
     and points), for a consistency warning."""

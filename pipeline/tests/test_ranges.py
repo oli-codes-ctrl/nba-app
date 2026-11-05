@@ -101,3 +101,17 @@ def test_records_publish_ranges_for_ranked_players_only(make_line):
     # The /v1/ copy keeps its old shape: shooting ranges only.
     old, _ = v1_records(records, lines)
     assert set(old[0]["ci"]) <= {"fg_pct", "fg2_pct", "fg3_pct", "ft_pct"}
+
+
+def test_game_score_range_comes_from_his_own_games(make_line):
+    lines = [make_line(pid, gp=4) for pid in range(1, 21)]
+    mark_qualified(lines)
+    # Player 1's four games: Game Scores 10, 14, 18, 22 (SD 5.16).
+    records, _ = build_player_records(lines, None, fit_shrinkage(lines), {1: [10.0, 14.0, 18.0, 22.0]})
+    by_id = {r["id"]: r for r in records}
+    center = by_id[1]["s"]["game_score"]
+    lo, hi = by_id[1]["ci"]["game_score"]
+    half = 1.959964 * 5.1640 / 2
+    assert lo == pytest.approx(center - half, abs=0.06)
+    assert hi == pytest.approx(center + half, abs=0.06)
+    assert "game_score" not in by_id[2]["ci"]  # no box scores for him

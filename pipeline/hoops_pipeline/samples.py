@@ -44,6 +44,10 @@ the player's own events are treated as luck:
 - Shares of team or opponent plays while he is on the court (usage, assist,
   turnover, rebound, steal and block percentage): Wilson intervals on his
   count out of those opportunities.
+- Game Score adds up a whole box line, so no single count model fits. With
+  box scores it gets the plain standard error of a season average: his
+  game-to-game spread (sample SD of his games' Game Scores) over the square
+  root of his games, 1.96 of them each side of his season Game Score.
 
 - [Garwood] F. Garwood, "Fiducial limits for the Poisson distribution",
   Biometrika 28 (1936).
@@ -218,6 +222,18 @@ def poisson_interval(count: float, z: float = Z95) -> tuple[float, float]:
     k1 = k + 1
     upper = k1 * (1 - 1 / (9 * k1) + z / (3 * math.sqrt(k1))) ** 3
     return max(0.0, lower), upper
+
+
+def mean_interval(center: float, values: list[float], z: float = Z95) -> tuple[float, float] | None:
+    """95% range for a season average from its game-by-game values: center
+    +/- z s / sqrt(n), s the sample SD. None with fewer than two games."""
+    n = len(values)
+    if n < 2:
+        return None
+    m = sum(values) / n
+    s = math.sqrt(sum((v - m) ** 2 for v in values) / (n - 1))
+    half = z * s / math.sqrt(n)
+    return center - half, center + half
 
 
 def normal_interval(value: float, sd: float, z: float = Z95) -> tuple[float, float]:

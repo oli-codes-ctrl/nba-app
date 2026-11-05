@@ -22,6 +22,7 @@ from .percentiles import compute_percentiles
 from .samples import (
     BetaPrior,
     fit_beta_binomial,
+    mean_interval,
     posterior_interval,
     separates_shooters,
     shrink,
@@ -75,6 +76,7 @@ def build_player_records(
     lines: list[SeasonLine],
     teams: dict[str, Team] | None = None,
     priors: dict[str, BetaPrior] | None = None,
+    game_scores: dict[int, list[float]] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, int]]:
     """Player records with stats, attempts, uncertainty ranges, sample-adjusted
     estimates, and percentiles and ranks among all qualified players and
@@ -131,6 +133,14 @@ def build_player_records(
             # Counts, points, efficiency and shares: only ranked players
             # need them (rank bands and gated insights in the app).
             ci.update(compute_ranges(ln, contexts[ln.pid]))
+            # Game Score from his box scores: the spread of his own games.
+            center = stats[ln.pid].get("game_score")
+            interval = (
+                mean_interval(float(center), game_scores.get(ln.pid, []))
+                if game_scores and center is not None else None
+            )
+            if interval is not None:
+                ci["game_score"] = [round(interval[0], 1), round(interval[1], 1)]
         if ci:
             rec["ci"] = ci
         adj: dict[str, float] = {}

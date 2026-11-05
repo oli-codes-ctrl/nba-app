@@ -17,24 +17,24 @@ export const CARD_SECTIONS: readonly CardSection[] = [
     title: 'Scoring',
     rows: [
       { stat: 'pts', label: 'Points' },
-      { stat: 'ts_pct', label: 'True shooting %' },
-      { stat: 'fg3_pct', label: 'Three-point %' },
-      { stat: 'ft_pct', label: 'Free throw %' },
+      { stat: 'ts_pct', label: 'True shooting\u00A0%' },
+      { stat: 'fg3_pct', label: 'Three-point\u00A0%' },
+      { stat: 'ft_pct', label: 'Free throw\u00A0%' },
     ],
   },
   {
     title: 'Playmaking',
     rows: [
-      { stat: 'ast_pct', label: 'Assist %' },
-      { stat: 'tov_pct', label: 'Turnover %' },
+      { stat: 'ast_pct', label: 'Assist\u00A0%' },
+      { stat: 'tov_pct', label: 'Turnover\u00A0%' },
     ],
   },
   {
     title: 'Boards and defense',
     rows: [
-      { stat: 'reb_pct', label: 'Rebound %' },
-      { stat: 'stl_pct', label: 'Steal %' },
-      { stat: 'blk_pct', label: 'Block %' },
+      { stat: 'reb_pct', label: 'Rebound\u00A0%' },
+      { stat: 'stl_pct', label: 'Steal\u00A0%' },
+      { stat: 'blk_pct', label: 'Block\u00A0%' },
     ],
   },
   { title: 'Role', rows: [{ stat: 'usg_pct', label: 'Usage' }] },
@@ -99,13 +99,14 @@ export type CardInsights = {
   elite: CardRow[];
   /** Worse than (100 - WEAK)% even at the lucky end. */
   weak: CardRow[];
-  /** Top or bottom 10% so far, but the range still reaches the middle. */
+  /** Top or bottom 10% so far, but no range confirms it (too wide, or none published yet). */
   unsettled: CardRow[];
 };
 
 /**
- * Only claims what the ranges support: a stat without a range (Game Score)
- * or a neutral one (usage) never makes the list.
+ * Only claims what the ranges support: elite and weak need a range, so a
+ * stat without one can at most be "not settled"; a neutral one (usage) is
+ * never judged.
  */
 export function cardInsights(rows: readonly CardRow[]): CardInsights {
   const judged = rows.filter(
@@ -113,8 +114,17 @@ export function cardInsights(rows: readonly CardRow[]): CardInsights {
   );
   const elite = judged.filter((r) => r.band[0] >= ELITE).sort((a, b) => b.band[0] - a.band[0]);
   const weak = judged.filter((r) => r.band[1] <= WEAK).sort((a, b) => a.band[1] - b.band[1]);
-  const unsettled = judged
-    .filter((r) => !elite.includes(r) && !weak.includes(r) && (r.better >= STANDOUT || r.better <= 100 - STANDOUT))
+  // Standouts the ranges don't confirm, including stats with no range yet:
+  // worth naming, never worth calling elite.
+  const unsettled = rows
+    .filter(
+      (r): r is CardRow & { better: number } =>
+        !r.neutral &&
+        r.better != null &&
+        !elite.includes(r as (typeof judged)[number]) &&
+        !weak.includes(r as (typeof judged)[number]) &&
+        (r.better >= STANDOUT || r.better <= 100 - STANDOUT),
+    )
     .sort((a, b) => Math.abs(b.better - 50) - Math.abs(a.better - 50));
   return { elite, weak, unsettled };
 }

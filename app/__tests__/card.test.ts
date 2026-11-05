@@ -64,9 +64,11 @@ describe('gated insights', () => {
     expect(unsettled.map((r) => r.stat)).toEqual(['ts_pct', 'stl_pct']);
   });
 
-  it('never judges roles or stats without a range', () => {
+  it('never judges roles, and never calls a stat without a range elite', () => {
     const { elite, weak, unsettled } = cardInsights([row('usg_pct', 99, [95, 100], true), row('game_score', 99, null)]);
-    expect([...elite, ...weak, ...unsettled]).toEqual([]);
+    expect([...elite, ...weak]).toEqual([]);
+    // The league's best Game Score with no range yet is named, not dropped.
+    expect(unsettled.map((r) => r.stat)).toEqual(['game_score']);
   });
 });
 

@@ -12,7 +12,7 @@ const RING = 30;
 /** The likely-range bar under each ring. */
 const BAND = 4;
 const BAND_GAP = 3;
-const LIST = 3;
+const LIST = 4;
 
 type Props = {
   title: string;
@@ -59,9 +59,8 @@ export function PercentileCard({ title, poolText, through, rows, insights, onOpe
       ))}
 
       <AppText variant="caption" color="textSecondary">
-        100 is best; for turnovers, fewer counts as better. A short bar means his rank is settled. Game Score has
-        no bar: it adds up too many parts for a simple range. Usage is a role, so it gets no color. Tap a stat to
-        see everyone.
+        100 is best; for turnovers, fewer counts as better. A short bar means his rank is settled; no bar means
+        no range is published for that stat yet. Usage is a role, so it gets no color. Tap a stat to see everyone.
       </AppText>
     </View>
   );
@@ -114,7 +113,7 @@ function Answer({ insights }: { insights: CardInsights }) {
     <View style={styles.answer} accessibilityRole="summary">
       {!elite.length && !weak.length ? (
         <AppText variant="small">
-          Nothing is clearly elite or weak yet: every range still reaches the middle of the pack.
+          Nothing is clearly elite or weak yet, allowing for luck.
         </AppText>
       ) : null}
       {lines.map((l) => (
@@ -132,7 +131,7 @@ function Answer({ insights }: { insights: CardInsights }) {
           {[
             elite.length ? `Elite: top ${100 - ELITE}% even at the unlucky end of his range.` : '',
             weak.length ? `Weak spot: bottom ${100 - ELITE}% even at the lucky end.` : '',
-            unsettled.length ? 'Not settled: top or bottom 10% so far, but it could still be luck.' : '',
+            unsettled.length ? 'Not settled: top or bottom 10% so far, but luck can’t be ruled out yet.' : '',
           ]
             .filter(Boolean)
             .join(' ')}
