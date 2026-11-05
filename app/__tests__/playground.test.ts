@@ -3,6 +3,7 @@ import {
   describeRelationship,
   median,
   quadrantCounts,
+  quadrantCandidates,
   quadrantExemplars,
   quadrantOf,
   ranks,
@@ -161,5 +162,61 @@ describe('points', () => {
     expect(all.map((p) => p.id)).toEqual([1, 2]);
     expect(all[0]).toMatchObject({ group: 'G', minutes: 150 });
     expect(buildPoints(ps, 'pts', 'reb', null, undefined, 'C').map((p) => p.id)).toEqual([2]);
+  });
+});
+
+describe('labels never hide other players', () => {
+  const bounds = { x0: 0, y0: 0, x1: 300, y1: 200 };
+
+  it('steps around a neighbouring dot, with a leader line when it moves away', () => {
+    // A dot sits right where the label would go (to the right of player 1).
+    const dots = [
+      { id: 1, x: 100, y: 100, r: 5 },
+      { id: 2, x: 120, y: 97, r: 5 },
+    ];
+    const [label] = placeLabels([{ id: 1, dotX: 100, dotY: 100, radius: 4, text: 'N. Jokić' }], bounds, 11, [], dots);
+    const nearest = (b: { x0: number; y0: number; x1: number; y1: number }) =>
+      Math.hypot(Math.max(b.x0, Math.min(120, b.x1)) - 120, Math.max(b.y0, Math.min(97, b.y1)) - 97);
+    expect(nearest(label.box)).toBeGreaterThanOrEqual(5);
+  });
+
+  it('skips an example label in a crowd but always places a picked player', () => {
+    const crowd = [];
+    for (let x = 40; x <= 260; x += 9) for (let y = 20; y <= 180; y += 9) crowd.push({ id: crowd.length + 10, x, y, r: 5 });
+    const req = { id: 1, dotX: 150, dotY: 100, radius: 4, text: 'L. Dončić' };
+    expect(placeLabels([req], bounds, 11, [], crowd)).toHaveLength(0);
+    const [picked] = placeLabels([{ ...req, required: true }], bounds, 11, [], crowd);
+    expect(picked.text).toBe('L. Dončić');
+  });
+
+  it('draws a leader only when the label sits away from its dot', () => {
+    const [near] = placeLabels([{ id: 1, dotX: 100, dotY: 100, radius: 4, text: 'A' }], bounds, 11);
+    expect(near.leader).toBeNull();
+    const blocked = [{ x0: 100, y0: 80, x1: 140, y1: 120 }, { x0: 60, y0: 80, x1: 100, y1: 120 }, { x0: 80, y0: 60, x1: 120, y1: 140 }];
+    const [far] = placeLabels([{ id: 1, dotX: 100, dotY: 100, radius: 4, text: 'A' }], bounds, 11, blocked);
+    expect(far.leader).not.toBeNull();
+  });
+});
+
+describe('example names per quadrant', () => {
+  it('offers several candidates per quadrant, most extreme first, round-robin', () => {
+    const pts = [pt(1, 10, 10), pt(2, 9, 9), pt(3, -10, 10), pt(4, -9, 8), pt(5, 1, 1), pt(6, -1, -1)];
+    const c = quadrantCandidates(pts, 0, 0, false, new Set(), 2);
+    expect(c.slice(0, 2).map((x) => x.id).sort()).toEqual([1, 3]);
+    expect(new Set(c.map((x) => x.quadrant)).size).toBeGreaterThanOrEqual(3);
+  });
+
+  it('names at most one player per group: the first that fits', () => {
+    const bounds = { x0: 0, y0: 0, x1: 300, y1: 200 };
+    const placed = placeLabels(
+      [
+        { id: 1, dotX: 100, dotY: 100, radius: 4, text: 'First', group: 'topRight' },
+        { id: 2, dotX: 200, dotY: 60, radius: 4, text: 'Second', group: 'topRight' },
+        { id: 3, dotX: 60, dotY: 160, radius: 4, text: 'Other', group: 'bottomLeft' },
+      ],
+      bounds,
+      11,
+    );
+    expect(placed.map((p) => p.text)).toEqual(['First', 'Other']);
   });
 });

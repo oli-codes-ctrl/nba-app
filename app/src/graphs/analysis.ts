@@ -161,6 +161,47 @@ export function quadrantExemplars(
   return [...best.values()].sort((a, b) => b.score - a.score).map((b) => b.id);
 }
 
+/**
+ * Up to `k` example players per quadrant, most extreme first, tagged with
+ * their quadrant. The chart names the first one in each quadrant whose
+ * label fits without covering anyone.
+ */
+export function quadrantCandidates(
+  points: readonly ChartPoint[],
+  mx: number,
+  my: number,
+  invertY: boolean,
+  skip: ReadonlySet<number>,
+  k = 4,
+): { id: number; quadrant: QuadrantKey }[] {
+  const sx = robustScale(
+    points.map((p) => p.x),
+    mx,
+  );
+  const sy = robustScale(
+    points.map((p) => p.y),
+    my,
+  );
+  const byQuadrant = new Map<QuadrantKey, { id: number; score: number }[]>();
+  for (const p of points) {
+    if (skip.has(p.id)) continue;
+    const q = quadrantOf(p, mx, my, invertY);
+    const score = Math.abs(p.x - mx) / sx + Math.abs(p.y - my) / sy;
+    byQuadrant.set(q, [...(byQuadrant.get(q) ?? []), { id: p.id, score }]);
+  }
+  const lists = [...byQuadrant.entries()].map(([quadrant, list]) => ({
+    quadrant,
+    list: list.sort((a, b) => b.score - a.score || a.id - b.id).slice(0, k),
+  }));
+  // Round-robin by rank, the strongest quadrant first within each round.
+  lists.sort((a, b) => (b.list[0]?.score ?? 0) - (a.list[0]?.score ?? 0));
+  const out: { id: number; quadrant: QuadrantKey }[] = [];
+  for (let r = 0; r < k; r++) {
+    for (const { quadrant, list } of lists) if (list[r]) out.push({ id: list[r].id, quadrant });
+  }
+  return out;
+}
+
 const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
 
 /** "Nikola Jokić" -> "N. Jokić"; "Jaren Jackson Jr." -> "J. Jackson". */

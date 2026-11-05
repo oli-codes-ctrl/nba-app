@@ -17,7 +17,7 @@ import {
   median,
   pearson,
   quadrantCounts,
-  quadrantExemplars,
+  quadrantCandidates,
   sharedInputs,
   shortName,
   thinSamples,
@@ -36,7 +36,6 @@ import { radius, spacing } from '@/theme/tokens';
 import { useChartColors, useColors } from '@/theme/useTokens';
 
 const MAX_HIGHLIGHTS = 3;
-const EXAMPLE_LABELS = 4;
 const RAMP_CLASSES = 5;
 
 type PickerTarget = 'x' | 'y' | 'z' | 'player' | null;
@@ -123,7 +122,7 @@ export default function GraphsScreen() {
       medians: { x: mx, y: my },
       counts: quadrantCounts(points, mx, my, invertY),
       hollow,
-      examples: quadrantExemplars(points, mx, my, invertY, new Set([...hollow, ...highlights])),
+      examples: quadrantCandidates(points, mx, my, invertY, new Set([...hollow, ...highlights])),
       relationship: describeRelationship(points, CATALOG[x].label.toLowerCase(), CATALOG[y].label.toLowerCase()),
       fit: linearFit(points),
       r: pearson(
@@ -163,7 +162,8 @@ export default function GraphsScreen() {
 
   const labels = [
     ...highlights.filter((id) => onChart.has(id)).map((id) => ({ id, text: shortName(nameOf(id)) })),
-    ...(analysis?.examples ?? []).slice(0, EXAMPLE_LABELS).map((id) => ({ id, text: shortName(nameOf(id)) })),
+    // Up to one example per quadrant: the first candidate whose name fits without covering anyone.
+    ...(analysis?.examples ?? []).map(({ id, quadrant }) => ({ id, text: shortName(nameOf(id)), group: quadrant })),
   ];
 
   const title = preset ? preset.question : `${CATALOG[y].label} vs. ${CATALOG[x].label.toLowerCase()}`;

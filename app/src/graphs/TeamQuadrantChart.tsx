@@ -97,15 +97,22 @@ export function TeamQuadrantChart({ teams, league, highlight = null, surface, su
     if (free) shownLineLabels.push({ c: l.c, text, ...free });
   }
 
-  const dotBoxes: Box[] = screen.map((s) => ({ x0: s.sx - DOT, y0: s.sy - DOT, x1: s.sx + DOT, y1: s.sy + DOT }));
   const order = teams.map((_, i) => i).sort((a, b) => (a === hi ? -1 : b === hi ? 1 : 0));
   const placed =
     width > 0
       ? placeLabels(
-          order.map((i) => ({ id: i, dotX: screen[i].sx, dotY: screen[i].sy, radius: i === hi ? BIG_DOT : DOT, text: teams[i].abbr })),
+          order.map((i) => ({
+            id: i,
+            dotX: screen[i].sx,
+            dotY: screen[i].sy,
+            radius: i === hi ? BIG_DOT : DOT,
+            text: teams[i].abbr,
+            required: i === hi,
+          })),
           { x0: plot.x0, y0: plot.y1, x1: plot.x1, y1: plot.y0 },
           LABEL_SIZE,
-          [...cornerBoxes, ...shownLineLabels.map((l) => l.box), ...dotBoxes],
+          [...cornerBoxes, ...shownLineLabels.map((l) => l.box)],
+          screen.map((s, i) => ({ id: i, x: s.sx, y: s.sy, r: (i === hi ? BIG_DOT : DOT) + 1, weight: i === hi ? 20 : 1 })),
         )
       : [];
 
@@ -208,6 +215,9 @@ export function TeamQuadrantChart({ teams, league, highlight = null, surface, su
 
             {placed.map((l) => (
               <G key={`l${l.id}`}>
+                {l.leader && (
+                  <Line x1={l.leader.x1} y1={l.leader.y1} x2={l.leader.x2} y2={l.leader.y2} stroke={ui.textSecondary} strokeWidth={1} />
+                )}
                 <SvgText x={l.x} y={l.y} fontSize={LABEL_SIZE} fontWeight={l.id === hi ? '800' : '600'} textAnchor={l.anchor} fontFamily={FONT} fill={surface} {...halo}>
                   {l.text}
                 </SvgText>

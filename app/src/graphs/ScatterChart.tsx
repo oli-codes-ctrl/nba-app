@@ -36,8 +36,8 @@ type Props = {
   trend?: { slope: number; intercept: number } | null;
   /** Players drawn larger, on top, with a ring. */
   highlightIds?: readonly number[];
-  /** Names to print beside dots, most important first. */
-  labels?: readonly { id: number; text: string }[];
+  /** Names to print beside dots, most important first; one per `group` at most. */
+  labels?: readonly { id: number; text: string; group?: string }[];
   /** The color behind the chart, for dot rings and label halos. */
   surface?: string;
   /** Spoken summary of the chart. */
@@ -104,11 +104,20 @@ export function ScatterChart({
       ? placeLabels(
           labels.flatMap((l) => {
             const i = indexById.get(l.id);
-            return i == null ? [] : [{ id: l.id, dotX: screen[i].sx, dotY: screen[i].sy, radius: highlighted.has(l.id) ? BIG_DOT : DOT, text: l.text }];
+            if (i == null) return [];
+            const big = highlighted.has(l.id);
+            // Players the reader picked always get their name; examples only where it covers no one.
+            return [
+              { id: l.id, dotX: screen[i].sx, dotY: screen[i].sy, radius: big ? BIG_DOT : DOT, text: l.text, required: big, group: l.group },
+            ];
           }),
           plot.x1 > plot.x0 ? { x0: plot.x0, y0: plot.y1, x1: plot.x1, y1: plot.y0 } : { x0: 0, y0: 0, x1: 0, y1: 0 },
           LABEL_SIZE,
           cornerBoxes,
+          points.map((p, i) => {
+            const big = highlighted.has(p.id);
+            return { id: p.id, x: screen[i].sx, y: screen[i].sy, r: (big ? BIG_DOT : DOT) + 1, weight: big ? 20 : 1 };
+          }),
         )
       : [];
 
@@ -210,6 +219,24 @@ export function ScatterChart({
                 );
               })}
 
+              {/* Named dots get a text-colored ring, so each name has an unmistakable dot. */}
+              {placed.map((l) => {
+                const i = indexById.get(l.id);
+                if (i == null || highlighted.has(l.id)) return null;
+                const p = points[i];
+                return (
+                  <Circle
+                    key={`n${l.id}`}
+                    cx={screen[i].sx}
+                    cy={screen[i].sy}
+                    r={DOT + 0.5}
+                    fill={hollowIds?.has(p.id) ? bg : dotColor(p)}
+                    stroke={ui.text}
+                    strokeWidth={1.75}
+                  />
+                );
+              })}
+
               {/* Highlighted players last, so they sit on top. */}
               {points.map((p, i) =>
                 highlighted.has(p.id) ? (
@@ -235,6 +262,9 @@ export function ScatterChart({
 
             {placed.map((l) => (
               <G key={`l${l.id}`}>
+                {l.leader && (
+                  <Line x1={l.leader.x1} y1={l.leader.y1} x2={l.leader.x2} y2={l.leader.y2} stroke={ui.textSecondary} strokeWidth={1} />
+                )}
                 <SvgText x={l.x} y={l.y} fontSize={LABEL_SIZE} fontWeight="600" textAnchor={l.anchor} fontFamily={FONT} fill={bg} {...halo}>
                   {l.text}
                 </SvgText>

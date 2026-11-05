@@ -5,7 +5,7 @@ import Svg, { Circle, G, Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useChartColors, useColors } from '@/theme/useTokens';
 
 import { beeswarm } from './distribution';
-import { placeLabels, type Box } from './labels';
+import { placeLabels } from './labels';
 import { nearestIndex, pressPoint, scale } from './math';
 
 const PAD = { left: 12, right: 12, top: 22, bottom: 34 };
@@ -67,7 +67,7 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
     .map((t, i) => ({ t, i }))
     .filter(({ t, i }) => i === hi || Math.abs(t.luck) > noise)
     .sort((a, b) => (a.i === hi ? -1 : b.i === hi ? 1 : Math.abs(b.t.luck) - Math.abs(a.t.luck)));
-  const dotBoxes: Box[] = screen.map((s) => ({ x0: s.sx - swarm.radius, y0: s.sy - swarm.radius, x1: s.sx + swarm.radius, y1: s.sy + swarm.radius }));
+  const dots = screen.map((s, i) => ({ id: i, x: s.sx, y: s.sy, r: (i === hi ? 7 : swarm.radius) + 1, weight: i === hi ? 20 : 1 }));
   const bounds = { x0, y0: 0, x1, y1: PAD.top + BAND };
   const request = ({ t, i }: (typeof toLabel)[number]) => ({
     id: i,
@@ -75,10 +75,11 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
     dotY: screen[i].sy,
     radius: i === hi ? 7 : swarm.radius,
     text: t.abbr,
+    required: i === hi,
   });
   // The highlighted team is always named, even over a crowded swarm; the
   // others only where they cover no dot.
-  const first = width > 0 && hi >= 0 ? placeLabels(toLabel.filter((l) => l.i === hi).map(request), bounds, LABEL_SIZE) : [];
+  const first = width > 0 && hi >= 0 ? placeLabels(toLabel.filter((l) => l.i === hi).map(request), bounds, LABEL_SIZE, [], dots) : [];
   const placed =
     width > 0
       ? [
@@ -87,7 +88,8 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
             toLabel.filter((l) => l.i !== hi).map(request),
             bounds,
             LABEL_SIZE,
-            [...dotBoxes, ...first.map((l) => l.box)],
+            first.map((l) => l.box),
+            dots,
           ),
         ]
       : [];
@@ -145,6 +147,9 @@ export function LuckStrip({ teams, noise, highlight = null, surface, summary, on
 
             {placed.map((l) => (
               <G key={`l${l.id}`}>
+                {l.leader && (
+                  <Line x1={l.leader.x1} y1={l.leader.y1} x2={l.leader.x2} y2={l.leader.y2} stroke={ui.textSecondary} strokeWidth={1} />
+                )}
                 <SvgText x={l.x} y={l.y} fontSize={LABEL_SIZE} fontWeight={l.id === hi ? '800' : '600'} textAnchor={l.anchor} fontFamily={FONT} fill={surface} {...halo}>
                   {l.text}
                 </SvgText>
