@@ -99,6 +99,14 @@ def main(argv: list[str] | None = None, client: JsonClient | None = None) -> int
             log.info("Games through %s are already published; nothing to do.", last)
             return EXIT_UP_TO_DATE
 
+        # Late retries are only safe while none of today's games has ended:
+        # ESPN's totals would include it under yesterday's label.
+        finished = games.finished_on(client, today)
+        if finished:
+            log.warning("%d of today's games already finished; their stats can't be labeled games through %s. "
+                        "Not publishing; tomorrow's run will include them.", finished, games_through)
+            return EXIT_STALE
+
         splits, missing = espn.fetch_rebound_splits(
             client, season, [ln.pid for ln in lines], cached_splits)
         if lines and missing / len(lines) > config.MAX_REBOUND_SPLIT_MISSING_SHARE:

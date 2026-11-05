@@ -40,7 +40,7 @@ Design every screen as a senior design engineer would. Concretely:
 ## Layout
 - `pipeline/`: Python 3.12 package `hoops_pipeline`, managed with uv. Pulls ESPN season stats, computes derived stats, publishes JSON.
 - `app/`: Expo (TypeScript, expo-router). iOS first, plus a static web build. Built and submitted with EAS, no Mac.
-- `.github/workflows/nightly-data.yml`: tries the pipeline four times each morning (10:15-15:45 UTC) and publishes to the `gh-pages` branch under `/v2/` (plus the `/v1/` compatibility copy) once ESPN has caught up. `nightly` exits 75 when ESPN is still behind (retry later) and 76 when those games are already published; only the last attempt fails loudly.
+- `.github/workflows/nightly-data.yml`: tries the pipeline six times a day (10:15-18:45 UTC; GitHub often starts them up to an hour late) and publishes to the `gh-pages` branch under `/v2/` (plus the `/v1/` compatibility copy) once ESPN has caught up. `nightly` exits 75 when ESPN is still behind (retry later) and 76 when those games are already published; only the last attempt fails loudly. `nightly` also exits 75 once any of today's games has finished (scoreboard check), so late attempts never label today's results as yesterday's.
 - Pipeline state (last ESPN response, rebound splits, team totals and standings, puzzle history, nightly totals, box scores, last published date) lives on the `pipeline-state` branch as one force-pushed commit. The app never reads it.
 
 ## Data

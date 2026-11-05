@@ -2,15 +2,19 @@ name: Nightly data
 
 on:
   schedule:
-    # ESPN's stats feeds finish updating some hours after the last game. The
-    # pipeline publishes only once they have caught up (exit 75 = not yet,
-    # exit 76 = already published), so later attempts are cheap no-ops. The
-    # last attempt fails loudly if ESPN still hasn't caught up. All four run
-    # before the earliest weekend tip-off (noon US Eastern).
+    # ESPN's stats feeds finish updating some hours after the last game; on
+    # 2026-11-04 the player totals only caught up around 16:00 UTC. The
+    # pipeline publishes only once they have (exit 75 = not yet, exit 76 =
+    # already published), so extra attempts are cheap no-ops. It also refuses
+    # once any of today's games has finished, so late attempts can't label
+    # today's results as yesterday's. GitHub often starts scheduled runs up
+    # to an hour late. Only the last attempt (18:45) fails loudly.
     - cron: "15 10 * * *"
     - cron: "15 12 * * *"
     - cron: "15 14 * * *"
     - cron: "45 15 * * *"
+    - cron: "15 17 * * *"
+    - cron: "45 18 * * *"
   workflow_dispatch:
     inputs:
       force:
@@ -56,7 +60,7 @@ jobs:
             0) echo "publish=true" >> "$GITHUB_OUTPUT" ;;
             76) echo "::notice::Last night's games are already published." ;;
             75)
-              if [ "$(date -u +%H)" -ge 15 ]; then
+              if [ "${{ github.event.schedule }}" = "45 18 * * *" ]; then
                 echo "::error::ESPN's stats still haven't caught up with last night's games after the last attempt."
                 exit 1
               fi

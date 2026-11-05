@@ -187,3 +187,20 @@ def test_nightly_skips_games_already_published(tmp_path, espn_fake):
     assert _run(tmp_path, espn_fake) == 0
     assert _run(tmp_path, espn_fake) == EXIT_UP_TO_DATE
     assert _run(tmp_path, espn_fake, "--force") == 0
+
+
+def test_nightly_waits_once_any_of_todays_games_has_finished(tmp_path, espn_fake):
+    """A late retry must not publish once a game from today has ended: ESPN's
+    totals would include it under yesterday's label."""
+    board = json.loads((Path(__file__).parent / "fixtures" / "espn_scoreboard_sample.json").read_text(encoding="utf-8"))
+
+    class WithScoreboard(FakeEspn):
+        def get(self, url, params=None):
+            if url == config.ESPN_SCOREBOARD_URL and params["dates"] == "20261104":
+                self.calls += 1
+                return copy.deepcopy(board)  # two of "today's" games are final
+            return super().get(url, params)
+
+    late = WithScoreboard(espn_fake.bulk, espn_fake.core, espn_fake.standings, espn_fake.byteam)
+    assert _run(tmp_path, late) == EXIT_STALE
+    assert not (tmp_path / "out").exists()

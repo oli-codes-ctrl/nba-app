@@ -171,6 +171,18 @@ def fetch_summary(client: JsonClient, game_id: str) -> dict[str, Any]:
     return client.get(config.ESPN_SUMMARY_URL, {"event": game_id})
 
 
+def finished_on(client: JsonClient, day: date) -> int:
+    """How many regular-season games on this US Eastern date have already
+    finished. 0 if the scoreboard can't be read: early runs are safe anyway,
+    and the schedule's last attempt runs before most late finishes."""
+    try:
+        refs, _ = parse_scoreboard(fetch_scoreboard(client, day.isoformat()), day.isoformat())
+    except (FetchError, KeyError, ValueError, TypeError) as exc:
+        log.warning("Today's scoreboard not read (%s); assuming none of today's games has finished.", exc)
+        return 0
+    return len(refs)
+
+
 def update(client: JsonClient, state: GameState, through: date) -> int:
     """Fetch what is missing for dates through `through`. Returns how many
     games were added. A failed summary is skipped (its date stays
