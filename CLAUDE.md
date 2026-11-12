@@ -1,6 +1,7 @@
 # Hoops Analytics (working name)
 
-iOS app and website (Expo web) for exploring current-season NBA stats, plus a few stat games. No name chosen yet; keep the working name until the owner picks one.
+A website for exploring current-season NBA stats, plus a few stat games. No name chosen yet; keep the working name until the owner picks one.
+Direction changed 2026-11-11: the product is now a premium website in `web/` (desktop and mobile web equally important), rebuilt page by page. The Expo app in `app/` is frozen and will be removed once the site reaches parity; do not add features to it. Plan, build log and waivers: `docs/website-redesign.md`.
 Ported from a MATLAB App Designer app kept at `legacy/FINAL_NOKEY.m` for reference only. Do not edit it.
 
 ## Product
@@ -12,7 +13,21 @@ A stats sandbox for fans who argue about basketball in group chats. Search any p
 - Shareable: any chart or result exports as a clean image card with the app name and the "games through" date.
 - Target tabs: Explore (search, last night's best, heat check, Build your MVP, scatter playground), Players (search, leaderboards, player card), Teams (offense vs. defense, luck meter, team pages), Play (Daily Guess, Higher or Lower, Box Score Mystery, trophies).
 
-## Design quality bar
+## Website (`web/`)
+- Next.js (App Router) static export, React 19, TypeScript strict, plain CSS Modules, hand-written SVG charts. No Tailwind, UI kit, chart or animation library; ask the owner before adding any big dependency.
+- `DESIGN.md` (repo root) is the binding visual system: near-black canvas, four-step surface ladder, hairlines, no shadows, Inter, one lavender accent, dark only. Tokens live in one file, `web/src/styles/tokens.css`; components use the variables only. `web/__tests__/tokens.test.ts` checks the contrast of every pairing in use.
+- Lavender `--accent` is only a fill behind white text; links and focus rings use `--accent-text`. Data colors are a separate `--viz-*` namespace (percentile scale, position colors, band), validated with the dataviz validator against `--surface-1`.
+- Required process for every page: screenshots at 1440 / 768 / 390 and a click-through with playwright-cli, a pass against the web-design-guidelines rules, the design-taste-frontend checker (`consistency.mjs --page software` on the built page), then a commit and the owner's OK before the next page. Waivers are recorded in `docs/website-redesign.md` section 7.
+- The stat logic (`stats/`, `players/`, `graphs/*.ts`, `games/logs.ts`, `teams/`, `today/`, `game/`, `lib/format.ts`, `data/`) was copied from `app/src` unchanged with its tests. Never change a calculation or the pipeline for the redesign: every number must stay the same; flag data problems instead.
+- Data is read at build time (`src/server/data.ts`) from `web/.data/`, filled by `scripts/fetch-data.mjs` from the published `/v2/` files. Pages get only the rows they show; the browser fetches nothing but a small search index.
+- One canonical URL per thing (`src/lib/routes.ts`): `/players/<name>-<id>`, `/teams/<abbr>`, `/stats/<stat>`, `/compare?a=&b=`. View state lives in the query string through `useQueryParam` (static HTML renders the default; the URL applies on hydration).
+- Pool-dependent sections (position vs all players) are both rendered at build time and switched with `PoolView`.
+- Every chart sits in `ChartFrame`: question title, who is included, the answer in words, the visual, and method notes behind "How to Read This" (no captions under charts). Charts have hover tooltips, arrow-key access, a table view and a legend; they draw when near the viewport and animate once only if on screen at load.
+- Headings are questions in sentence case; buttons, navigation and controls use Title Case. Copy never says "tap".
+- Dense lists of links use `prefetch={false}`. `scripts/postbuild.mjs` renames Next's prefetch files so a plain static host can serve them.
+- Write files with the Write tool or a script file, not long bash heredocs (they fail on some quote patterns in this shell).
+
+## Design quality bar (Expo app, frozen)
 Design every screen as a senior design engineer would. Concretely:
 - Lead with the answer. A screen's title is its question; the answer sits above the fold; controls come second.
 - Tokens only (`app/src/theme/`): color, type scale, spacing on a 4-pt grid, radius. No ad-hoc sizes or colors in components.
@@ -100,7 +115,8 @@ V6. [x] Box scores from game summaries, then trends (rolling 10-game lines with 
 Then:
 4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More? Charts move into Explore and Teams.
 5. [ ] Glossary and first-launch onboarding.
-8. [ ] Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart. Known: the web tab bar (expo-router NativeTabs, Radix) logs a hydration id mismatch on every page in dev. On the web the tab bar is themed from tokens and moved to the bottom (`theme/WebTabBar.tsx`, matched by its ARIA attributes since the class names are hashed); scrolling screens keep 64 pt of bottom padding so content clears it.
+W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home, players table, compare, teams, explore, stat page, games, glossary/about/404 and launch polish.
+8. [ ] (superseded by W) Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart. Known: the web tab bar (expo-router NativeTabs, Radix) logs a hydration id mismatch on every page in dev. On the web the tab bar is themed from tokens and moved to the bottom (`theme/WebTabBar.tsx`, matched by its ARIA attributes since the class names are hashed); scrolling screens keep 64 pt of bottom padding so content clears it.
 11. [ ] Build your own MVP: weight sliders over standardized categories, shareable ladder.
 14. [ ] Share cards for every chart and result.
 
@@ -112,6 +128,7 @@ Cut: age curve, lineups/on-off, salaries, Who Has More?, the trend-line coloring
 - Pipeline tests: `cd pipeline && uv run --extra dev pytest`
 - Pipeline local run (about 2 minutes): `cd pipeline && uv run python -m hoops_pipeline nightly --state ../.state --out ../out`
 - Rebuild JSON from saved state without network: same with `build-only`.
+- Website: `cd web && npm run dev` (fetches data on first run). Build and preview as a static host would serve it: `npm run build && npm run serve` (http://localhost:4173). Tests: `npm test`. Refresh data: `npm run data` (set `HOOPS_DATA_URL` to a URL or a local pipeline `out/v2` folder).
 - App: `cd app && npx expo start` (scan the QR code with Expo Go)
 - App tests: `cd app && npx jest`
 - App against local data: serve the pipeline's `--out` folder with CORS, then `EXPO_PUBLIC_DATA_URL=http://localhost:PORT/v2/ npx expo start --web`.

@@ -1,0 +1,620 @@
+/* Player page: header, percentile card, comps, stat tables, game log. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-6);
+}
+
+/* ---------- Header ---------- */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-subtle);
+}
+.crumb {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  transition: color var(--motion-fast) ease;
+}
+.crumb::after {
+  content: '';
+  position: absolute;
+  inset: -10px -8px;
+}
+.crumb:hover {
+  color: var(--ink);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+}
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--ink-subtle);
+}
+/* A dot before every item; the clip hides the one that would start a line. */
+.metaClip {
+  overflow: hidden;
+  color: var(--ink-subtle);
+}
+.metaList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) 0;
+  margin-left: -17px;
+}
+.metaList li {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: 17px;
+  white-space: nowrap;
+}
+.metaList li::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 50%;
+  background: var(--ink-disabled);
+}
+.portrait {
+  display: inline-flex;
+}
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* ---------- Main grid: card beside trend and comps ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+.grid > * {
+  grid-column: span 7;
+}
+.grid > .side {
+  grid-column: span 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+/* Without a card (not yet qualified), the side column takes the full width. */
+.grid > .side:only-child {
+  grid-column: 1 / -1;
+}
+
+/* ---------- Percentile card ---------- */
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.answerList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.answerLine {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+}
+.answerLine dt {
+  color: var(--ink-subtle);
+}
+.answerLine dd {
+  font-weight: 500;
+}
+
+.cardBody {
+  --ring: 30px;
+  --label: 132px;
+  --value: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.keyItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.keyRing {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-subtle);
+}
+.keyBar {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink-subtle);
+}
+
+.scale,
+.row {
+  display: grid;
+  grid-template-columns: var(--label) minmax(0, 1fr) var(--value);
+  gap: var(--space-3);
+}
+.scale {
+  margin-bottom: calc(-1 * var(--space-2));
+}
+.scaleTicks {
+  position: relative;
+  height: 16px;
+  margin: 0 calc(var(--ring) / 2);
+  color: var(--ink-subtle);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.scaleTicks span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.cardSection {
+  display: flex;
+  flex-direction: column;
+}
+.cardKicker {
+  color: var(--ink-subtle);
+}
+.row {
+  align-items: start;
+  min-height: 44px;
+  padding: 3px var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) ease;
+}
+.row:hover {
+  background: var(--surface-3);
+}
+.row:focus-visible {
+  border-radius: var(--radius-md);
+  outline-offset: -2px;
+}
+.rowLabel,
+.rowValue {
+  /* Centered on the ring. */
+  line-height: var(--ring);
+  font-size: 14px;
+}
+.rowLabel {
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row:hover .rowLabel {
+  color: var(--ink);
+}
+.rowValue {
+  text-align: right;
+  font-weight: 500;
+}
+
+.track {
+  position: relative;
+  height: calc(var(--ring) + 8px);
+}
+.trackLine {
+  position: absolute;
+  inset: calc(var(--ring) / 2 - 1px) 0 auto 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--viz-track);
+}
+/* Positions inside are percentages of the 0-100 line, inset so a ring at either end stays inside. */
+.trackInner {
+  position: absolute;
+  inset: 0 calc(var(--ring) / 2);
+}
+.trackMid {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--ring) / 2 - 5px);
+  width: 1px;
+  height: 10px;
+  margin-left: -0.5px;
+  background: var(--hairline-tertiary);
+}
+.band {
+  position: absolute;
+  top: calc(var(--ring) + 3px);
+  height: 4px;
+  min-width: 4px;
+  border-radius: 2px;
+  background: var(--mark);
+}
+.ring {
+  position: absolute;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: var(--ring);
+  height: var(--ring);
+  margin-left: calc(var(--ring) / -2);
+  border: 3px solid var(--mark);
+  border-radius: 50%;
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.2px;
+}
+.row:hover .ring {
+  background: var(--surface-3);
+}
+.unranked {
+  position: absolute;
+  inset: 0 0 auto 0;
+  line-height: var(--ring);
+  text-align: center;
+  color: var(--ink-subtle);
+}
+
+/* ---------- Game detail under the trend chart ---------- */
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+}
+.gameLine {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* ---------- Comps ---------- */
+.comps {
+  display: flex;
+  flex-direction: column;
+  margin: 0 calc(-1 * var(--space-2));
+}
+.comps li + li {
+  border-top: 1px solid var(--hairline);
+}
+.comp {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 60px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) ease;
+}
+.comp:hover {
+  background: var(--surface-3);
+}
+.comp:focus-visible {
+  border-radius: var(--radius-md);
+  outline-offset: -2px;
+}
+.compText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.compName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+.compWhy {
+  color: var(--ink-subtle);
+}
+.compMatch {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.compScore {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+/* ---------- Every stat ---------- */
+.every {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+.everyHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.tables {
+  columns: 2;
+  column-gap: var(--space-12);
+}
+.tableGroup {
+  break-inside: avoid;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-8);
+}
+.groupTitle {
+  color: var(--ink);
+}
+.groupNote {
+  color: var(--ink-subtle);
+  max-width: 64ch;
+}
+.method {
+  break-inside: avoid;
+  max-width: 64ch;
+}
+
+/* Dense data table: hairline rows, right-aligned tabular numbers. */
+.table {
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.table th,
+.table td {
+  padding: 9px var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+  vertical-align: baseline;
+  font-weight: 400;
+}
+.table th:first-child,
+.table td:first-child {
+  padding-left: 0;
+}
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0;
+}
+.table thead th {
+  padding-block: 6px;
+  color: var(--ink-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.table tbody th {
+  color: var(--ink-muted);
+}
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom-color: transparent;
+}
+.table abbr {
+  text-decoration: none;
+}
+.right {
+  text-align: right !important;
+}
+.value {
+  color: var(--ink);
+  font-weight: 500;
+}
+.waiting {
+  color: var(--ink-subtle);
+}
+.statLink {
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition:
+    color var(--motion-fast) ease,
+    text-decoration-color var(--motion-fast) ease;
+}
+.statLink:hover {
+  color: var(--ink);
+  text-decoration-color: var(--hairline-tertiary);
+}
+.sample {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-subtle);
+}
+/* A range wraps whole, never split across lines. */
+.sample span {
+  white-space: nowrap;
+}
+.pctHead,
+.pctCell {
+  width: 132px;
+}
+.pct {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-muted);
+}
+.pct > :first-child {
+  text-align: right;
+}
+.rank {
+  width: 96px;
+  color: var(--ink-subtle);
+  white-space: nowrap;
+}
+.caption {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: var(--space-2);
+}
+
+/* Game log: scrolls inside its panel with the header pinned. */
+.logScroll {
+  max-height: 360px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-sm);
+}
+.logScroll:focus-visible {
+  outline-offset: 2px;
+}
+.logTable {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.logTable thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+}
+.logTable tbody th {
+  color: var(--ink);
+}
+
+/* Touch: every table row is a 44px target, and the stat link fills it. */
+@media (pointer: coarse), (max-width: 767px) {
+  .tables .table tbody th,
+  .tables .table tbody td {
+    padding-block: 13px;
+  }
+  .statLink {
+    display: block;
+    margin-block: -13px;
+    padding-block: 13px;
+  }
+  .sample {
+    margin-top: 0;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1023px) {
+  .grid > *,
+  .grid > .side {
+    grid-column: 1 / -1;
+  }
+  .tables {
+    columns: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+  }
+  .grid,
+  .side {
+    gap: var(--space-4);
+  }
+  .actions {
+    width: 100%;
+  }
+  .actions > * {
+    flex: 1;
+  }
+  .cardBody {
+    --label: 104px;
+    --value: 46px;
+  }
+  .portrait {
+    zoom: 0.75;
+  }
+  .scale,
+  .row {
+    gap: var(--space-2);
+  }
+  .answerLine {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+  .rowLabel,
+  .rowValue {
+    font-size: 13px;
+  }
+}
+
+/* The smallest phones: the rank stays, the percentile number goes. */
+@media (max-width: 359px) {
+  .tables .pctHead,
+  .tables .pctCell {
+    display: none;
+  }
+  .rank {
+    width: auto;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 479px) {
+  .pctHead,
+  .pctCell {
+    width: 36px;
+  }
+  .pct {
+    grid-template-columns: 22px;
+  }
+  .pct > :nth-child(2) {
+    display: none;
+  }
+  .rank {
+    width: 84px;
+  }
+}

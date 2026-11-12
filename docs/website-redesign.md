@@ -1,6 +1,6 @@
 # Website redesign: audit and proposed plan
 
-Status: Phase 1 (audit) done 2026-11-11. Phase 2 (plan) proposed, **awaiting owner approval**. No code has changed.
+Status: Phase 1 (audit) done 2026-11-11. Phase 2 (plan) **approved by the owner 2026-11-11** ("yes to everything": Next.js in `web/`, retire the Expo app once the site reaches parity, lavender accent, dark only, self-hosted Inter, cut Who Has More? and phone-only reminders). Phase 3 (build) in progress: see section 7.
 
 Tools used, as required: `DESIGN.md` (binding visual system), `design-taste-frontend` (its `consistency.mjs` checker, run without arming its build gate), `playwright-cli` (screenshots and behavior probes), `web-design-guidelines` (rules fetched 2026-11-11 from vercel-labs/web-interface-guidelines `command.md`).
 
@@ -204,3 +204,46 @@ After each: playwright-cli screenshots at three widths plus a click-through, a w
 - Box score sums disagreed with ESPN season totals for 3 of 447 players on Nov 3 (warning only).
 - Percentile rings round 99.7 up to "100" while sentences cap at 99. Presentation, not data; the redesign should pick one.
 - Share previews for a specific comparison (`/compare?a=&b=`) cannot be unique on static hosting; player and team pages can.
+
+## 7. Build log (Phase 3)
+
+| Step | State | Notes |
+|---|---|---|
+| 0. Foundation | done 2026-11-12 | `web/`: Next.js 16 static export, tokens (`src/styles/tokens.css`), shell (top bar, search palette, mobile menu, footer, skip link), base components, chart frame, build-time data layer, 15 logic test suites moved over unchanged plus token-contrast, route and search tests. |
+| 1. Player page | done 2026-11-12, awaiting review | `/players/<name>-<id>`, 461 pages. |
+| 2. Home | next | An interim home page links to player pages until then. |
+| 3 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
+
+Not built yet from the component list in 5.3: the sortable `DataTable` (arrives with the Players table, step 3) and the game components (step 8).
+
+### Measured on the player page
+
+- JavaScript: 148 KB gzip in a modern browser (641 KB before). HTML 22 KB gzip, CSS 8 KB gzip.
+- One `h1`, four `h2`, 88 real links, 7 real tables, title, description, canonical and Open Graph tags.
+- No sideways scroll from 320 px to 1440 px. Controls are 44 px tall on touch screens and phone-width windows.
+- The 29 logic files are byte-identical to `app/src` except `theme/teams.ts` (one import replaced by the two-color constant it imported).
+
+### Waivers
+
+Rules from the required tools that are deliberately not followed, each with its reason.
+
+| Tool and rule | Where | Reason |
+|---|---|---|
+| taste: no violet or lavender | whole site | `DESIGN.md` is the binding visual system and makes lavender the accent (owner decision 3). |
+| taste: `hero-fill`, `hero-screen`, `one-section`, `section-height`, `one-heading`, `section-gaps`, `flush`, `cta`, `no-visual`, `moment-none` | tool pages (player, team, table, charts, games) | Marketing-page structure: a hero alone on the first screen, one section per screen, a closing call to action. A data page puts the answer and the charts on the first screen. Applied in full on the home page. |
+| taste: `copy-headline`, `copy-headings` | player page | The `h1` is the player's name and section headings are the questions fans ask; the checker wants a product category noun in each. |
+| taste: `container-edges` | whole site | The checker looks for its own `.wrap` class. The site has one container: content sits 80 px from both edges at 1440 px and 16 px on a phone, and the two-column split is on the 12-column grid. |
+| taste: `row-lines` ("every item one height"), `top-stagger` | percentile card, stat tables | A chart row holds a label, a track and a value of different heights by design; table groups flow in two balanced columns. |
+| taste: `visual-caption` | game detail under the trend chart | It is the readout of the selected game (it changes on click and arrow keys), not a description of the chart. Explanations are in "How to Read This". |
+| guidelines: Title Case for headings | section headings | Headings are questions in sentence case ("Is he heating up?"). Buttons, navigation and controls use Title Case. |
+| guidelines: `Intl.NumberFormat` / `Intl.DateTimeFormat` | `lib/format.ts` | Moved unchanged so every number matches the pipeline's rounding exactly; the site is English only. |
+| guidelines: animate transform and opacity only | hover states | Color and background transitions of 150 ms on hover; nothing else animates except one 250 ms opacity and transform load-in per chart. |
+| guidelines: `<div>` with a click handler | `charts/TrendChart.tsx` | The chart is one focusable group with arrow-key support and a text summary; each game is also in the table view. |
+| DESIGN.md: hover fill `#828fff`, 50% focus ring, lavender text | buttons, focus, links | Fail WCAG AA. See the `tokens.css` header and section 4. |
+| dataviz validator: lightness band and chroma floor | percentile scale | Categorical checks; the scale is diverging with a gray middle. Its separation and contrast checks pass on the new surface. |
+
+Position colors were re-picked for the new surface, as planned: guards `#1baf7a`, forwards `#c98500`, centers `#b565d9` (validator: all pairs pass, worst color-vision separation 10.6).
+
+### Found while building
+
+- Next.js 16 writes each route's prefetch file as a nested path but the browser requests a dotted file name, so a plain static host returns 404 on link hover. `web/scripts/postbuild.mjs` moves the files to the requested names after every build.
