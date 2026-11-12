@@ -1,0 +1,380 @@
+/* Top bar, search palette, mobile menu and footer. */
+
+/* ---------- Top bar ---------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  height: var(--nav-height);
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+}
+.navInner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 100%;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+.links {
+  min-width: 0;
+}
+.linkList {
+  display: flex;
+  gap: 2px;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  color: var(--ink-subtle);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+.link:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.link[aria-current='page'] {
+  color: var(--ink);
+}
+.navEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* The search trigger reads as a field. */
+.searchField {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 280px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--ink-subtle);
+  font-size: 14px;
+  text-align: left;
+  cursor: text;
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+}
+.searchField:hover {
+  border-color: var(--hairline-strong);
+  background: var(--surface-2);
+}
+.searchField:focus-visible {
+  border-radius: var(--radius-md);
+}
+.searchPlaceholder {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+.searchShort {
+  display: none;
+}
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  color: var(--ink-subtle);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+.iconButton:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.iconButton:focus-visible {
+  border-radius: var(--radius-md);
+}
+.searchIcon,
+.mobileOnly {
+  display: none;
+}
+
+/* Section links as a sheet under the bar. */
+.sheet {
+  position: fixed;
+  inset: var(--nav-height) 0 auto 0;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+  padding: var(--space-2) 0 var(--space-4);
+}
+.sheet .linkList {
+  flex-direction: column;
+  gap: 0;
+}
+.sheet .link {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-3);
+  margin-inline: calc(-1 * var(--space-3));
+  font-size: 16px;
+}
+
+@media (max-width: 1023px) {
+  .searchField {
+    width: 148px;
+  }
+  .searchLong {
+    display: none;
+  }
+  .searchShort {
+    display: inline;
+  }
+  .navInner {
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 767px) {
+  .links,
+  .searchField {
+    display: none;
+  }
+  .searchIcon {
+    display: inline-grid;
+  }
+  .mobileOnly {
+    display: block;
+  }
+  .navEnd {
+    gap: 0;
+    margin-right: -10px;
+  }
+}
+
+/* ---------- Search palette ---------- */
+.palette {
+  width: min(640px, calc(100vw - 2 * var(--gutter)));
+  max-height: min(560px, calc(100dvh - 96px));
+  margin: 72px auto 0;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  box-shadow: var(--edge-highlight);
+  color: var(--ink);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.palette::backdrop {
+  background: var(--overlay);
+}
+.palette[open] {
+  display: flex;
+  animation: rise var(--motion-base) var(--ease-out);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.paletteBody {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+.paletteField {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-subtle);
+}
+.paletteInput {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  /* 16px keeps iOS from zooming the page on focus. */
+  font-size: 16px;
+}
+.paletteInput::placeholder {
+  color: var(--ink-subtle);
+}
+/* A ring around a full-width field would be clipped by the dialog: a 2px accent line under it instead. */
+.paletteInput:focus-visible {
+  outline: none;
+  box-shadow: 0 2px 0 var(--accent-text);
+}
+.kbdButton {
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+}
+.kbdButton:hover .kbd {
+  color: var(--ink);
+}
+.results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2);
+  overscroll-behavior: contain;
+}
+.groupLabel {
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  color: var(--ink-subtle);
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+.option[aria-selected='true'] {
+  background: var(--surface-4);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+}
+.optionName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.optionMeta {
+  color: var(--ink-subtle);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.paletteMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-4);
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+.paletteHints {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-subtle);
+}
+@media (pointer: coarse) {
+  .paletteHints {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .palette {
+    margin-top: var(--space-4);
+    max-height: calc(100dvh - 2 * var(--space-4));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .palette[open] {
+    animation: none;
+  }
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  margin-top: var(--space-section);
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-subtle);
+}
+.footerInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-8) var(--space-12);
+  padding-block: var(--space-12);
+}
+.footerBrand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.footerNav {
+  display: flex;
+  gap: var(--space-12);
+}
+.footerList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.footerLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  font-size: 13px;
+  color: var(--ink-subtle);
+  transition: color var(--motion-fast) ease;
+}
+.footerLink:hover {
+  color: var(--ink);
+}
+.footerLegal {
+  grid-column: 1 / -1;
+  max-width: 72ch;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--hairline);
+}
+@media (max-width: 767px) {
+  .footerInner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .footerLink {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}

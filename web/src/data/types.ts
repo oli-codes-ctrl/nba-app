@@ -1,0 +1,224 @@
+/**
+ * Shapes of the JSON the pipeline publishes under /v1/.
+ * Source: pipeline/hoops_pipeline/publish.py and puzzles.py.
+ */
+import type { StatId } from '@/stats/catalog';
+import type { PositionGroup } from '@/stats/views';
+
+/** 2: Off/Def scores retired, team context and the teams file added. */
+export const SCHEMA_VERSION = 2;
+
+export type Manifest = {
+  schemaVersion: number;
+  /** Start year: 2026 means 2026-27. */
+  season: number;
+  generatedAt: string;
+  /** Last day whose games are all included (US Eastern), YYYY-MM-DD. */
+  asOf: string;
+  /** Same as asOf, named for what it means. Older files lack it. */
+  gamesThrough?: string;
+  source: string;
+  playerCount: number;
+  qualifiedCount: number;
+  /** `games` (box scores) is optional: older data and failed pipeline runs lack it. */
+  files: { players: string; puzzles: string; teams: string; games?: string };
+};
+
+export type StatLine = Record<StatId, number | null>;
+
+export type Player = {
+  id: number;
+  name: string;
+  searchName: string;
+  /** Current team abbreviation. */
+  team: string;
+  /** Current team first, then earlier teams this season. */
+  teams: string[];
+  conf: string;
+  pos: string;
+  /** Qualified for percentiles and games. */
+  q: boolean;
+  s: StatLine;
+  /** Season attempt totals: the sample behind each shooting percentage. */
+  att?: Attempts;
+  /**
+   * Present only for qualified players. Shooting percentages are missing
+   * when the player is below that stat's attempt minimum.
+   */
+  pct?: Partial<Record<StatId, number>>;
+  rank?: Partial<Record<StatId, number>>;
+  /** Percentile and rank among qualified players at his position (G, F or C). */
+  pctPos?: Partial<Record<StatId, number>>;
+  rankPos?: Partial<Record<StatId, number>>;
+  /**
+   * 95% range for the long-run value, in the stat's units. Shooting
+   * percentages (makes over attempts, whole percent) for every player; for
+   * qualified players also counts, points, TS%, eFG% and the team shares
+   * (0.1). See pipeline samples.py for the models.
+   */
+  ci?: Partial<Record<StatId, [number, number]>>;
+  /**
+   * Sample-adjusted estimate (pulled toward the league rate by how few
+   * attempts there are). Only for 3P% and FT%, and only once the season's
+   * data can tell shooters apart.
+   */
+  adj?: Partial<Record<StatId, number>>;
+  /** Averages over the recent window (PlayersDoc.recent). Absent if no games in it. */
+  r?: RecentLine;
+  /** Box line of the player's latest game, when exactly one game was played since PlayersDoc.latest.since. */
+  g?: GameLine;
+};
+
+export type AttemptKey = 'fga' | 'fg2a' | 'fg3a' | 'fta';
+export type Attempts = Record<AttemptKey, number>;
+/** Attempts a shooting percentage needs before it is ranked. */
+export type AttemptRule = { by: AttemptKey; min: number };
+
+/** Averages over the recent window. Percentages are from the window's totals. */
+export type RecentLine = { gp: number } & Partial<Record<StatId, number | null>>;
+
+/** One game's box line. mpg is that game's minutes. */
+export type GameLine = Partial<Record<StatId, number>>;
+
+export type PlayersDoc = {
+  schemaVersion: number;
+  season: number;
+  poolSize: Partial<Record<StatId, number>>;
+  lowerIsBetter: StatId[];
+  /** Attempt minimums for shooting percentages, scaled to the season so far. */
+  minAttempts?: Partial<Record<StatId, AttemptRule>>;
+  /** Pool sizes for percentiles within each position. */
+  poolSizePos?: Partial<Record<PositionGroup, Partial<Record<StatId, number>>>>;
+  /** Medians among ranked players: all, and by position. */
+  medians?: Partial<Record<'all' | PositionGroup, Partial<Record<StatId, number | null>>>>;
+  /** League priors behind `adj`: mean (percent) and strength (equivalent attempts). */
+  shrinkage?: Partial<Record<StatId, { mean: number; strength: number }>>;
+  /** Present once the pipeline has an earlier night to compare with. */
+  latest?: { since: string };
+  /** Present once the pipeline has at least a few days of history. */
+  recent?: { since: string; days: number };
+  players: Player[];
+};
+
+export type PuzzlePoolEntry = {
+  id: number;
+  name: string;
+  searchName: string;
+  team: string;
+  age: number;
+  pts: number;
+  ast: number;
+  reb: number;
+  stl: number;
+  blk: number;
+};
+
+export type Puzzle = {
+  date: string;
+  number: number;
+  answerId: number;
+  xStat: StatId;
+  hintStats: StatId[];
+  clues: { position: string; conference: string; team: string };
+  pool: PuzzlePoolEntry[];
+};
+
+export type PuzzlesDoc = {
+  schemaVersion: number;
+  puzzles: Puzzle[];
+};
+
+/** Team stats published per team, with league ranks (1 = best, or fastest for pace). */
+export type TeamStatId =
+  | 'ortg'
+  | 'drtg'
+  | 'net'
+  | 'pace'
+  | 'efg_pct'
+  | 'tov_pct'
+  | 'oreb_pct'
+  | 'ft_rate'
+  | 'fg3a_rate'
+  | 'opp_efg_pct'
+  | 'opp_tov_pct'
+  | 'dreb_pct'
+  | 'opp_ft_rate';
+
+/** One team's season. Formulas: pipeline/hoops_pipeline/formulas.py. */
+export type TeamSeason = Record<TeamStatId, number | null> & {
+  abbr: string;
+  gp: number;
+  w: number | null;
+  l: number | null;
+  /** Points for and against. */
+  pf: number;
+  pa: number;
+  poss: number | null;
+  /** Wins a point differential usually produces (Pythagorean expectation). */
+  pyth_w: number | null;
+  /** Wins above that expectation. */
+  luck: number | null;
+  /** 95% half-width of luck alone (wins), when close games are coin flips. Older files lack it. */
+  luck_noise?: number | null;
+  /** 95% half-width of the net rating from game-to-game luck (per 100 possessions). Older files lack it. */
+  net_noise?: number | null;
+  rank: Partial<Record<TeamStatId, number>>;
+};
+
+export type TeamsDoc = {
+  schemaVersion: number;
+  season: number;
+  gamesThrough: string;
+  league: Partial<Record<TeamStatId, number | null>>;
+  teams: TeamSeason[];
+};
+
+/** Box score columns, in the order the pipeline publishes them (games.py STAT_KEYS). */
+export type GameStatKey =
+  | 'min'
+  | 'pts'
+  | 'reb'
+  | 'ast'
+  | 'stl'
+  | 'blk'
+  | 'tov'
+  | 'fgm'
+  | 'fga'
+  | 'fg3m'
+  | 'fg3a'
+  | 'ftm'
+  | 'fta'
+  | 'oreb'
+  | 'dreb'
+  | 'pf'
+  | 'pm'
+  | 'gmsc';
+
+/** [game id, US Eastern date, home, away, home points, away points] */
+export type GameRow = [string, string, string, string, number, number];
+
+/**
+ * Box scores for the season (games.<hash>.json), loaded only when a screen
+ * needs them. Player rows: [game index, side (0 home, 1 away), starter (0/1),
+ * ...values in `keys` order].
+ */
+export type GamesDoc = {
+  schemaVersion: number;
+  season: number;
+  gamesThrough: string;
+  /** Last date whose box scores are all in; lags gamesThrough only after a failed fetch. */
+  boxScoresThrough: string | null;
+  keys: GameStatKey[];
+  games: GameRow[];
+  players: Record<string, number[][]>;
+};
+
+/** Everything the app needs from one data refresh. */
+export type Snapshot = {
+  manifest: Manifest;
+  players: PlayersDoc;
+  puzzles: PuzzlesDoc;
+  teams: TeamsDoc;
+  /** When this device last fetched it (ISO time). */
+  fetchedAt: string;
+};

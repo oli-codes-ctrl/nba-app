@@ -1,0 +1,360 @@
+/*
+ * Styles for the small shared pieces: buttons, segmented control, avatar,
+ * team chip, stat tiles, percentile bar, badges, notes, skeletons and the
+ * empty and error states. Values come from styles/tokens.css only.
+ */
+
+/* ---------- Button ---------- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    transform var(--motion-fast) var(--ease-out);
+}
+.button:focus-visible {
+  border-radius: var(--radius-md);
+}
+.button:active {
+  transform: translateY(1px);
+}
+.button:disabled {
+  color: var(--ink-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Lavender fill, white text. Hover keeps the fill (contrast) and lifts the top edge. */
+.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+.primary:hover {
+  box-shadow:
+    inset 0 1px 0 var(--accent-text),
+    inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.primary:active {
+  background: var(--accent-pressed);
+}
+
+.secondary {
+  background: var(--surface-1);
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+.secondary:hover,
+.secondary[aria-pressed='true'] {
+  background: var(--surface-3);
+  border-color: var(--hairline-strong);
+}
+
+.tertiary {
+  background: transparent;
+  color: var(--ink-muted);
+}
+.tertiary:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* ---------- Segmented control (DESIGN.md pricing-tab): selected lifts one surface ---------- */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  max-width: 100%;
+}
+.segment {
+  position: relative;
+  min-height: calc(var(--control-height) - 6px);
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  color: var(--ink-subtle);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+/* The hit area spans the full height of the control. */
+.segment::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+.segment:hover {
+  color: var(--ink);
+}
+.segment[aria-checked='true'] {
+  background: var(--surface-3);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+}
+.segment:focus-visible {
+  border-radius: var(--radius-pill);
+}
+.segmentedCompact .segment {
+  padding: 0 11px;
+  font-size: 13px;
+}
+
+/* ---------- Avatar: initials, never a photo ---------- */
+.avatar {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  color: var(--ink-muted);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+/* ---------- Team chip: the team color is identity only, a swatch beside the text ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 7px 0 6px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
+}
+.chipMuted {
+  color: var(--ink-subtle);
+}
+
+/* ---------- Stat tiles: one panel divided by hairlines, not a row of cards ---------- */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--tiles, 6), minmax(0, 1fr));
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  overflow: hidden;
+}
+.tile {
+  border-left: 1px solid var(--hairline);
+  min-width: 0;
+}
+.tileBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+  padding: var(--space-4) var(--space-6);
+}
+.tile:first-child {
+  border-left: 0;
+}
+.tileLabel {
+  color: var(--ink-subtle);
+}
+.tileValue {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+}
+.tileNote {
+  color: var(--ink-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+a.tileBody {
+  transition: background-color var(--motion-fast) ease;
+}
+a.tileBody:hover {
+  background: var(--surface-2);
+}
+a.tileBody:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+@media (max-width: 1023px) {
+  .tileBody {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+@media (max-width: 767px) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .tile:nth-child(3n + 1) {
+    border-left: 0;
+  }
+  .tile:nth-child(n + 4) {
+    border-top: 1px solid var(--hairline);
+  }
+  .tileValue {
+    font-size: 24px;
+    letter-spacing: -0.5px;
+  }
+}
+
+/* ---------- Percentile bar ---------- */
+.bar {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--viz-track);
+  overflow: hidden;
+}
+.barFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 3px;
+  border-radius: var(--radius-pill);
+}
+/* A role, not a quality: a dot on the line, no fill and no color. */
+.barNeutral {
+  overflow: visible;
+  height: 2px;
+  margin: 2px 0;
+}
+.barDot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--viz-mark);
+  box-shadow: 0 0 0 2px var(--surface-1);
+}
+.barEmpty {
+  background: repeating-linear-gradient(90deg, var(--viz-track) 0 4px, transparent 4px 8px);
+}
+
+/* ---------- Badge and inline note ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.note {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+}
+.note svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--ink-subtle);
+}
+
+/* ---------- Skeleton ---------- */
+.skeleton {
+  display: block;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.04), transparent);
+  transform: translateX(-100%);
+  animation: sweep 1.4s ease-in-out infinite;
+}
+@keyframes sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* ---------- Empty and error states ---------- */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  color: var(--ink-muted);
+}
+.stateTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 500;
+}
+.stateBody {
+  color: var(--ink-subtle);
+  max-width: 60ch;
+}
+.stateActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.stateError .stateTitle svg {
+  color: var(--danger);
+}

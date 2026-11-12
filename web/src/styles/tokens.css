@@ -1,0 +1,130 @@
+/*
+ * Design tokens: the one place colors, type, space, radius and motion are
+ * defined. Source: DESIGN.md (repo root). Components use these variables
+ * only; __tests__/tokens.test.ts checks the contrast of every pairing in use.
+ *
+ * Departures from DESIGN.md, each for WCAG AA:
+ * - Lavender (--accent) is only ever a fill behind white text (4.7:1).
+ *   Links and focus rings use the lighter --accent-text (6.6:1 on cards).
+ * - Primary buttons keep their fill on hover (white on #828fff is 2.9:1) and
+ *   gain a lighter top edge instead.
+ * - The focus ring is solid, not 50% opacity (under 3:1).
+ * - --ink-disabled (#62666d, 3.3:1) is for disabled controls only.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: canvas, then four lifts. Hierarchy comes from these, not shadows. */
+  --canvas: #010102;
+  --surface-1: #0f1011;
+  --surface-2: #141516;
+  --surface-3: #18191a;
+  --surface-4: #191a1b;
+  --hairline: #23252a;
+  --hairline-strong: #34343a;
+  --hairline-tertiary: #3e3e44;
+  /* Faint top edge on lifted panels. */
+  --edge-highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --overlay: rgb(0 0 0 / 0.64);
+
+  /* Ink */
+  --ink: #f7f8f8;
+  --ink-muted: #d0d6e0;
+  --ink-subtle: #8a8f98;
+  --ink-disabled: #62666d;
+
+  /* The single accent. Scarce: brand mark, primary action, focus, links. */
+  --accent: #5e6ad2;
+  --accent-pressed: #5e69d1;
+  --accent-text: #828fff;
+  --on-accent: #ffffff;
+
+  /* Semantic. Danger is game feedback only, always with an icon and a label. */
+  --success: #27a644;
+  --danger: #eb5757;
+
+  /*
+   * Data colors, kept apart from the interface colors.
+   * Percentile scale, cold to hot (0-20 ... 80-100): two hues with a gray
+   * middle. Validated with the dataviz palette validator against --surface-1.
+   */
+  --viz-pct-1: #9cc8f7;
+  --viz-pct-2: #3987e5;
+  --viz-pct-3: #898781;
+  --viz-pct-4: #e8692f;
+  --viz-pct-5: #ffb08a;
+  --viz-track: #34343a;
+  --viz-grid: #1e2024;
+  --viz-axis: #34343a;
+  --viz-axis-label: #8a8f98;
+  /* Shaded ranges behind marks: a region, not a mark. */
+  --viz-band: #26282e;
+  --viz-mark: #8a8f98;
+  --viz-line: #d0d6e0;
+  --viz-reference: #8a8f98;
+  --viz-highlight: #f7f8f8;
+  /* Dots by position: guards, forwards, centers. Never the percentile hues or the accent. */
+  --viz-pos-g: #1baf7a;
+  --viz-pos-f: #c98500;
+  --viz-pos-c: #b565d9;
+
+  /* Type */
+  --font-sans: var(--font-inter), 'SF Pro Display', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Space (4 px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-section: 96px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  /* Layout */
+  --container: 1280px;
+  --gutter: 24px;
+  --nav-height: 56px;
+  /* Smallest comfortable target; raised to 44px for touch in base.css. */
+  --control-height: 36px;
+
+  /* Motion: short, transform and opacity only. Zeroed under reduced motion. */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layers */
+  --z-nav: 20;
+  --z-tooltip: 30;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --space-section: 64px;
+  }
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  :root {
+    --control-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}

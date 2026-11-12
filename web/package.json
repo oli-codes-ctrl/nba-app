@@ -1,0 +1,28 @@
+{
+  "name": "hoops-analytics-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "data": "node scripts/fetch-data.mjs",
+    "predev": "node scripts/fetch-data.mjs --if-missing",
+    "dev": "next dev",
+    "prebuild": "node scripts/fetch-data.mjs",
+    "build": "next build && node scripts/postbuild.mjs",
+    "serve": "node scripts/serve.mjs",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "jest": "~30.5.2",
+    "typescript": "~6.0.3"
+  }
+}
