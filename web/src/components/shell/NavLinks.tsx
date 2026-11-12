@@ -66,7 +66,7 @@ export function MobileMenu() {
         {open ? <CloseIcon size={18} /> : <MenuIcon size={18} />}
       </button>
       <nav id={id} aria-label="Main" className={s.sheet} hidden={!open}>
-        <div className="container">
+        <div className="wrap">
           <NavLinks onNavigate={() => setOpen(false)} />
         </div>
       </nav>

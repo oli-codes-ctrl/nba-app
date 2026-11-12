@@ -219,7 +219,7 @@
   border-radius: var(--radius-md);
   transition: background-color var(--motion-fast) ease;
 }
-.row:hover {
+.rowLink:hover {
   background: var(--surface-3);
 }
 .row:focus-visible {
@@ -238,7 +238,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.row:hover .rowLabel {
+.rowLink:hover .rowLabel {
   color: var(--ink);
 }
 .rowValue {
@@ -296,7 +296,7 @@
   line-height: 1;
   letter-spacing: -0.2px;
 }
-.row:hover .ring {
+.rowLink:hover .ring {
   background: var(--surface-3);
 }
 .unranked {

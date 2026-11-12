@@ -1,0 +1,670 @@
+/*
+ * Home page. One section per screen: the hero fills the first screen under
+ * the top bar, each section after it is at least one screen tall with its
+ * heading at the same height, and the page ends on the closing footer.
+ */
+
+/* ---------- Hero ---------- */
+/* The hero is the whole first screen: it starts under the (sticky, opaque) top bar. */
+.hero {
+  display: flex;
+  min-height: 100svh;
+  margin-top: calc(-1 * var(--nav-height));
+  padding: calc(var(--nav-height) + 88px) 0 var(--space-12);
+}
+.heroGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--space-6);
+  align-items: start;
+}
+.heroText {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding-top: var(--space-8);
+  padding-right: var(--space-6);
+}
+.notice {
+  color: var(--ink-subtle);
+  margin-bottom: calc(-1 * var(--space-2));
+}
+.lead {
+  color: var(--ink-muted);
+  max-width: 34em;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+.actions > a {
+  min-height: 48px;
+  padding-inline: var(--space-4);
+}
+
+/* Three facts docked under the hero text (wide screens only). */
+.facts {
+  display: flex;
+  gap: var(--space-12);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--hairline);
+  width: 100%;
+}
+.facts div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+.facts dt {
+  color: var(--ink-subtle);
+}
+.facts dd {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+}
+
+/* The product itself as the hero picture: a live percentile card, one link. */
+.heroCard {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) ease,
+    background-color var(--motion-base) ease;
+}
+.heroCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--hairline-strong);
+  background: var(--surface-2);
+}
+.heroCard:focus-visible {
+  border-radius: var(--radius-xl);
+}
+.heroCardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--ink-subtle);
+}
+.heroCardName {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.heroCardTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+/* The hero settles in once on load. */
+.hero[data-enter] .heroText > *,
+.hero[data-enter] .heroCard {
+  animation: enter 480ms var(--ease-out) both;
+}
+.hero[data-enter] .heroText > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.hero[data-enter] .heroText > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.hero[data-enter] .heroText > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.hero[data-enter] .heroCard {
+  animation-delay: 160ms;
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero[data-enter] .heroText > *,
+  .hero[data-enter] .heroCard {
+    animation: none;
+  }
+}
+
+/* ---------- Sections ---------- */
+.section {
+  display: flex;
+  min-height: 100svh;
+  padding: 120px 0 var(--space-12);
+}
+.sectionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.split {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: stretch;
+}
+/* Lists need the wider column: 7 of 12, the side column 5. */
+.split > :first-child {
+  grid-column: span 7;
+}
+.split > :last-child {
+  grid-column: span 5;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+.fact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+.factLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.panel {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  min-width: 0;
+}
+
+/* Ranked rows: each one a link to the player. */
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+}
+.list li + li {
+  border-top: 1px solid var(--hairline);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 60px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) ease;
+}
+.row:hover {
+  background: var(--surface-3);
+}
+.row:focus-visible {
+  border-radius: var(--radius-md);
+  outline-offset: -2px;
+}
+.rank {
+  flex: none;
+  width: 16px;
+  color: var(--ink-subtle);
+  font-size: 13px;
+  text-align: right;
+}
+.who {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+.line {
+  color: var(--ink-muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.score {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 52px;
+}
+.scoreValue {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+}
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Magnitude bar: neutral ink, zero baseline. */
+.bar {
+  flex: none;
+  width: 72px;
+  height: 6px;
+}
+.barTrack {
+  fill: var(--viz-track);
+}
+.barFill {
+  fill: var(--viz-mark);
+}
+.row:hover .barFill {
+  fill: var(--ink-muted);
+}
+
+/* Heat check */
+.heat {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panelHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-6) var(--space-2);
+}
+.calm {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  color: var(--ink-muted);
+}
+.calm strong {
+  display: block;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 500;
+}
+.heat > details {
+  margin: var(--space-2) 0 0;
+}
+
+/* Leaders: eight small tables in a grid. */
+.leaders {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.leader {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+}
+.leaderTitle {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  line-height: 1.3;
+}
+.leaderLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--ink-subtle);
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+.leaderLink:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.leaderLink:focus-visible,
+.leaderRow:focus-visible {
+  border-radius: var(--radius-md);
+  outline-offset: -2px;
+}
+.leaderRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-top: 1px solid var(--hairline);
+  font-size: 14px;
+  transition: background-color var(--motion-fast) ease;
+}
+.leaderRow:hover {
+  background: var(--surface-2);
+}
+.leaderName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* In-cell bar: each value against the leader's, behind the row's text. */
+.leaderRow {
+  position: relative;
+}
+.leaderRow > * {
+  position: relative;
+}
+.leaderRow > .cellBar {
+  position: absolute;
+  inset: 6px auto 6px 0;
+  border-radius: var(--radius-xs);
+  background: var(--hairline);
+}
+.leaderRow:hover > .cellBar {
+  background: var(--hairline-strong);
+}
+.leaderValue {
+  width: 48px;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* The top game of the season, large. */
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-8);
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) ease,
+    background-color var(--motion-base) ease;
+}
+.feature:hover {
+  transform: translateY(-2px);
+  border-color: var(--hairline-strong);
+  background: var(--surface-2);
+}
+.feature:focus-visible {
+  border-radius: var(--radius-xl);
+}
+.featureScore {
+  margin-top: var(--space-4);
+  font-size: 80px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -3px;
+}
+.featureName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+}
+.featureLine {
+  font-size: 18px;
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+.featureMore {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-6);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------- Your players (only for readers who follow someone) ---------- */
+.following {
+  padding: 0 0 var(--space-12);
+}
+.followingWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.followList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+.follow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) ease;
+}
+.follow:hover {
+  transform: translateY(-2px);
+  border-color: var(--hairline-strong);
+}
+.follow:focus-visible {
+  border-radius: var(--radius-lg);
+}
+.followHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.followHead .name {
+  flex: 1;
+  min-width: 0;
+}
+.followLine {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--ink-subtle);
+  font-size: 12px;
+}
+.followLine b {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ---------- Closing call (in the footer) ---------- */
+.close {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  color: var(--ink);
+}
+.close .actions {
+  margin-top: var(--space-4);
+}
+.starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+  font-weight: 500;
+}
+.starters span {
+  font-weight: 400;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1199px) {
+  .leaders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+
+  .hero {
+    padding-top: calc(var(--nav-height) + var(--space-12));
+  }
+  .heroText,
+  .heroCard {
+    grid-column: 1 / -1;
+  }
+  .heroText {
+    padding: 0;
+  }
+  .heroGrid {
+    row-gap: var(--space-8);
+    align-content: start;
+  }
+  .facts {
+    display: none;
+  }
+  /* The preview shortens so the hero still ends on the first screen. */
+  .heroCard li:nth-child(n + 9) {
+    display: none;
+  }
+  .section {
+    padding-top: 96px;
+  }
+  .split > :first-child,
+  .split > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero {
+    padding: calc(var(--nav-height) + var(--space-4)) 0 var(--space-6);
+  }
+  .heroGrid {
+    row-gap: var(--space-8);
+  }
+  .heroText {
+    gap: var(--space-4);
+  }
+  .heroCard li:nth-child(n + 5) {
+    display: none;
+  }
+  .side {
+    gap: var(--space-4);
+  }
+  .fact {
+    padding: var(--space-4);
+  }
+  .heroCard {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+  .section {
+    padding-top: 88px;
+  }
+  .sectionWrap {
+    gap: var(--space-6);
+  }
+  .panel {
+    border-radius: var(--radius-lg);
+  }
+  .actions > * {
+    width: 100%;
+  }
+  .leaders {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  /* Top 3 on a phone, so eight lists stay within two screens. */
+  .leader li:nth-child(n + 4) {
+    display: none;
+  }
+  .row {
+    padding-inline: var(--space-2);
+  }
+  .panelHead {
+    padding: var(--space-4) var(--space-4) var(--space-2);
+  }
+  .calm {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+  .feature {
+    padding: var(--space-6);
+  }
+  .featureScore {
+    font-size: 56px;
+    letter-spacing: -1.8px;
+  }
+}
+
+/*
+ * Game rows in a narrow column (phones, and the 7-column list on small
+ * laptops): name, then the box line, then the result, with the score at the
+ * right. The bar goes; the numbers stay.
+ */
+@media (max-width: 767px), (min-width: 1024px) and (max-width: 1199px) {
+  .gameRow {
+    display: grid;
+    grid-template-columns: 16px 36px minmax(0, 1fr) auto;
+    column-gap: var(--space-3);
+    row-gap: 1px;
+    padding-block: 10px;
+  }
+  .gameRow .who {
+    display: contents;
+  }
+  .gameRow .rank {
+    grid-area: 1 / 1 / 4 / 2;
+  }
+  .gameRow > :nth-child(2) {
+    grid-area: 1 / 2 / 4 / 3;
+  }
+  .gameRow .name {
+    grid-area: 1 / 3;
+  }
+  .gameRow .line {
+    grid-area: 2 / 3;
+    white-space: normal;
+  }
+  .gameRow .who > :last-child {
+    grid-area: 3 / 3;
+  }
+  .gameRow .score {
+    grid-area: 1 / 4 / 4 / 5;
+  }
+  .gameRow .bar {
+    display: none;
+  }
+}

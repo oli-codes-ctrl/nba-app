@@ -10,6 +10,7 @@
   border-bottom: 1px solid var(--hairline);
 }
 .navInner {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-6);
@@ -187,6 +188,43 @@
   }
 }
 
+/* The search field as the main action of a page. */
+.searchHero {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(100%, 420px);
+  height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  color: var(--ink-muted);
+  font-size: 16px;
+  text-align: left;
+  cursor: text;
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    transform var(--motion-fast) var(--ease-out);
+}
+.searchHero:hover {
+  border-color: var(--accent-text);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.searchHero:active {
+  transform: translateY(1px);
+}
+.searchHero:focus-visible {
+  border-radius: var(--radius-md);
+}
+.searchHero svg {
+  flex: none;
+  color: var(--accent-text);
+}
+
 /* ---------- Search palette ---------- */
 .palette {
   width: min(640px, calc(100vw - 2 * var(--gutter)));
@@ -337,6 +375,26 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-8) var(--space-12);
   padding-block: var(--space-12);
+}
+/* Home: the closing call and the links share the last screen. */
+.footerClosing {
+  margin-top: 0;
+  border-top: 0;
+  min-height: 100svh;
+  display: flex;
+}
+.footerClosing .footerWrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+.footerClose {
+  padding-top: 120px;
+}
+.footerClosing .footerInner {
+  border-top: 1px solid var(--hairline);
+  padding-block: var(--space-8) 72px;
 }
 .footerBrand {
   display: flex;

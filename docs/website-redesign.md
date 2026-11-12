@@ -210,9 +210,10 @@ After each: playwright-cli screenshots at three widths plus a click-through, a w
 | Step | State | Notes |
 |---|---|---|
 | 0. Foundation | done 2026-11-12 | `web/`: Next.js 16 static export, tokens (`src/styles/tokens.css`), shell (top bar, search palette, mobile menu, footer, skip link), base components, chart frame, build-time data layer, 15 logic test suites moved over unchanged plus token-contrast, route and search tests. |
-| 1. Player page | done 2026-11-12, awaiting review | `/players/<name>-<id>`, 461 pages. |
-| 2. Home | next | An interim home page links to player pages until then. |
-| 3 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
+| 1. Player page | done 2026-11-12, approved | `/players/<name>-<id>`, 461 pages. |
+| 2. Home | done 2026-11-12, awaiting review | Hero with search and a live percentile card of the Game Score leader; the best games of the last night with the heat check and the stat of the day; top 5 in 8 stats; the best games of the season; a closing search in the footer. "Your players" appears for readers who follow someone. A games section joins it when the games are built (step 8). |
+| 3. Players table | next | |
+| 4 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
 
 Not built yet from the component list in 5.3: the sortable `DataTable` (arrives with the Players table, step 3) and the game components (step 8).
 
@@ -222,6 +223,12 @@ Not built yet from the component list in 5.3: the sortable `DataTable` (arrives 
 - One `h1`, four `h2`, 88 real links, 7 real tables, title, description, canonical and Open Graph tags.
 - No sideways scroll from 320 px to 1440 px. Controls are 44 px tall on touch screens and phone-width windows.
 - The 29 logic files are byte-identical to `app/src` except `theme/teams.ts` (one import replaced by the two-color constant it imported).
+
+### Measured on the home page
+
+- Five sections, each exactly one screen at 1440 x 900 (0, 900, 1800, 2700, 3600 px); the hero ends on the first screen at 1440, 768 and 390 wide.
+- JavaScript 143 KB gzip, HTML 17 KB gzip. No sideways scroll at 320 px. Copy-lint: 0 FAIL.
+- design-taste checker: 28 FAIL at first run, 11 left, all waived below.
 
 ### Waivers
 
@@ -234,6 +241,10 @@ Rules from the required tools that are deliberately not followed, each with its 
 | taste: `copy-headline`, `copy-headings` | player page | The `h1` is the player's name and section headings are the questions fans ask; the checker wants a product category noun in each. |
 | taste: `container-edges` | whole site | The checker looks for its own `.wrap` class. The site has one container: content sits 80 px from both edges at 1440 px and 16 px on a phone, and the two-column split is on the 12-column grid. |
 | taste: `row-lines` ("every item one height"), `top-stagger` | percentile card, stat tables | A chart row holds a label, a track and a value of different heights by design; table groups flow in two balanced columns. |
+| taste: `no-visual`, `card-visual` | home page sections 2 to 4 | The checker wants a picture or a mock beside the text. These sections are the product itself: live ranked lists with real numbers and bars. They are not marked as mocks (`data-ui`), because that would hide their links from the tap-size and text checks. The hero's percentile card, which is a still preview, is marked. |
+| taste: `container-edges` (text inside a panel starts 9 px in; a box over half the container must span it) | home page lists | DESIGN.md's panels carry inner padding, and the lists need 7 of 12 columns to show a full box line. |
+| taste: dealt palette, hero, moments and the kit's CSS and scripts | home page | DESIGN.md fixes the palette and type, and the kit is a large library (owner rule: no big new libraries). The hero entrance, hover lifts and press states are written by hand. |
+| taste: `copy-stat-strip`, `copy-length`, `label-centre`, `action-repeat` (warnings) | home page | A stats site shows numbers in rows; list rows count as words; the search control is a field, so its label is left-aligned; search is in the top bar on every page and is also the hero's main action. |
 | taste: `visual-caption` | game detail under the trend chart | It is the readout of the selected game (it changes on click and arrow keys), not a description of the chart. Explanations are in "How to Read This". |
 | guidelines: Title Case for headings | section headings | Headings are questions in sentence case ("Is he heating up?"). Buttons, navigation and controls use Title Case. |
 | guidelines: `Intl.NumberFormat` / `Intl.DateTimeFormat` | `lib/format.ts` | Moved unchanged so every number matches the pipeline's rounding exactly; the site is English only. |

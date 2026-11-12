@@ -2,11 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
-import { Footer } from '@/components/shell/Footer';
 import { TopNav } from '@/components/shell/TopNav';
-import { formatDate } from '@/lib/format';
 import { SITE } from '@/lib/site';
-import { loadData } from '@/server/data';
 
 import '@/styles/tokens.css';
 import '@/styles/base.css';
@@ -22,6 +19,7 @@ export const metadata: Metadata = {
   openGraph: { type: 'website', siteName: SITE.name, locale: 'en_US' },
   twitter: { card: 'summary_large_image' },
   formatDetection: { telephone: false },
+  other: { 'page-type': 'software', 'site-kind': 'software' },
 };
 
 export const viewport: Viewport = {
@@ -32,18 +30,11 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const { through } = loadData();
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-type="software">
       <body>
-        <a href="#main" className="skip-link">
-          Skip to Content
-        </a>
         <TopNav />
-        <main id="main">
-          {children}
-        </main>
-        <Footer through={formatDate(through)} />
+        {children}
       </body>
     </html>
   );

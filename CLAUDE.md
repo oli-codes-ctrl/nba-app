@@ -24,6 +24,9 @@ A stats sandbox for fans who argue about basketball in group chats. Search any p
 - Pool-dependent sections (position vs all players) are both rendered at build time and switched with `PoolView`.
 - Every chart sits in `ChartFrame`: question title, who is included, the answer in words, the visual, and method notes behind "How to Read This" (no captions under charts). Charts have hover tooltips, arrow-key access, a table view and a legend; they draw when near the viewport and animate once only if on screen at load.
 - Headings are questions in sentence case; buttons, navigation and controls use Title Case. Copy never says "tap".
+- Layouts: the root layout renders the document and top bar; `app/(site)/layout.tsx` adds `<main>` and the plain footer; `app/(home)/layout.tsx` adds the footer with the closing call. One container class, `.wrap` (a centered box, no padding), on every section, the top bar and the footer.
+- The home page follows the design-taste skill's rhythm: the hero is the first screen (`min-height: 100svh`, pulled up under the sticky top bar), every section after it is one screen with its `h2` 120px from the top, and the footer with the closing call is the last screen. Check with `home-shoot`-style measurements that sections start at whole multiples of the viewport height at 1440 x 900. The hero's preview rows shorten on smaller screens so it still ends on the first screen.
+- Small bars on the home page compare a value with the best in its list from zero (neutral ink, decorative; the number beside it carries the value).
 - Dense lists of links use `prefetch={false}`. `scripts/postbuild.mjs` renames Next's prefetch files so a plain static host can serve them.
 - Write files with the Write tool or a script file, not long bash heredocs (they fail on some quote patterns in this shell).
 
@@ -115,7 +118,7 @@ V6. [x] Box scores from game summaries, then trends (rolling 10-game lines with 
 Then:
 4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More? Charts move into Explore and Teams.
 5. [ ] Glossary and first-launch onboarding.
-W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home, players table, compare, teams, explore, stat page, games, glossary/about/404 and launch polish.
+W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home [x], players table, compare, teams, explore, stat page, games, glossary/about/404 and launch polish.
 8. [ ] (superseded by W) Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart. Known: the web tab bar (expo-router NativeTabs, Radix) logs a hydration id mismatch on every page in dev. On the web the tab bar is themed from tokens and moved to the bottom (`theme/WebTabBar.tsx`, matched by its ARIA attributes since the class names are hashed); scrolling screens keep 64 pt of bottom padding so content clears it.
 11. [ ] Build your own MVP: weight sliders over standardized categories, shareable ladder.
 14. [ ] Share cards for every chart and result.

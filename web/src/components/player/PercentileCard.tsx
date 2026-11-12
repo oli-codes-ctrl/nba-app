@@ -67,15 +67,7 @@ export function PercentileCard({ id, title, poolText, through, rows, insights, p
           </span>
         </div>
 
-        <div className={s.scale} aria-hidden="true">
-          <span />
-          <span className={s.scaleTicks}>
-            <span style={{ left: '0%' }}>0</span>
-            <span style={{ left: '50%' }}>50</span>
-            <span style={{ left: '100%' }}>100</span>
-          </span>
-          <span />
-        </div>
+        <CardScale />
 
         {CARD_SECTIONS.map((section) => (
           <div key={section.title} className={s.cardSection}>
@@ -94,6 +86,39 @@ export function PercentileCard({ id, title, poolText, through, rows, insights, p
         ))}
       </div>
     </ChartFrame>
+  );
+}
+
+function CardScale() {
+  return (
+    <div className={s.scale} aria-hidden="true">
+      <span />
+      <span className={s.scaleTicks}>
+        <span style={{ left: '0%' }}>0</span>
+        <span style={{ left: '50%' }}>50</span>
+        <span style={{ left: '100%' }}>100</span>
+      </span>
+      <span />
+    </div>
+  );
+}
+
+/**
+ * The card's rows alone, as a picture of the product (the home page hero):
+ * no headings and no links, since the panel around them is one link.
+ */
+export function CardPreview({ rows }: { rows: readonly CardRow[] }) {
+  return (
+    <div className={s.cardBody}>
+      <CardScale />
+      <ul>
+        {rows.map((row) => (
+          <li key={row.stat}>
+            <Row row={row} />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -136,7 +161,7 @@ function Answer({ insights }: { insights: CardInsights }) {
   );
 }
 
-function Row({ row, href }: { row: CardRow; href: string }) {
+function Row({ row, href }: { row: CardRow; href?: string }) {
   const ranked = row.better != null;
   const color = row.neutral || !ranked ? 'var(--viz-mark)' : percentileColor(row.better!);
   const spoken =
@@ -149,8 +174,8 @@ function Row({ row, href }: { row: CardRow; href: string }) {
       : ', not ranked yet') +
     '. See every player.';
 
-  return (
-    <Link href={href} className={s.row} aria-label={spoken} prefetch={false}>
+  const body = (
+    <>
       <span className={s.rowLabel}>{row.label}</span>
       <span className={s.track} style={{ '--mark': color } as CSSProperties}>
         <span className={s.trackLine} />
@@ -172,6 +197,13 @@ function Row({ row, href }: { row: CardRow; href: string }) {
         {!ranked ? <span className={`t-caption ${s.unranked}`}>Not ranked yet</span> : null}
       </span>
       <span className={`num ${s.rowValue}`}>{formatStat(row.stat, row.value)}</span>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={`${s.row} ${s.rowLink}`} aria-label={spoken} prefetch={false}>
+      {body}
     </Link>
+  ) : (
+    <span className={s.row}>{body}</span>
   );
 }

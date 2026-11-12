@@ -10,8 +10,11 @@ import s from './shell.module.css';
 /** Sticky bar: wordmark, section links, search. Links fold into a menu under 768px. */
 export function TopNav() {
   return (
-    <header className={s.nav}>
-      <div className={`container ${s.navInner}`}>
+    <header className={`nav ${s.nav}`}>
+      <div className={`wrap ${s.navInner}`}>
+        <a href="#main" className="skip-link">
+          Skip to Content
+        </a>
         <Link href="/" className={s.brand} aria-label={`${SITE.name} home`}>
           <BrandMark />
           <span translate="no">{SITE.name}</span>

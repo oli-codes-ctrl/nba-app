@@ -102,7 +102,7 @@ export default async function PlayerPage({ params }: Params) {
     : [{ pool: 'all', group: null }];
 
   return (
-    <div className={`container ${s.page}`}>
+    <div className={`wrap ${s.page}`}>
       <nav aria-label="Breadcrumb" className={`t-caption ${s.crumbs}`}>
         <Link href="/players" className={s.crumb}>
           Players
