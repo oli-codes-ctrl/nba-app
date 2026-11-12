@@ -1,0 +1,360 @@
+/* Players table: toolbar, dense sortable table, pager. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-12);
+}
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  /* Paging scrolls back here, clear of the sticky top bar. */
+  scroll-margin-top: calc(var(--nav-height) + var(--space-4));
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.filter {
+  position: relative;
+  display: block;
+  width: 240px;
+  color: var(--ink-subtle);
+}
+.filter svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  margin-top: -8px;
+  pointer-events: none;
+}
+.filterInput {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 12px 0 36px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--ink);
+  /* 16px on touch screens keeps iOS from zooming the page on focus. */
+  font-size: 14px;
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+}
+.filterInput::placeholder {
+  color: var(--ink-subtle);
+}
+.filterInput:hover {
+  border-color: var(--hairline-strong);
+}
+.filterInput:focus-visible {
+  border-radius: var(--radius-md);
+  outline-offset: 0;
+}
+
+/* Switch: a track and a thumb beside its label; state is also in aria-checked. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  /* No left padding: the track starts on the page margin when the switch wraps to its own line. */
+  padding: 0 var(--space-2) 0 0;
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--motion-fast) ease;
+}
+.switch:hover {
+  color: var(--ink);
+}
+.switch:focus-visible {
+  border-radius: var(--radius-md);
+}
+.switchTrack {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background: var(--hairline-strong);
+  transition: background-color var(--motion-fast) ease;
+}
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) ease;
+}
+.switch[aria-checked='true'] .switchTrack {
+  background: var(--accent);
+}
+.switch[aria-checked='true'] .switchThumb {
+  transform: translateX(14px);
+  background: var(--on-accent);
+}
+
+.meta {
+  color: var(--ink-subtle);
+  max-width: 110ch;
+}
+
+/* ---------- Table ---------- */
+/* position: relative keeps the screen-reader labels (absolutely positioned) inside the scroll box, so they never widen the page. */
+.scroll {
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  margin-inline: calc(-1 * var(--gutter));
+  padding-inline: var(--gutter);
+}
+.table {
+  width: 100%;
+  min-width: 1180px;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.table th,
+.table td {
+  height: 45px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-weight: 400;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--canvas);
+}
+.table thead th {
+  height: 40px;
+  padding: 0;
+  border-bottom-color: var(--hairline-strong);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  font-weight: 500;
+}
+.table thead th.rankCol,
+.table thead th.playerCol {
+  padding: 0 10px;
+}
+.table tbody tr:hover > * {
+  background: var(--surface-1);
+}
+.table abbr {
+  text-decoration: none;
+}
+
+.table .rankCol {
+  width: 44px;
+  padding-left: 0;
+  color: var(--ink-subtle);
+  font-size: 13px;
+}
+.table .playerCol {
+  width: 300px;
+  padding-left: 4px;
+  text-align: left;
+}
+.player {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  min-width: 0;
+}
+.player:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+.playerName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.player:hover .playerName {
+  text-decoration-color: var(--hairline-tertiary);
+}
+.playerText {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.playerMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.pos {
+  color: var(--ink-subtle);
+}
+
+/* The column the list is sorted by reads first. */
+.table td.activeCol {
+  color: var(--ink);
+  font-weight: 600;
+}
+.table thead th.activeCol {
+  color: var(--ink);
+}
+.thin {
+  color: var(--ink-subtle) !important;
+  font-weight: 400 !important;
+}
+.sample {
+  display: block;
+  color: var(--ink-subtle);
+  font-weight: 400;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  transition:
+    color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+}
+.sortButton:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.sortButton:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Wide screens: the table fits, so the page scrolls and the header row stays in view. */
+@media (min-width: 1280px) {
+  .scroll {
+    overflow: visible;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+  .table {
+    min-width: 0;
+  }
+  .table thead th {
+    position: sticky;
+    top: var(--nav-height);
+    z-index: 1;
+  }
+  /* A row reached with Tab scrolls clear of the top bar and the pinned header row. */
+  .player {
+    scroll-margin-top: calc(var(--nav-height) + 56px);
+  }
+}
+
+/* Narrower screens: the table scrolls sideways and the player stays pinned. */
+@media (max-width: 1279px) {
+  /* The table scrolls inside the page margins, so nothing slides out beside the pinned columns. */
+  .scroll {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+  .table .rankCol,
+  .table .playerCol {
+    position: sticky;
+    z-index: 1;
+  }
+  .table .rankCol {
+    left: 0;
+    width: 36px;
+    min-width: 36px;
+    padding-right: 6px;
+  }
+  .table .playerCol {
+    left: 36px;
+    width: 280px;
+    box-shadow: inset -1px 0 0 var(--hairline);
+  }
+}
+
+/* ---------- Pager ---------- */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+.pagerButtons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .filterInput {
+    font-size: 16px;
+  }
+  .sortButton,
+  .table thead th {
+    height: 44px;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding-top: var(--space-6);
+    gap: var(--space-4);
+  }
+  .filter {
+    width: 100%;
+  }
+  .table {
+    min-width: 1010px;
+  }
+  .table .playerCol {
+    width: 176px;
+    max-width: 176px;
+  }
+  /* Room for the name: the avatar goes, and the team sits under the name. */
+  .player > :first-child {
+    display: none;
+  }
+  .playerText {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .playerName {
+    max-width: 100%;
+  }
+  .pager {
+    justify-content: center;
+  }
+}

@@ -211,9 +211,10 @@ After each: playwright-cli screenshots at three widths plus a click-through, a w
 |---|---|---|
 | 0. Foundation | done 2026-11-12 | `web/`: Next.js 16 static export, tokens (`src/styles/tokens.css`), shell (top bar, search palette, mobile menu, footer, skip link), base components, chart frame, build-time data layer, 15 logic test suites moved over unchanged plus token-contrast, route and search tests. |
 | 1. Player page | done 2026-11-12, approved | `/players/<name>-<id>`, 461 pages. |
-| 2. Home | done 2026-11-12, awaiting review | Hero with search and a live percentile card of the Game Score leader; the best games of the last night with the heat check and the stat of the day; top 5 in 8 stats; the best games of the season; a closing search in the footer. "Your players" appears for readers who follow someone. A games section joins it when the games are built (step 8). |
-| 3. Players table | next | |
-| 4 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
+| 2. Home | done 2026-11-12, approved | Hero with search and a live percentile card of the Game Score leader; the best games of the last night with the heat check and the stat of the day; top 5 in 8 stats; the best games of the season; a closing search in the footer. "Your players" appears for readers who follow someone. A games section joins it when the games are built (step 8). |
+| 3. Players table | done 2026-11-12, awaiting review | `/players`: every player in one sortable table (15 columns), with position, per game / per 36 / per 100, a qualified-only switch, a name filter and 50-row pages. All of it lives in the query string (`sort`, `order`, `per`, `pos`, `show`, `q`, `page`). Ranks stay the real ones while filtering by name. The browser gets a packed copy of the rows (about 41 KB gzip of HTML), not the full data file. |
+| 4. Compare | next | |
+| 5 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
 
 Not built yet from the component list in 5.3: the sortable `DataTable` (arrives with the Players table, step 3) and the game components (step 8).
 
@@ -230,6 +231,11 @@ Not built yet from the component list in 5.3: the sortable `DataTable` (arrives 
 - JavaScript 143 KB gzip, HTML 17 KB gzip. No sideways scroll at 320 px. Copy-lint: 0 FAIL.
 - design-taste checker: 28 FAIL at first run, 11 left, all waived below.
 
+### Measured on the players table
+
+- JavaScript 146 KB gzip, HTML 41 KB gzip (the packed rows included). No sideways page scroll from 320 px up; the table scrolls inside the page with rank and player pinned below 1280 px, and its header row stays in view above 1280 px.
+- Found and fixed: screen-reader labels inside the sort buttons are absolutely positioned and escaped the scroll box, widening the whole page on phones. The scroll box now sets `position: relative`.
+
 ### Waivers
 
 Rules from the required tools that are deliberately not followed, each with its reason.
@@ -245,6 +251,7 @@ Rules from the required tools that are deliberately not followed, each with its 
 | taste: `container-edges` (text inside a panel starts 9 px in; a box over half the container must span it) | home page lists | DESIGN.md's panels carry inner padding, and the lists need 7 of 12 columns to show a full box line. |
 | taste: dealt palette, hero, moments and the kit's CSS and scripts | home page | DESIGN.md fixes the palette and type, and the kit is a large library (owner rule: no big new libraries). The hero entrance, hover lifts and press states are written by hand. |
 | taste: `copy-stat-strip`, `copy-length`, `label-centre`, `action-repeat` (warnings) | home page | A stats site shows numbers in rows; list rows count as words; the search control is a field, so its label is left-aligned; search is in the top bar on every page and is also the hero's main action. |
+| taste: `stagger` | players table | Rank numbers are right-aligned, so "1" starts further right than "10": standard numeric alignment. |
 | taste: `visual-caption` | game detail under the trend chart | It is the readout of the selected game (it changes on click and arrow keys), not a description of the chart. Explanations are in "How to Read This". |
 | guidelines: Title Case for headings | section headings | Headings are questions in sentence case ("Is he heating up?"). Buttons, navigation and controls use Title Case. |
 | guidelines: `Intl.NumberFormat` / `Intl.DateTimeFormat` | `lib/format.ts` | Moved unchanged so every number matches the pipeline's rounding exactly; the site is English only. |

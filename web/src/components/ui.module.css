@@ -358,3 +358,11 @@ a.tileBody:focus-visible {
 .stateError .stateTitle svg {
   color: var(--danger);
 }
+
+/* The smallest phones: segments tighten so a three-option control fits in 288px. */
+@media (max-width: 359px) {
+  .segment {
+    padding: 0 9px;
+    font-size: 13px;
+  }
+}

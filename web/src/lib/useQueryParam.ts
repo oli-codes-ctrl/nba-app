@@ -45,3 +45,26 @@ export function useQueryParam<T extends string>(
 
   return [value, set];
 }
+
+/**
+ * The whole query string, for views with several linked settings (a table's
+ * sort, filters and page). `update` changes any number of keys in one
+ * history entry; a null value removes the key.
+ */
+export function useQuery(): [URLSearchParams, (patch: Record<string, string | null>) => void] {
+  const search = useSyncExternalStore(
+    subscribe,
+    () => window.location.search,
+    () => '',
+  );
+  const update = useCallback((patch: Record<string, string | null>) => {
+    const url = new URL(window.location.href);
+    for (const [key, value] of Object.entries(patch)) {
+      if (value == null || value === '') url.searchParams.delete(key);
+      else url.searchParams.set(key, value);
+    }
+    window.history.replaceState(null, '', url);
+    window.dispatchEvent(new Event(CHANGE));
+  }, []);
+  return [new URLSearchParams(search), update];
+}
