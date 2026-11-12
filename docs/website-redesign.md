@@ -212,9 +212,10 @@ After each: playwright-cli screenshots at three widths plus a click-through, a w
 | 0. Foundation | done 2026-11-12 | `web/`: Next.js 16 static export, tokens (`src/styles/tokens.css`), shell (top bar, search palette, mobile menu, footer, skip link), base components, chart frame, build-time data layer, 15 logic test suites moved over unchanged plus token-contrast, route and search tests. |
 | 1. Player page | done 2026-11-12, approved | `/players/<name>-<id>`, 461 pages. |
 | 2. Home | done 2026-11-12, approved | Hero with search and a live percentile card of the Game Score leader; the best games of the last night with the heat check and the stat of the day; top 5 in 8 stats; the best games of the season; a closing search in the footer. "Your players" appears for readers who follow someone. A games section joins it when the games are built (step 8). |
-| 3. Players table | done 2026-11-12, awaiting review | `/players`: every player in one sortable table (15 columns), with position, per game / per 36 / per 100, a qualified-only switch, a name filter and 50-row pages. All of it lives in the query string (`sort`, `order`, `per`, `pos`, `show`, `q`, `page`). Ranks stay the real ones while filtering by name. The browser gets a packed copy of the rows (about 41 KB gzip of HTML), not the full data file. |
-| 4. Compare | next | |
-| 5 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
+| 3. Players table | done 2026-11-12, approved | `/players`: every player in one sortable table (15 columns), with position, per game / per 36 / per 100, a qualified-only switch, a name filter and 50-row pages. All of it lives in the query string (`sort`, `order`, `per`, `pos`, `show`, `q`, `page`). Ranks stay the real ones while filtering by name. The browser gets a packed copy of the rows (about 41 KB gzip of HTML), not the full data file. |
+| 4. Compare | done 2026-11-13, awaiting review | `/compare?a=&b=`: a scoreboard (stats won and clear edges for each player, the verdict in words, Swap Sides, Copy Link), "Who wins each stat?" as a dumbbell chart of the 16 head-to-head stats (percentiles; filled dot player 1, ring player 2; clear edge / too close to call / too few attempts per row; table view `?view=table`), "Do they play alike?" (style match out of 100 with the shared traits and biggest gaps, ten style stats against the average; table view `?style=table`) and six suggested matchups from the leaderboards. Picking a player (search dialog) or a suggestion adds a history entry, so Back returns to the previous matchup. The browser fetches `compare-data.json` (56 KB gzip) once; `versusRows` and `styleVectors` run on it unchanged. |
+| 5. Teams | next | |
+| 6 to 9 | not started | Nav links to pages not yet built land on the 404 page. |
 
 Not built yet from the component list in 5.3: the sortable `DataTable` (arrives with the Players table, step 3) and the game components (step 8).
 
@@ -236,6 +237,12 @@ Not built yet from the component list in 5.3: the sortable `DataTable` (arrives 
 - JavaScript 146 KB gzip, HTML 41 KB gzip (the packed rows included). No sideways page scroll from 320 px up; the table scrolls inside the page with rank and player pinned below 1280 px, and its header row stays in view above 1280 px.
 - Found and fixed: screen-reader labels inside the sort buttons are absolutely positioned and escaped the scroll box, widening the whole page on phones. The scroll box now sets `position: relative`.
 
+### Measured on the compare page
+
+- JavaScript 157 KB gzip in a modern browser (the players table measures 150 KB the same way), HTML 5 KB gzip, plus the 56 KB data file fetched after load. No sideways page scroll from 320 px to 1440 px; no console errors.
+- Checked in the click-through: pick both players from the dialog (the picker moves on to player 2, focus lands on the Change button after), Escape changes nothing, swap, table views, copy link, suggestion then Back, arrow keys through the chart with each row read out, hover tooltips, an unknown id, an unqualified player (numbers without marks, no style match), and the player page's Compare button (player 1 filled).
+- Same 16 stats, tallies and clear-edge tests as the app's head-to-head (`players/versus.ts`), and the same style vectors as "Who's he like?" (`players/similar.ts`), both unchanged.
+
 ### Waivers
 
 Rules from the required tools that are deliberately not followed, each with its reason.
@@ -256,7 +263,8 @@ Rules from the required tools that are deliberately not followed, each with its 
 | guidelines: Title Case for headings | section headings | Headings are questions in sentence case ("Is he heating up?"). Buttons, navigation and controls use Title Case. |
 | guidelines: `Intl.NumberFormat` / `Intl.DateTimeFormat` | `lib/format.ts` | Moved unchanged so every number matches the pipeline's rounding exactly; the site is English only. |
 | guidelines: animate transform and opacity only | hover states | Color and background transitions of 150 ms on hover; nothing else animates except one 250 ms opacity and transform load-in per chart. |
-| guidelines: `<div>` with a click handler | `charts/TrendChart.tsx` | The chart is one focusable group with arrow-key support and a text summary; each game is also in the table view. |
+| guidelines: `<div>` with a click handler | `charts/TrendChart.tsx`, `compare/DumbbellChart.tsx` (rows) | The chart is one focusable group with arrow-key support and a text summary; every value is also in the table view. |
+| taste: `flush` (header text "above the rule"), `card-visual`, `no-visual`, `text-only`, `section-tile` | compare page | The checker reads the static page before a matchup is picked, so the charts are not there yet; the header block has no padding by design (the page's 24 px gap separates it from the panel). Suggested matchups carry the players' initials, the site's only player imagery (no photos, owner rule). |
 | DESIGN.md: hover fill `#828fff`, 50% focus ring, lavender text | buttons, focus, links | Fail WCAG AA. See the `tokens.css` header and section 4. |
 | dataviz validator: lightness band and chroma floor | percentile scale | Categorical checks; the scale is diverging with a gray middle. Its separation and contrast checks pass on the new surface. |
 
