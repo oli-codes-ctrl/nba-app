@@ -37,6 +37,8 @@ import { CATALOG, GROUPS, isStatId, STAT_IDS, statsInGroup, type StatDef, type S
 import { attemptsText, hasSample, minimumsText, sampleFor, type AttemptRules } from '@/stats/samples';
 import { groupNoun, POSITION_GROUPS, positionGroup, positionName, type PositionGroup } from '@/stats/views';
 
+import tb from '@/components/table.module.css';
+
 import s from './explore.module.css';
 import { unpackExplorePlayer, type PackedExplorePlayer } from './exploreData';
 
@@ -812,8 +814,8 @@ function ValueTable({
     [points, invertY],
   );
   return (
-    <div className={s.tableBox} tabIndex={0} role="region" aria-label={`${title} as a table`}>
-      <table className={s.table}>
+    <div className={tb.tableBox} tabIndex={0} role="region" aria-label={`${title} as a table`}>
+      <table className={tb.table}>
         <caption className="visually-hidden">
           {title} Every player on the chart, {invertY ? 'fewest' : 'highest'} {lower(CATALOG[columns[0].stat].label)} first.
         </caption>
@@ -821,7 +823,7 @@ function ValueTable({
           <tr>
             <th scope="col">Player</th>
             {columns.map((col) => (
-              <th key={col.stat} scope="col" className={s.right}>
+              <th key={col.stat} scope="col" className={tb.right}>
                 <abbr title={CATALOG[col.stat].label}>{CATALOG[col.stat].short}</abbr>
               </th>
             ))}
@@ -832,10 +834,10 @@ function ValueTable({
           {sorted.map((p) => {
             const player = byId.get(p.id);
             return (
-              <tr key={p.id} className={highlights.includes(p.id) ? s.marked : undefined}>
+              <tr key={p.id} className={highlights.includes(p.id) ? tb.marked : undefined}>
                 <th scope="row">
-                  <span className={s.tableName}>
-                    <Link href={playerPath(p)} className={`hit ${s.tableLink}`} prefetch={false}>
+                  <span className={tb.tableName}>
+                    <Link href={playerPath(p)} className={`hit ${tb.tableLink}`} prefetch={false}>
                       {p.name}
                     </Link>
                     {player ? <TeamChip abbr={player.team} /> : null}
@@ -843,7 +845,7 @@ function ValueTable({
                   </span>
                 </th>
                 {columns.map((col) => (
-                  <td key={col.stat} className={`num ${s.right}`}>
+                  <td key={col.stat} className={`num ${tb.right}`}>
                     {formatStat(col.stat, p[col.axis])}
                   </td>
                 ))}

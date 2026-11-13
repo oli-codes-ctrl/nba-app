@@ -146,6 +146,12 @@
 .bandRect {
   fill: var(--viz-band);
 }
+/* A player's likely range under the axis. */
+.bracket {
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 
 /* Marks settle in once when the chart first draws; nothing moves afterwards. */
 .enter .marks {

@@ -19,7 +19,7 @@ type Props = {
   /** Shown in the field before the input; a search icon when omitted. */
   icon?: ReactNode;
   /** Best first, as the data file orders them: an empty field lists the first few. */
-  players: readonly Player[];
+  players: readonly Pick<Player, 'id' | 'name' | 'searchName' | 'team' | 'pos'>[];
   /** Heading over the list while the field is empty. */
   topLabel: string;
   /** The players are still on their way. */

@@ -54,9 +54,12 @@ export function TeamChip({ abbr, link = false, muted = false }: { abbr: string; 
 export type Tile = { label: string; value: string; note?: string; href?: string; title?: string };
 
 /** A strip of headline numbers. */
-export function StatTiles({ tiles, label }: { tiles: readonly Tile[]; label: string }) {
+export function StatTiles({ tiles, label, phoneColumns = 3 }: { tiles: readonly Tile[]; label: string; phoneColumns?: 2 | 3 }) {
   return (
-    <ul className={s.tiles} style={{ '--tiles': tiles.length } as CSSProperties} aria-label={label}>
+    <ul
+      className={phoneColumns === 2 ? `${s.tiles} ${s.tilesPair}` : s.tiles}
+      style={{ '--tiles': tiles.length } as CSSProperties}
+      aria-label={label}>
       {tiles.map((t) => {
         const body = (
           <>

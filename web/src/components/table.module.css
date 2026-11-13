@@ -1,0 +1,68 @@
+/* A long table in a scroll box with a sticky header: chart table views on Explore and the stat pages. */
+
+.tableBox {
+  position: relative;
+  max-height: 600px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-md);
+}
+.table {
+  width: 100%;
+  min-width: 480px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.table th,
+.table td {
+  height: 44px;
+  padding: 6px var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 36px;
+  border-bottom-color: var(--hairline-strong);
+  background: var(--surface-1);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  font-weight: 500;
+}
+.table abbr {
+  text-decoration: none;
+}
+.table tbody tr:hover > * {
+  background: var(--surface-2);
+}
+.table .right {
+  text-align: right;
+}
+.marked > * {
+  background: var(--surface-2);
+}
+.marked th[scope='row'] {
+  box-shadow: inset 2px 0 0 var(--ink);
+}
+.tableName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tableLink {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.tableLink:hover {
+  text-decoration-color: var(--hairline-tertiary);
+}

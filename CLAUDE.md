@@ -121,7 +121,7 @@ V6. [x] Box scores from game summaries, then trends (rolling 10-game lines with 
 Then:
 4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More? Charts move into Explore and Teams.
 5. [ ] Glossary and first-launch onboarding.
-W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home [x], players table [x], compare [x], teams [x], explore [x], stat page, games, glossary/about/404 and launch polish.
+W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home [x], players table [x], compare [x], teams [x], explore [x], stat page [x], games, glossary/about/404 and launch polish.
 8. [ ] (superseded by W) Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart. Known: the web tab bar (expo-router NativeTabs, Radix) logs a hydration id mismatch on every page in dev. On the web the tab bar is themed from tokens and moved to the bottom (`theme/WebTabBar.tsx`, matched by its ARIA attributes since the class names are hashed); scrolling screens keep 64 pt of bottom padding so content clears it.
 11. [ ] Build your own MVP: weight sliders over standardized categories, shareable ladder.
 14. [ ] Share cards for every chart and result.
