@@ -1,0 +1,455 @@
+/* Teams index and team pages: charts side by side, standings, four factors, leaders, roster. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-block: var(--space-12) var(--space-section);
+}
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.lede {
+  max-width: 68ch;
+}
+
+/* Two panels side by side on wide screens; stacked below. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+/* On the page's 12-column grid (gutters included): 7 columns and 5. */
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .grid > :first-child {
+    grid-column: span 7;
+  }
+  .grid > :last-child {
+    grid-column: span 5;
+  }
+}
+
+/* Panels stacked in the narrow column beside a chart. */
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-6);
+}
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 80ch;
+}
+
+/* ---------- Team header ---------- */
+.teamHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+/* Team color as identity only: a bar under the abbreviation, never behind text. */
+.teamMark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.teamSwatch {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 5px;
+}
+.teamTitles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* ---------- Tables ---------- */
+.conferences {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (min-width: 1280px) {
+  .conferences {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.tableScroll {
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border-radius: var(--radius-md);
+}
+.table {
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.table th,
+.table td {
+  height: 44px;
+  padding: 6px var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.table thead th {
+  height: 36px;
+  border-bottom-color: var(--hairline-strong);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  font-weight: 500;
+}
+.table abbr {
+  text-decoration: none;
+}
+.table tbody tr:hover > * {
+  background: var(--surface-1);
+}
+.table .right {
+  text-align: right;
+}
+.table .strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.table .rank {
+  width: 32px;
+  color: var(--ink-subtle);
+  font-size: 13px;
+}
+.caption {
+  padding-bottom: var(--space-2);
+  color: var(--ink);
+  text-align: left;
+}
+.standings {
+  min-width: 520px;
+}
+/* A percentage on too few attempts: shown, but quieter. It is not ranked. */
+.table td.thin {
+  color: var(--ink-subtle);
+  font-weight: 400;
+}
+.cellNote {
+  display: block;
+  color: var(--ink-subtle);
+  font-size: 12px;
+}
+.currentRow > * {
+  background: var(--surface-2);
+}
+.teamCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.teamName {
+  color: var(--ink);
+  font-weight: 500;
+}
+.teamLink {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.teamLink:hover {
+  text-decoration-color: var(--hairline-tertiary);
+}
+
+/* Legend swatches the shared chart styles lack. */
+.swatchFocus {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--viz-highlight);
+}
+.swatchDiagonal {
+  width: 14px;
+  height: 0;
+  border-top: 1px solid var(--viz-axis);
+  transform: rotate(-45deg);
+}
+
+/* ---------- Four factors ---------- */
+.factorAnswer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.factorAnswer > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+}
+.factorAnswer dt {
+  flex: 0 0 88px;
+  color: var(--ink-subtle);
+}
+.factorAnswer dd {
+  flex: 1 1 240px;
+  font-weight: 500;
+}
+.factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-6);
+}
+.factorSide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.factorTitle {
+  color: var(--ink-subtle);
+}
+.factorList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.factor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 36px;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  row-gap: 6px;
+}
+.factorLabel {
+  min-width: 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+.factorValue {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.factorRank {
+  color: var(--ink-subtle);
+  text-align: right;
+}
+.factorTrack {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 12px;
+}
+.factorLine {
+  position: absolute;
+  inset: 5px 0 auto 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--viz-track);
+}
+.factorBar {
+  position: absolute;
+  top: 3px;
+  height: 6px;
+  min-width: 2px;
+  border-radius: 3px;
+}
+.factorMid {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 12px;
+  margin-left: -0.5px;
+  background: var(--hairline-tertiary);
+}
+.factorLeague {
+  grid-column: 1 / -1;
+  color: var(--ink-subtle);
+}
+
+/* ---------- Leaders ---------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  min-width: 0;
+}
+.panelHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.leaders {
+  display: flex;
+  flex-direction: column;
+}
+.leaders > li + li {
+  border-top: 1px solid var(--hairline);
+}
+.leader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: var(--space-3);
+  min-height: 44px;
+  padding: 8px var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) ease;
+}
+.leader:hover {
+  background: var(--surface-3);
+}
+.leader:focus-visible {
+  outline-offset: -2px;
+}
+.leaderStat {
+  color: var(--ink-subtle);
+  font-size: 13px;
+}
+.leaderValue {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  align-self: center;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.leaderName {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ---------- Which teams have proven it? ---------- */
+.provenGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.provenTitle {
+  color: var(--ink-subtle);
+}
+.provenList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.provenTeam {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--control-height);
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
+}
+.provenTeam:hover {
+  background: var(--surface-3);
+  border-color: var(--hairline-strong);
+}
+.provenSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.provenNet {
+  color: var(--ink-subtle);
+  font-weight: 400;
+}
+
+/* ---------- Roster ---------- */
+.roster {
+  min-width: 760px;
+}
+.roster th[scope='row'] {
+  width: 36%;
+}
+.rosterPlayer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+}
+.rosterPlayer:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+.rosterText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rosterName {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.rosterPlayer:hover .rosterName {
+  text-decoration-color: var(--hairline-tertiary);
+}
+.rosterMeta {
+  color: var(--ink-subtle);
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding-top: var(--space-6);
+    gap: var(--space-4);
+  }
+  .panel {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+  .teamMark {
+    width: 52px;
+    height: 52px;
+    font-size: 15px;
+  }
+}

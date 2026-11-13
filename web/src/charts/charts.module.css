@@ -65,6 +65,58 @@
   paint-order: stroke;
 }
 
+/* Team charts: the focus team, the hovered or selected mark, direct labels. */
+.netZero {
+  stroke: var(--viz-axis);
+  stroke-width: 1.5;
+}
+.dotFocus {
+  fill: var(--viz-highlight);
+  stroke: var(--surface-1);
+  stroke-width: 2.5;
+  paint-order: stroke;
+}
+.dotRing {
+  fill: none;
+  stroke: var(--viz-highlight);
+  stroke-width: 1.5;
+}
+.axisTitle {
+  fill: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.corner {
+  fill: var(--ink-subtle);
+  font-size: 11px;
+  font-weight: 600;
+}
+.label,
+.labelStrong {
+  fill: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.labelStrong {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+/* Text over marks and lines keeps a ring of the panel color, so it stays readable. */
+.halo {
+  paint-order: stroke;
+  stroke: var(--surface-1);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.leader {
+  stroke: var(--ink-subtle);
+  stroke-width: 1;
+}
+.bandRect {
+  fill: var(--viz-band);
+}
+
 /* Marks settle in once when the chart first draws; nothing moves afterwards. */
 .enter .marks {
   animation: settle var(--motion-slow) var(--ease-out) both;

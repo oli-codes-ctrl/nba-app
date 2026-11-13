@@ -205,9 +205,16 @@
   gap: var(--space-6);
   align-items: start;
 }
+/* On the page's 12-column grid (gutters included): 8 columns and 4. */
 @media (min-width: 1280px) {
   .grid {
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .grid > :first-child {
+    grid-column: span 8;
+  }
+  .grid > :last-child {
+    grid-column: span 4;
   }
 }
 

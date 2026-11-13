@@ -196,11 +196,10 @@
   line-height: 1.2;
   letter-spacing: -0.6px;
 }
+/* Notes wrap rather than cut off: on a phone a tile is a third of the screen. */
 .tileNote {
   color: var(--ink-subtle);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 a.tileBody {
   transition: background-color var(--motion-fast) ease;
