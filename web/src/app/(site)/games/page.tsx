@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 
-import { DailyFeature, DailyRecord, GameRow } from '@/components/games/GamesHub';
+import { DailyFeature, DailyRecord, OtherGames } from '@/components/games/GamesHub';
 import s from '@/components/games/games.module.css';
-import { HigherLowerIcon, TableIcon, TrophyIcon } from '@/components/icons';
 import { buildDayPuzzleDate } from '@/components/games/puzzleDate';
 import { formatDate } from '@/lib/format';
 import { loadData } from '@/server/data';
@@ -36,26 +35,7 @@ export default function GamesPage() {
           <h2 id="more-title" className="t-card-title">
             What else can you play?
           </h2>
-          <ul className={s.gameList}>
-            <GameRow
-              title="Higher or Lower"
-              icon={<HigherLowerIcon size={20} />}
-              blurb="Is the next player’s number higher or lower? Keep the chain going as the gaps get smaller."
-              status="Coming Next"
-            />
-            <GameRow
-              title="Box Score Mystery"
-              icon={<TableIcon size={20} />}
-              blurb="Ten real stat lines from this season, four names each. Whose game was it?"
-              status="Coming Next"
-            />
-            <GameRow
-              title="Trophies"
-              icon={<TrophyIcon size={20} />}
-              blurb="Milestones across every game, from your first solve to a 30-day streak."
-              status="Coming Next"
-            />
-          </ul>
+          <OtherGames />
         </section>
       </div>
 

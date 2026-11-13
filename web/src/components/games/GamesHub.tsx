@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { ButtonLink } from '@/components/Button';
-import { ChevronRightIcon } from '@/components/icons';
+import { ChevronRightIcon, HigherLowerIcon, TableIcon, TrophyIcon } from '@/components/icons';
 import { Badge, StatTiles } from '@/components/primitives';
 import type { Puzzle } from '@/data/types';
 import {
@@ -17,15 +17,19 @@ import {
   type DailyStats,
   type GameState,
 } from '@/game/daily';
+import { QUIZ_LENGTH, type MysteryStats } from '@/game/mystery';
 import { loadGame, loadStats } from '@/game/storage';
+import type { StreakStats } from '@/game/streak';
 import { extent, paddedDomain, scale } from '@/graphs/math';
 
-import { browserStore, untilMidnight, useToday } from './browser';
+import { browserStore, loadFacts, SITE_TROPHIES, untilMidnight, useToday } from './browser';
 import s from './games.module.css';
 
 type Props = {
   puzzles: readonly Puzzle[];
   buildDate: string;
+  /** h2 on the games hub, h3 inside a home page section. */
+  level?: 2 | 3;
 };
 
 type Progress = { game: GameState; daily: DailyStats };
@@ -35,7 +39,8 @@ type Progress = { game: GameState; daily: DailyStats };
  * in this browser, so the static HTML shows the fresh-puzzle state and the
  * saved one replaces it on hydration.
  */
-export function DailyFeature({ puzzles, buildDate }: Props) {
+export function DailyFeature({ puzzles, buildDate, level = 2 }: Props) {
+  const Heading = level === 3 ? 'h3' : 'h2';
   const today = useToday();
   const puzzle = puzzleFor(puzzles, today ?? buildDate);
   const date = puzzle?.date ?? null;
@@ -57,9 +62,9 @@ export function DailyFeature({ puzzles, buildDate }: Props) {
       <article className={s.daily} aria-labelledby="daily-title">
         <div className={s.dailyText}>
           <p className="t-eyebrow t-subtle">Daily Guess</p>
-          <h2 id="daily-title" className="t-headline">
+          <Heading id="daily-title" className="t-headline">
             Who’s today’s mystery player?
-          </h2>
+          </Heading>
           <p className="t-body t-muted">The next puzzle is published with tonight’s stats.</p>
         </div>
       </article>
@@ -99,9 +104,9 @@ export function DailyFeature({ puzzles, buildDate }: Props) {
           <span className="num">Daily Guess · #{puzzle.number}</span>
           {double ? <Badge>Double points</Badge> : null}
         </p>
-        <h2 id="daily-title" className="t-headline">
+        <Heading id="daily-title" className="t-headline">
           Who’s today’s mystery player?
-        </h2>
+        </Heading>
         <p className="t-body t-muted num">{line}</p>
         <div className={s.dailyActions}>
           <ButtonLink variant="primary" href="/games/daily">
@@ -196,8 +201,50 @@ function MiniScatter({ puzzle, solved }: { puzzle: Puzzle; solved: boolean }) {
   );
 }
 
+type Progress8b = { streak: StreakStats; mystery: MysteryStats; trophies: number };
+
+/** The other games, each with the reader's progress once it has loaded. */
+export function OtherGames() {
+  const [p, setP] = useState<Progress8b | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    loadFacts().then((f) => {
+      if (!cancelled)
+        setP({ streak: f.streak, mystery: f.mystery, trophies: SITE_TROPHIES.filter((t) => f.career.unlocked[t.id]).length });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return (
+    <ul className={s.gameList}>
+      <GameRow
+        title="Higher or Lower"
+        href="/games/higher-lower"
+        icon={<HigherLowerIcon size={20} />}
+        blurb="Does the next player average more or less? Keep the chain going as the gaps get smaller."
+        status={p && p.streak.best > 0 ? `Best run ${p.streak.best}` : undefined}
+      />
+      <GameRow
+        title="Box Score Mystery"
+        href="/games/box-score"
+        icon={<TableIcon size={20} />}
+        blurb="Ten real stat lines, four names each. Whose line is it?"
+        status={p && p.mystery.played ? `Best ${p.mystery.best}/${QUIZ_LENGTH}` : undefined}
+      />
+      <GameRow
+        title="Trophies"
+        href="/games/trophies"
+        icon={<TrophyIcon size={20} />}
+        blurb="Milestones across every game, from your first solve to a 30-day streak."
+        status={p ? `${p.trophies} of ${SITE_TROPHIES.length}` : undefined}
+      />
+    </ul>
+  );
+}
+
 /** One of the other games: a link once it exists, a plain row until then. */
-export function GameRow({
+function GameRow({
   title,
   blurb,
   icon,

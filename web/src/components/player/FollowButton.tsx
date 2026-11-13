@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/Button';
+import { FOLLOWS_EVENT as CHANGE } from '@/components/games/trophyEvent';
 import { StarIcon } from '@/components/icons';
 
 const KEY = 'hoops:follows';
-const CHANGE = 'hoops:follows-change';
 
 /** Followed player ids, saved in this browser only. */
 export function readFollows(): number[] {

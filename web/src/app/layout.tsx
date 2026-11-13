@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
+import { TrophyNotice } from '@/components/games/TrophyNotice';
 import { TopNav } from '@/components/shell/TopNav';
 import { SITE } from '@/lib/site';
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <TopNav />
         {children}
+        <TrophyNotice />
       </body>
     </html>
   );

@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 import c from '@/charts/charts.module.css';
 import { ScatterChart, type ScatterTip } from '@/charts/ScatterChart';
 import { Button, ButtonLink } from '@/components/Button';
 import { ChartFrame, Disclosure } from '@/components/ChartFrame';
 import { ChoiceChips } from '@/components/ChoiceChips';
-import { ChartIcon, CheckIcon, CloseIcon, ShareIcon, TableIcon } from '@/components/icons';
+import { ChartIcon, CheckIcon, CloseIcon, TableIcon } from '@/components/icons';
 import { Avatar, Badge, EmptyState, Note, Skeleton, TeamChip } from '@/components/primitives';
 import tb from '@/components/table.module.css';
 import type { Puzzle, PuzzlePoolEntry } from '@/data/types';
@@ -30,12 +30,12 @@ import type { ChartPoint } from '@/graphs/math';
 import { fold } from '@/lib/fold';
 import { formatDate, ordinal } from '@/lib/format';
 import { playerPath } from '@/lib/routes';
-import { SITE } from '@/lib/site';
 import { useQuery } from '@/lib/useQueryParam';
 import { positionName } from '@/stats/views';
 import { teamInfo } from '@/theme/teams';
 
 import { untilMidnight, useToday } from './browser';
+import { EarnedTrophies, ScoreList, ShareButton } from './GameParts';
 import s from './games.module.css';
 import { useDailyGame } from './useDaily';
 
@@ -303,7 +303,7 @@ function Board({ puzzle, stale, through, hasPage }: { puzzle: Puzzle; stale: boo
               onClearSelected={() => setSelected(null)}
             />
           )}
-          <Clues puzzle={puzzle} state={state} onClue={game.revealClue} />
+          <Clues puzzle={puzzle} state={state} onClue={game.revealClue}>
           <Disclosure summary="How Scoring Works">
             <p>
               A right answer scores 3 points with no clues, 2 after 1 clue and 1 after both. Each wrong guess costs a
@@ -314,6 +314,7 @@ function Board({ puzzle, stale, through, hasPage }: { puzzle: Puzzle; stale: boo
               this browser.
             </p>
           </Disclosure>
+          </Clues>
           <p className="visually-hidden" aria-live="polite">
             {said}
           </p>
@@ -480,7 +481,18 @@ function GuessPanel({
   );
 }
 
-function Clues({ puzzle, state, onClue }: { puzzle: Puzzle; state: GameState | null; onClue: () => void }) {
+function Clues({
+  puzzle,
+  state,
+  onClue,
+  children,
+}: {
+  puzzle: Puzzle;
+  state: GameState | null;
+  onClue: () => void;
+  /** The rules, at the foot of the panel. */
+  children?: ReactNode;
+}) {
   const done = state != null && state.status !== 'playing';
   const shown = state == null ? 0 : done ? MAX_CLUES : state.clues;
   const next = state ? pointsAvailable({ ...state, clues: Math.min(MAX_CLUES, state.clues + 1) }) : 0;
@@ -519,6 +531,7 @@ function Clues({ puzzle, state, onClue }: { puzzle: Puzzle; state: GameState | n
           <span className="t-caption t-subtle num">A right answer is then worth {pointsText(next)}.</span>
         </div>
       ) : null}
+      {children}
     </section>
   );
 }
@@ -553,7 +566,6 @@ function Result({
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const now = useNow();
-  const [shared, setShared] = useState<'idle' | 'copied' | 'failed'>('idle');
   const won = state.status === 'won';
   const pts = score(state, puzzle);
   const tries = state.guesses.length;
@@ -562,24 +574,6 @@ function Result({
   useEffect(() => {
     if (focus) heading.current?.focus();
   }, [focus]);
-
-  async function share() {
-    const text = shareText(state, puzzle);
-    const url = `${window.location.origin}${SITE.basePath}/games/daily/`;
-    try {
-      if (typeof navigator.share === 'function' && window.matchMedia('(pointer: coarse)').matches) {
-        await navigator.share({ text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(`${text}\n${url}`);
-      setShared('copied');
-    } catch (err) {
-      // Closing the share sheet is not a failure.
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-      setShared('failed');
-    }
-    window.setTimeout(() => setShared('idle'), 2500);
-  }
 
   const clueText = state.clues === 0 ? 'no clues' : state.clues === 1 ? '1 clue' : 'both clues';
   return (
@@ -617,46 +611,24 @@ function Result({
         </div>
       ) : null}
 
-      <dl className={s.record}>
-        {[
+      <ScoreList
+        items={[
           ['Today', `${pts > 0 ? '+' : pts < 0 ? '−' : ''}${Math.abs(pts)}`],
           ['Streak', String(stats.currentStreak)],
           ['Best streak', String(stats.bestStreak)],
           ['Played', String(stats.played)],
           ['Won', `${winRate}%`],
           ['Total points', String(stats.totalScore)],
-        ].map(([label, value]) => (
-          <div key={label} className={s.recordItem}>
-            <dt className="t-caption t-subtle">{label}</dt>
-            <dd className={`num ${s.recordValue}`}>{value}</dd>
-          </div>
-        ))}
-      </dl>
+        ]}
+      />
 
-      {earned.length ? (
-        <p className={`t-body-sm ${s.trophy}`}>
-          {earned.length === 1 ? 'Trophy earned: ' : 'Trophies earned: '}
-          {earned.map((t, i) => (
-            <span key={t.id}>
-              {i > 0 ? ', ' : ''}
-              <strong>{t.title}</strong> ({t.description})
-            </span>
-          ))}
-          .
-        </p>
-      ) : null}
+      <EarnedTrophies earned={earned} />
 
       <div className={s.actions}>
-        <Button variant="primary" icon={shared === 'copied' ? <CheckIcon /> : <ShareIcon />} onClick={share}>
-          {shared === 'copied' ? 'Copied' : 'Share Result'}
-        </Button>
+        <ShareButton text={() => shareText(state, puzzle)} path="/games/daily/" />
         {answer && hasPage ? <ButtonLink href={playerPath(answer)}>Player Page</ButtonLink> : null}
       </div>
-      {shared === 'failed' ? <p className="t-caption t-subtle">This browser blocked copying. Take a screenshot of the result instead.</p> : null}
       <p className="t-caption t-subtle num">Next puzzle in {untilMidnight(now)}, at midnight your time.</p>
-      <p className="visually-hidden" aria-live="polite">
-        {shared === 'copied' ? 'Result copied to the clipboard.' : ''}
-      </p>
     </section>
   );
 }

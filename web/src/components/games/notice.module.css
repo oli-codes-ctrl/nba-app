@@ -1,0 +1,88 @@
+/* The site-wide trophy notice: bottom right on wide screens, across the bottom on phones. */
+.region {
+  position: fixed;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  z-index: var(--z-nav);
+  width: min(360px, calc(100vw - 2 * var(--gutter)));
+  pointer-events: none;
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-3);
+  box-shadow: var(--edge-highlight);
+  pointer-events: auto;
+  animation: rise var(--motion-base) var(--ease-out);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notice {
+    animation: none;
+  }
+}
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.eyebrow {
+  color: var(--ink-subtle);
+}
+.title {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+.link {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.link:hover {
+  text-decoration-color: currentColor;
+}
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) 0 0;
+  border-radius: var(--radius-md);
+  color: var(--ink-subtle);
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+.close:hover {
+  background: var(--surface-4);
+  color: var(--ink);
+}

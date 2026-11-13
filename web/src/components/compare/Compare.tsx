@@ -14,6 +14,7 @@ import {
 
 import { Button } from '@/components/Button';
 import { ChartFrame } from '@/components/ChartFrame';
+import { useVersusCount } from '@/components/games/Counters';
 import { ChartIcon, CompareIcon, SearchIcon, TableIcon } from '@/components/icons';
 import { Avatar, ErrorState, Note, Skeleton, TeamChip } from '@/components/primitives';
 import type { Player } from '@/data/types';
@@ -161,6 +162,7 @@ export function Compare({ through, qualifiedCount, suggestions }: Props) {
   const missing = data ? [aId, bId].filter((id) => id != null && !data.byId.has(id)).length : 0;
 
   const rows = useMemo(() => (a && b && data ? versusRows(a, b, data.rules) : []), [a, b, data]);
+  useVersusCount(a && b ? `${a.id}-${b.id}` : null);
 
   // The tab title names the matchup, so a saved or shared tab says what it holds.
   useEffect(() => {

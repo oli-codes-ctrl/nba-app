@@ -290,6 +290,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3) var(--space-2);
 }
+.record4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .recordItem {
   display: flex;
   flex-direction: column-reverse;
@@ -501,4 +504,527 @@
     padding: var(--space-4);
     border-radius: var(--radius-lg);
   }
+}
+
+/* ---------- Shared by the games ---------- */
+.inlineLink {
+  color: var(--accent-text);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.inlineLink:hover {
+  text-decoration-color: currentColor;
+}
+.fullRow {
+  flex-basis: 100%;
+}
+.stage {
+  gap: var(--space-6);
+}
+.stageSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.iconRight {
+  flex: none;
+  color: var(--success);
+}
+.iconWrong {
+  flex: none;
+  color: var(--danger);
+}
+/* A score set large with its sentence beside it. */
+.bigScore {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+}
+.bigScore > :first-child {
+  color: var(--ink);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+.progressTrack {
+  display: block;
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--viz-track);
+  overflow: hidden;
+}
+/* Filled by scaleX from the left, so only transform animates. */
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--ink-muted);
+  transform-origin: left center;
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+
+/* ---------- Higher or Lower: two cards face to face ---------- */
+.duel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-3);
+}
+.stageSkeleton .duel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.versus {
+  align-self: center;
+  color: var(--ink-subtle);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.duelCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  animation: dealIn var(--motion-base) var(--ease-out);
+  transition: border-color var(--motion-fast) ease;
+}
+@keyframes dealIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.duelRight {
+  border-color: var(--success);
+}
+.duelWrong {
+  border-color: var(--danger);
+}
+.duelWho {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.duelName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.duelNameText {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.duelMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.duelValueRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-height: 56px;
+}
+.duelValue {
+  color: var(--ink);
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -1.2px;
+}
+.duelMark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+.duelMark svg {
+  color: var(--success);
+}
+.duelMarkWrong svg {
+  color: var(--danger);
+}
+/* The value against the most in the pool, from zero. Decorative: the number carries it. */
+.duelBar {
+  display: block;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--viz-track);
+  overflow: hidden;
+}
+.duelBarFill {
+  display: block;
+  height: 100%;
+  background: var(--ink-muted);
+  transform-origin: left center;
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .duelCard {
+    animation: none;
+  }
+  .duelBarFill,
+  .progressFill {
+    transition: none;
+  }
+}
+.choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.choice .choiceButton {
+  min-height: 56px;
+  font-size: 17px;
+}
+.choiceButton[aria-disabled='true'] {
+  cursor: default;
+}
+.runOver {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+}
+.level {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.levelSteps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+.levelStep {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--viz-track);
+}
+.levelStepOn {
+  background: var(--ink-muted);
+}
+
+/* ---------- Box Score Mystery ---------- */
+.quizHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+}
+.markNow {
+  border-color: var(--ink);
+}
+.markRight {
+  border-color: transparent;
+  background: var(--surface-4);
+  color: var(--success);
+}
+.markWrong {
+  border-color: transparent;
+  background: var(--surface-4);
+  color: var(--danger);
+}
+.boxLine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+.boxCells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-2);
+}
+.boxCell {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-1);
+}
+.boxLabel {
+  color: var(--ink-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+.boxLabel abbr {
+  text-decoration: none;
+}
+.boxValue {
+  color: var(--ink);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.boxFoot {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+.optionsBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.optionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
+}
+.optionButton:hover:not([aria-disabled='true']) {
+  border-color: var(--hairline-tertiary);
+  background: var(--surface-3);
+}
+.optionButton:active:not([aria-disabled='true']) {
+  background: var(--surface-4);
+}
+.optionButton[aria-disabled='true'] {
+  cursor: default;
+}
+.optionRight {
+  border-color: var(--success);
+}
+.optionWrong {
+  border-color: var(--danger);
+}
+.optionKey {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-xs);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  font-weight: 500;
+}
+.answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+}
+.answerList {
+  display: flex;
+  flex-direction: column;
+}
+.answerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding-block: var(--space-2);
+}
+.answerItem + .answerItem {
+  border-top: 1px solid var(--hairline);
+}
+.answerText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* ---------- Trophies ---------- */
+.trophySummary {
+  gap: var(--space-3);
+}
+.trophySummary .progressTrack {
+  flex: none;
+}
+.trophyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+@media (min-width: 1024px) {
+  .trophyGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  /* Daily Guess across the page, its trophies in two columns; the other three groups a third each. */
+  .trophyGrid > * {
+    grid-column: span 4;
+  }
+  .trophyGrid > :first-child {
+    grid-column: span 12;
+  }
+  .trophyList.trophyListWide {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(4, auto);
+    grid-auto-flow: column;
+    column-gap: var(--space-8);
+  }
+}
+.trophyHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.trophyList {
+  display: flex;
+  flex-direction: column;
+}
+.trophyRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+.trophyRow {
+  border-top: 1px solid var(--hairline);
+}
+.trophyCount {
+  flex: none;
+  min-width: 7ch;
+}
+.medal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--hairline-tertiary);
+  border-radius: 50%;
+}
+.medalEarned {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.trophyText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.trophyTitle {
+  color: var(--ink-muted);
+  font-size: 16px;
+  font-weight: 600;
+}
+.trophyEarned .trophyTitle {
+  color: var(--ink);
+}
+.trophyProgress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  max-width: 320px;
+}
+
+@media (max-width: 767px) {
+  .duel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .versus {
+    justify-self: center;
+    margin-block: calc(-1 * var(--space-2));
+  }
+  /* On a phone each card is one row, name left and number right, so both cards and the answer buttons fit on one screen. */
+  .duelCard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .duelRole,
+  .duelBar {
+    display: none;
+  }
+  .duelWho {
+    gap: var(--space-2);
+  }
+  .duelValueRow {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-end;
+    min-height: 0;
+  }
+  .duelRank {
+    grid-column: 1 / -1;
+  }
+  .duelValue {
+    font-size: 36px;
+  }
+  .boxLine {
+    padding: var(--space-4);
+  }
+  .boxCells {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .boxValue {
+    font-size: 32px;
+  }
+  .optionGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.pushDown {
+  align-self: flex-start;
+  margin-top: auto;
 }

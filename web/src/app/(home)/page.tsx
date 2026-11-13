@@ -3,6 +3,9 @@ import Link from 'next/link';
 
 import { ButtonLink } from '@/components/Button';
 import { Disclosure } from '@/components/ChartFrame';
+import { DailyFeature, OtherGames } from '@/components/games/GamesHub';
+import g from '@/components/games/games.module.css';
+import { buildDayPuzzleDate } from '@/components/games/puzzleDate';
 import { Following } from '@/components/home/Following';
 import s from '@/components/home/home.module.css';
 import { ArrowDownIcon, ArrowUpIcon, ChevronRightIcon } from '@/components/icons';
@@ -302,6 +305,26 @@ export default function HomePage() {
           </div>
         </section>
       ) : null}
+
+      <section className={s.section} aria-labelledby="play-title">
+        <div className={`wrap ${s.sectionWrap}`}>
+          <header className={s.head}>
+            <h2 id="play-title" className="t-display-md">
+              Think you know the league?
+            </h2>
+            <p className="t-body t-subtle">
+              Quick games built on this season’s numbers. No account: your scores stay in this browser.
+            </p>
+          </header>
+          <div className={g.hubGrid}>
+            <DailyFeature puzzles={data.puzzles.puzzles} buildDate={buildDayPuzzleDate(data.through)} level={3} />
+            <div className={g.more}>
+              <h3 className="t-card-title">What else can you play?</h3>
+              <OtherGames />
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

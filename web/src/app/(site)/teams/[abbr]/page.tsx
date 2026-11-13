@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { TeamVisit } from '@/components/games/Counters';
 import pl from '@/components/player/player.module.css';
 import { Avatar, Note, StatTiles, type Tile } from '@/components/primitives';
 import { luckAnswer, luckNoise, luckTeams, netNoise, ratedTeams, ratingsAnswer, signed } from '@/components/teams/answers';
@@ -115,6 +116,7 @@ export default async function TeamPage({ params }: Params) {
 
   return (
     <div className={`wrap ${s.page}`}>
+      <TeamVisit abbr={abbr} />
       <nav aria-label="Breadcrumb" className={`t-caption ${pl.crumbs}`}>
         <Link href="/teams" className={pl.crumb}>
           Teams
