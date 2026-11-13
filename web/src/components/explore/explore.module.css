@@ -74,41 +74,6 @@
   color: var(--ink-subtle);
 }
 
-/* Question chips: radio semantics; the chosen one lifts a surface, as in the segmented control. */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.chip {
-  min-height: var(--control-height);
-  padding: 0 14px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-pill);
-  color: var(--ink-subtle);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.2;
-  white-space: nowrap;
-  transition:
-    background-color var(--motion-fast) ease,
-    border-color var(--motion-fast) ease,
-    color var(--motion-fast) ease;
-}
-.chip:hover {
-  border-color: var(--hairline-strong);
-  color: var(--ink);
-}
-.chip[aria-checked='true'] {
-  background: var(--surface-3);
-  border-color: var(--hairline-tertiary);
-  color: var(--ink);
-  font-weight: 600;
-}
-.chip:focus-visible {
-  border-radius: var(--radius-pill);
-}
-
 .fields {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

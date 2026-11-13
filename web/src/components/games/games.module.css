@@ -1,0 +1,504 @@
+/* Games: the hub and Daily Guess. Values come from styles/tokens.css only. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-block: var(--space-12) var(--space-section);
+}
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.lede {
+  max-width: 68ch;
+}
+
+/* ---------- Daily Guess: chart across 7 of 12 columns, the game across 5 ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .grid > :first-child {
+    grid-column: span 7;
+  }
+  .grid > :last-child {
+    grid-column: span 5;
+  }
+}
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+/* Stat chips with the legend at the end of the same row; the legend drops below when there is no room. */
+.chartTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+.answerLead {
+  font-weight: 500;
+  text-wrap: pretty;
+}
+/* The mystery dot's look: an ink dot inside a ring. */
+.swatchMystery {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow:
+    0 0 0 2px var(--surface-1),
+    0 0 0 3.5px var(--ink);
+  margin-inline: 2px;
+}
+.swatchHollow {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--viz-mark);
+  border-radius: 50%;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  min-width: 0;
+}
+.panelHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Guesses: three slots, filled as they are used. */
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+}
+.slotEmpty {
+  border: 1px dashed var(--hairline-strong);
+}
+.slotWrong {
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+}
+.wrongIcon {
+  flex: none;
+  color: var(--danger);
+}
+.slotName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A dot picked on the chart, waiting to be confirmed as a guess. */
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.pickWho {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.pickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The name field with its suggestions underneath. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.fieldLabel {
+  color: var(--ink-subtle);
+}
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  /* 16px keeps iOS from zooming the page on focus. */
+  font-size: 16px;
+  transition: border-color var(--motion-fast) ease;
+}
+.input::placeholder {
+  color: var(--ink-subtle);
+}
+.input:hover {
+  border-color: var(--hairline-tertiary);
+}
+.input:focus-visible {
+  border-color: var(--accent-text);
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.options[hidden] {
+  display: none;
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.option[aria-selected='true'] {
+  background: var(--surface-4);
+}
+.optionAction {
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Clues: two rows of label and value. */
+.clues {
+  display: flex;
+  flex-direction: column;
+}
+.clue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 40px;
+}
+.clue + .clue {
+  border-top: 1px solid var(--hairline);
+}
+.clueValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: right;
+}
+.hiddenValue {
+  color: var(--ink-subtle);
+  font-weight: 400;
+  letter-spacing: 0.4px;
+}
+.clueAction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+/* Result. Focus lands on the heading when a game ends; the global ring shows it to keyboard readers. */
+.resultTitle:focus-visible {
+  border-radius: var(--radius-xs);
+}
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+.verdictWin svg {
+  color: var(--success);
+}
+.verdictLoss svg {
+  color: var(--danger);
+}
+.answerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.answerName {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.answerLink {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--hairline-tertiary);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+.answerLink:hover {
+  text-decoration-color: var(--ink);
+}
+.record {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-2);
+}
+.recordItem {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.recordValue {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+}
+.trophy {
+  padding: var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+}
+.trophy strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ---------- Hub: Daily Guess across 7 of 12 columns, the other games across 5 ---------- */
+.hubGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: stretch;
+}
+@media (min-width: 1024px) {
+  .hubGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .hubGrid > :first-child {
+    grid-column: span 7;
+  }
+  .hubGrid > :last-child {
+    grid-column: span 5;
+  }
+}
+.daily {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  min-width: 0;
+}
+.dailyText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.eyebrowRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dailyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.mini {
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+}
+.miniSvg {
+  display: block;
+  overflow: visible;
+}
+.miniGrid {
+  stroke: var(--viz-grid);
+  stroke-width: 1;
+}
+.miniAxis {
+  stroke: var(--viz-axis);
+  stroke-width: 1;
+}
+.miniDot {
+  fill: var(--viz-mark);
+}
+.miniHalo {
+  fill: var(--canvas);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.miniMystery {
+  fill: var(--ink);
+}
+.miniLabel {
+  fill: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+.miniAxisTitle {
+  fill: var(--ink-subtle);
+  font-size: 11px;
+}
+
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.gameList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  overflow: hidden;
+}
+.gameList > li {
+  display: flex;
+  flex: 1;
+}
+.gameList > li + li {
+  border-top: 1px solid var(--hairline);
+}
+.game {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 96px;
+  padding: var(--space-4) var(--space-6);
+}
+.gameLink {
+  transition: background-color var(--motion-fast) ease;
+}
+.gameLink:hover {
+  background: var(--surface-2);
+}
+.gameLink:focus-visible {
+  outline-offset: -2px;
+}
+/* A drawn glyph per game, on the next surface up. */
+.gameIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+  color: var(--ink-muted);
+}
+.gameText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.gameTitle {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.gameChevron {
+  flex: none;
+  color: var(--ink-subtle);
+}
+.recordSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-6);
+}
+
+@media (max-width: 767px) {
+  .daily {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+  .game {
+    padding: var(--space-4);
+  }
+  .page {
+    padding-top: var(--space-6);
+    gap: var(--space-4);
+  }
+  .panel {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+}

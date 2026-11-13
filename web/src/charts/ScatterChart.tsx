@@ -49,6 +49,8 @@ type Props = {
   speak: (p: ChartPoint) => string;
   /** The chart in a sentence, for screen readers. */
   summary: string;
+  /** Height over width in wide columns (default 0.58). */
+  aspect?: number;
 };
 
 /**
@@ -74,6 +76,7 @@ export function ScatterChart({
   tip,
   speak,
   summary,
+  aspect = 0.58,
 }: Props) {
   const { ref, width, ready, entering } = useChartBox<HTMLDivElement>();
   const clipId = `scatter-${useId().replace(/:/g, '')}`;
@@ -84,7 +87,7 @@ export function ScatterChart({
   const xd = useMemo(() => paddedDomain(extent(points.map((p) => p.x))), [points]);
   const yd = useMemo(() => paddedDomain(extent(points.map((p) => p.y))), [points]);
   // Narrow columns get a plot taller than wide, so hundreds of dots still separate; wide ones fit the first screen.
-  const height = Math.round(width < 560 ? Math.min(520, Math.max(320, width * 1.1)) : Math.min(560, Math.max(320, width * 0.58)));
+  const height = Math.round(width < 560 ? Math.min(520, Math.max(320, width * 1.1)) : Math.min(560, Math.max(320, width * aspect)));
   const plot = { x0: MARGIN.left, x1: Math.max(MARGIN.left, width - MARGIN.right), y0: height - MARGIN.bottom, y1: MARGIN.top };
   const sx = scale(xd, [plot.x0, plot.x1]);
   const sy = scale(yd, invertY ? [plot.y1, plot.y0] : [plot.y0, plot.y1]);

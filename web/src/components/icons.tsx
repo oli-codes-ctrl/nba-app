@@ -99,6 +99,31 @@ export const ArrowDownIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** Higher or Lower: one arrow up, one down. */
+export const HigherLowerIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 12.5v-9M2.75 5.75 5 3.5l2.25 2.25M11 3.5v9M8.75 10.25 11 12.5l2.25-2.25" />
+  </Icon>
+);
+
+export const TrophyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 2.5h6v3.5a3 3 0 0 1-6 0V2.5ZM5 3.75H2.75v.5A2.5 2.5 0 0 0 5.2 6.75M11 3.75h2.25v.5a2.5 2.5 0 0 1-2.45 2.5M8 9v2.5M5.25 13.5h5.5M6.25 11.5h3.5" />
+  </Icon>
+);
+
+export const CheckIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m3 8.5 3.25 3.25L13 4.75" />
+  </Icon>
+);
+
+export const ShareIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 10V2.5M5 5.25 8 2.25l3 3M3.5 8.5v4.25c0 .4.35.75.75.75h7.5c.4 0 .75-.35.75-.75V8.5" />
+  </Icon>
+);
+
 export const AlertIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M8 2.25 14.25 13H1.75L8 2.25ZM8 6.5v3M8 11.25v.01" />

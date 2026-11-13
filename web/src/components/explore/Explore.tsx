@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import c from '@/charts/charts.module.css';
 import { ScatterChart, type ScatterTip } from '@/charts/ScatterChart';
 import { Button, ButtonLink } from '@/components/Button';
 import { ChartFrame } from '@/components/ChartFrame';
+import { ChoiceChips } from '@/components/ChoiceChips';
 import { ChartIcon, ChevronDownIcon, CloseIcon, CompareIcon, PlusIcon, TableIcon } from '@/components/icons';
 import { PlayerSearchDialog } from '@/components/PlayerSearchDialog';
 import pt from '@/components/players/players.module.css';
@@ -571,48 +572,6 @@ export function Explore({ packed, rules, through }: Props) {
 }
 
 /** A choice from a short list, as wrapping chips with radio semantics: arrow keys move and select. */
-function ChoiceChips({
-  labelledBy,
-  options,
-  value,
-  onChange,
-}: {
-  labelledBy: string;
-  options: readonly { id: string; label: string }[];
-  value: string;
-  onChange: (id: string) => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    const index = options.findIndex((o) => o.id === value);
-    let next = index;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (index + 1) % options.length;
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (index - 1 + options.length) % options.length;
-    else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = options.length - 1;
-    else return;
-    e.preventDefault();
-    onChange(options[next].id);
-    ref.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus();
-  }
-  return (
-    <div ref={ref} role="radiogroup" aria-labelledby={labelledBy} className={s.chips} onKeyDown={onKeyDown}>
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          role="radio"
-          aria-checked={o.id === value}
-          tabIndex={o.id === value ? 0 : -1}
-          className={s.chip}
-          onClick={() => onChange(o.id)}>
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 const SELECT_GROUPS: readonly { title: string; stats: readonly StatDef[] }[] = [
   ...GROUPS.map((g) => ({ title: g.title, stats: statsInGroup(g.id) })),
   { title: 'Playing time and age', stats: statsInGroup('context') },
