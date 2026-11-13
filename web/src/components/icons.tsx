@@ -44,6 +44,12 @@ export const CloseIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const PlusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 3.5v9M3.5 8h9" />
+  </Icon>
+);
+
 export const ChevronRightIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="m6 3.5 4.5 4.5L6 12.5" />
