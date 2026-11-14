@@ -5,14 +5,18 @@ import s from '@/components/games/games.module.css';
 import { buildDayPuzzleDate } from '@/components/games/puzzleDate';
 import { formatDate } from '@/lib/format';
 import { loadData } from '@/server/data';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 export function generateMetadata(): Metadata {
-  return {
+  return pageMeta({
     title: 'Games: Play the Numbers',
     description:
       'Stat games built on this season’s numbers: name the Daily Guess mystery player from a chart, keep a Higher or Lower chain going, and read a box score to find its player.',
-    alternates: { canonical: '/games' },
-  };
+    path: '/games',
+    share: 'Play the numbers.',
+    image: ogImage.page('games'),
+    imageAlt: 'Play the numbers: stat games on this season’s stats.',
+  });
 }
 
 export default function GamesPage() {

@@ -4,15 +4,19 @@ import { Explore } from '@/components/explore/Explore';
 import s from '@/components/explore/explore.module.css';
 import { packExplorePlayer } from '@/components/explore/exploreData';
 import { formatDate, seasonLabel } from '@/lib/format';
+import { ogImage, pageMeta } from '@/lib/meta';
 import { loadData } from '@/server/data';
 
 export function generateMetadata(): Metadata {
   const data = loadData();
-  return {
+  return pageMeta({
     title: 'Explore: Any Two Stats, Every Player',
     description: `Plot any two stats for the ${data.manifest.qualifiedCount} qualified players of ${seasonLabel(data.manifest.season)}: who scores efficiently on high volume, who creates without turning it over, who cleans the glass. Named corners, honest samples, and whether the two stats really go together. Games through ${formatDate(data.through)}.`,
-    alternates: { canonical: '/explore' },
-  };
+    path: '/explore',
+    share: 'Any two stats, every player.',
+    image: ogImage.page('explore'),
+    imageAlt: 'Any two stats, every player: a scatter of the qualified players.',
+  });
 }
 
 export default function ExplorePage() {

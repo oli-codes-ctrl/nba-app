@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Compare, type Suggestion } from '@/components/compare/Compare';
 import s from '@/components/compare/compare.module.css';
 import { formatDate, seasonLabel } from '@/lib/format';
+import { ogImage, pageMeta } from '@/lib/meta';
 import { queryPlayers } from '@/players/query';
 import { loadData, type SiteData } from '@/server/data';
 import type { StatId } from '@/stats/catalog';
@@ -10,11 +11,14 @@ import type { PositionGroup } from '@/stats/views';
 
 export function generateMetadata(): Metadata {
   const data = loadData();
-  return {
+  return pageMeta({
     title: 'Compare Two Players: Who’s Better?',
     description: `Put any two players of ${seasonLabel(data.manifest.season)} head to head: 16 stats scored, each ranked against the ${data.manifest.qualifiedCount} qualified players, with an edge only called clear when it holds up allowing for luck. Plus how alike their styles are.`,
-    alternates: { canonical: '/compare' },
-  };
+    path: '/compare',
+    share: 'Who’s better?',
+    image: ogImage.page('compare'),
+    imageAlt: 'Who’s better? Any two players head to head.',
+  });
 }
 
 const MAX_SUGGESTIONS = 6;

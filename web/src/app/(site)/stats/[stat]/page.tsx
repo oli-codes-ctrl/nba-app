@@ -9,6 +9,7 @@ import { StatView } from '@/components/stat/StatView';
 import { formatDate, formatStat, seasonLabel } from '@/lib/format';
 import { loadData } from '@/server/data';
 import { CATALOG, GROUPS, isStatId, STAT_IDS, type StatId } from '@/stats/catalog';
+import { ogImage, pageMeta, statQuestion } from '@/lib/meta';
 
 type Params = { params: Promise<{ stat: string }> };
 
@@ -40,12 +41,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     `${def.label} for every qualified player of ${seasonLabel(data.manifest.season)}, ranked, with the median, the middle half and how far luck could move each player.` +
     (top ? ` ${def.lowerIsBetter ? 'Fewest' : 'Highest'}: ${top.name}, ${formatStat(stat, top.s[stat])}.` : '') +
     ` Games through ${formatDate(data.through)}.`;
-  return {
+  return pageMeta({
     title: `${def.label}: Every Player Ranked`,
     description,
-    alternates: { canonical: `/stats/${stat}` },
-    openGraph: { title: `Who has the best ${def.label.toLowerCase()}?`, description, url: `/stats/${stat}` },
-  };
+    path: `/stats/${stat}`,
+    share: statQuestion(stat),
+    image: ogImage.stat(stat),
+    imageAlt: `${statQuestion(stat)} The top three qualified players.`,
+  });
 }
 
 export default async function StatPage({ params }: Params) {

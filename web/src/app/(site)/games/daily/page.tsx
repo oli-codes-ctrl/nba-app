@@ -7,15 +7,18 @@ import { buildDayPuzzleDate } from '@/components/games/puzzleDate';
 import pl from '@/components/player/player.module.css';
 import { formatDate } from '@/lib/format';
 import { loadData } from '@/server/data';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 export function generateMetadata(): Metadata {
-  return {
+  return pageMeta({
     title: 'Daily Guess: Name the Mystery Player',
     description:
       'One of the season’s top scorers is hidden on a chart. Switch stats to see where he stands, then name him in three guesses. A new puzzle every day; clues cost points.',
-    alternates: { canonical: '/games/daily' },
-    openGraph: { title: 'Who’s the mystery player?', url: '/games/daily' },
-  };
+    path: '/games/daily',
+    share: 'Who’s the mystery player?',
+    image: ogImage.page('daily'),
+    imageAlt: 'Who’s the mystery player? Today’s Daily Guess.',
+  });
 }
 
 export default function DailyPage() {

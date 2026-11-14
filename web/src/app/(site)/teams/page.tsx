@@ -9,6 +9,7 @@ import { LuckPanel, RatingsPanel } from '@/components/teams/TeamCharts';
 import s from '@/components/teams/teams.module.css';
 import type { TeamSeason } from '@/data/types';
 import { formatDate, seasonLabel } from '@/lib/format';
+import { ogImage, pageMeta } from '@/lib/meta';
 import { teamPath } from '@/lib/routes';
 import { loadData } from '@/server/data';
 import { teamsByConference } from '@/teams/team';
@@ -16,11 +17,14 @@ import { teamInfo } from '@/theme/teams';
 
 export function generateMetadata(): Metadata {
   const data = loadData();
-  return {
+  return pageMeta({
     title: `Team Ratings, Luck and Standings, ${seasonLabel(data.manifest.season)}`,
     description: `All 30 teams on offense and defense per 100 possessions, which records are running ahead of their point differential, and the standings by conference. Games through ${formatDate(data.teams.gamesThrough)}.`,
-    alternates: { canonical: '/teams' },
-  };
+    path: '/teams',
+    share: 'Every team, rated.',
+    image: ogImage.page('teams'),
+    imageAlt: 'Every team, rated: offense, defense and luck.',
+  });
 }
 
 function winPct(t: TeamSeason): number {

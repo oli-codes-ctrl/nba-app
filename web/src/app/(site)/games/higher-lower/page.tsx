@@ -7,15 +7,18 @@ import { HigherLower } from '@/components/games/HigherLower';
 import pl from '@/components/player/player.module.css';
 import { formatDate } from '@/lib/format';
 import { loadData } from '@/server/data';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 export function generateMetadata(): Metadata {
-  return {
+  return pageMeta({
     title: 'Higher or Lower: Season Averages',
     description:
       'Does the next player average more or less? Chain right answers as the stat changes every round and the gaps get smaller. One miss ends the run.',
-    alternates: { canonical: '/games/higher-lower' },
-    openGraph: { title: 'Higher or lower?', url: '/games/higher-lower' },
-  };
+    path: '/games/higher-lower',
+    share: 'Higher or lower?',
+    image: ogImage.page('higher-lower'),
+    imageAlt: 'Higher or lower? Guess who averages more.',
+  });
 }
 
 export default function HigherLowerPage() {

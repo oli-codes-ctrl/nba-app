@@ -19,6 +19,7 @@ import { positionName } from '@/stats/views';
 import { factorRows } from '@/teams/analysis';
 import { roster, TEAM_LEADER_STATS, teamLeader, teamsByConference } from '@/teams/team';
 import { TEAMS, teamInfo } from '@/theme/teams';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 type Params = { params: Promise<{ abbr: string }> };
 
@@ -45,12 +46,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     `${name} in ${seasonLabel(data.manifest.season)}${record ? `: ${record}` : ''}` +
     (t?.net != null ? `, ${signed(t.net)} net rating per 100 possessions` : '') +
     `. Are they for real, have they been lucky, where they win and lose, and who leads them. Games through ${formatDate(data.teams.gamesThrough)}.`;
-  return {
+  return pageMeta({
     title: `${name} Team Stats, Ratings and Roster`,
     description,
-    alternates: { canonical: `/teams/${abbr.toLowerCase()}` },
-    openGraph: { title: `Is ${name} for real?`, description, url: `/teams/${abbr.toLowerCase()}` },
-  };
+    path: `/teams/${abbr.toLowerCase()}`,
+    share: `Is ${name} for real?`,
+    image: ogImage.team(abbr),
+    imageAlt: `Is ${name} for real? Record, net rating, offense and defense with ranks.`,
+  });
 }
 
 export default async function TeamPage({ params }: Params) {

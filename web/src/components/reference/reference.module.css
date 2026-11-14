@@ -1,0 +1,432 @@
+/* Glossary and About: reference pages. Values come from styles/tokens.css only. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-block: var(--space-12) var(--space-section);
+}
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.lede {
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+
+/* ---------- Rail (3 of 12 columns) beside the content (9 of 12) ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8) var(--gutter);
+  align-items: start;
+}
+.rail {
+  display: none;
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .rail {
+    grid-column: span 3;
+    position: sticky;
+    top: calc(var(--nav-height) + var(--space-6));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    max-height: calc(100svh - var(--nav-height) - var(--space-12));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: var(--space-2);
+  }
+  .content {
+    grid-column: span 9;
+  }
+}
+.railTitle {
+  margin: 0;
+}
+.toc,
+.tocSub {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.toc {
+  gap: var(--space-3);
+}
+.tocSub {
+  margin-top: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--hairline);
+}
+.tocLink,
+.tocSubLink {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: var(--radius-xs);
+  transition: color var(--motion-fast) ease;
+}
+.tocLink {
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+.tocSubLink {
+  color: var(--ink-subtle);
+  font-size: 13px;
+}
+.tocLink:hover,
+.tocSubLink:hover {
+  color: var(--ink);
+}
+
+/* ---------- Filter ---------- */
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+.filter {
+  position: relative;
+  display: block;
+  width: min(100%, 360px);
+  color: var(--ink-subtle);
+}
+.filter svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  margin-top: -8px;
+  pointer-events: none;
+}
+.filterInput {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 12px 0 36px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: 14px;
+  transition: border-color var(--motion-fast) ease;
+}
+.filterInput::placeholder {
+  color: var(--ink-subtle);
+}
+.filterInput:hover {
+  border-color: var(--hairline-strong);
+}
+.filterInput:focus-visible {
+  outline-offset: 0;
+}
+@media (pointer: coarse), (max-width: 767px) {
+  /* 16px keeps iOS from zooming the page on focus. */
+  .filterInput {
+    font-size: 16px;
+  }
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+
+/* ---------- Sections, groups and terms ---------- */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.groupHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 68ch;
+}
+.terms {
+  margin: 0;
+  border-top: 1px solid var(--hairline);
+}
+.term {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  position: relative;
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+}
+/* A term reached by its link gets a bar in the gutter beside it; the rows stay on the content edge. */
+.term:target::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--space-3) * -1);
+  top: var(--space-4);
+  bottom: var(--space-4);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent-text);
+}
+.term:target .termName {
+  color: var(--accent-text);
+}
+@media (min-width: 768px) {
+  .term {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 6fr);
+    gap: var(--space-6);
+  }
+}
+.termName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.short {
+  font-variant-numeric: tabular-nums;
+}
+.termBody {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 68ch;
+}
+.termBody p {
+  margin: 0;
+  text-wrap: pretty;
+}
+.formula {
+  overflow-x: auto;
+  position: relative;
+}
+.formula code {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: var(--surface-1);
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: normal;
+}
+.termFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+}
+.termLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 24px;
+}
+
+/* ---------- About: prose sections ---------- */
+/* A question and its answer: closer together than the gap between sections. */
+.qa {
+  gap: var(--space-4);
+}
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.prose > p,
+.prose > ul,
+.prose > .tableScroll {
+  max-width: 68ch;
+}
+.prose p {
+  margin: 0;
+  text-wrap: pretty;
+}
+.prose ul {
+  list-style: disc;
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+@media (min-width: 768px) {
+  /* Bullets hang in the margin, so list text lines up with the paragraphs. */
+  .prose ul {
+    padding-left: 0;
+  }
+}
+.prose li::marker {
+  color: var(--ink-subtle);
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+@media (min-width: 768px) {
+  /* The date gets a double column so it stays on one line. */
+  .facts {
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  /* The date needs the full row on a phone. */
+  .factWide {
+    grid-column: span 3;
+  }
+}
+.fact {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+}
+.fact dd {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+}
+.fact dt {
+  color: var(--ink-subtle);
+  font-size: 13px;
+}
+.minTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.minTable th,
+.minTable td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+}
+.minTable th {
+  color: var(--ink-subtle);
+  font-weight: 500;
+  font-size: 13px;
+}
+.minTable td.numCell,
+.minTable th.numCell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.minTable th.rowHead {
+  color: var(--ink);
+  font-size: 14px;
+}
+.tableScroll {
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+}
+.tableScroll .minTable tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- Not found ---------- */
+.missing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-block: var(--space-section);
+  min-height: calc(100svh - var(--nav-height));
+  justify-content: center;
+}
+.missingSearch {
+  width: min(100%, 560px);
+}
+.places {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.placeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+@media (min-width: 768px) {
+  .placeList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .placeList {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.place {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  box-shadow: var(--edge-highlight);
+  color: var(--ink-subtle);
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+.place:hover {
+  background: var(--surface-2);
+  border-color: var(--hairline-strong);
+  transform: translateY(-2px);
+}
+.placeText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ink);
+}

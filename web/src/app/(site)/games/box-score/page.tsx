@@ -7,15 +7,18 @@ import s from '@/components/games/games.module.css';
 import pl from '@/components/player/player.module.css';
 import { formatDate } from '@/lib/format';
 import { loadData } from '@/server/data';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 export function generateMetadata(): Metadata {
-  return {
+  return pageMeta({
     title: 'Box Score Mystery: Whose Line Is It?',
     description:
       'Ten real stat lines from the latest games, four names each. The wrong names scored about as many points, so read the rest of the line to find who posted it.',
-    alternates: { canonical: '/games/box-score' },
-    openGraph: { title: 'Whose line is it?', url: '/games/box-score' },
-  };
+    path: '/games/box-score',
+    share: 'Whose line is it?',
+    image: ogImage.page('box-score'),
+    imageAlt: 'Whose line is it? A real box line and four names.',
+  });
 }
 
 export default function BoxScorePage() {

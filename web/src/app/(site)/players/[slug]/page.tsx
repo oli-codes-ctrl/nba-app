@@ -23,6 +23,7 @@ import { loadData, type SiteData } from '@/server/data';
 import { CATALOG, type StatId } from '@/stats/catalog';
 import { groupNoun, positionGroup, positionName, type PositionGroup } from '@/stats/views';
 import { teamInfo } from '@/theme/teams';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 /** Below this many team games, the page warns that ranks are volatile. */
 const EARLY_SEASON_GAMES = 20;
@@ -56,12 +57,17 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     `${player.name} (${team}, ${positionName(player.pos).toLowerCase()}) in ${seasonLabel(data.manifest.season)}: ${line}` +
     (player.s.ts_pct != null ? ` on ${formatStat('ts_pct', player.s.ts_pct)} true shooting` : '') +
     `. Where he ranks, how sure we can be, and who plays like him. Games through ${formatDate(data.through)}.`;
-  return {
+  return pageMeta({
     title,
     description,
-    alternates: { canonical: playerPath(player) },
-    openGraph: { title: `${player.name}: How Good Is He, Really?`, description, url: playerPath(player), type: 'profile' },
-  };
+    path: playerPath(player),
+    share: `${player.name}: How Good Is He, Really?`,
+    image: ogImage.player(slug),
+    imageAlt: player.q
+      ? `${player.name}'s percentile rings for Game Score, points, true shooting, assist rate and rebound rate.`
+      : `${player.name}'s points, rebounds, assists and minutes per game.`,
+    type: 'profile',
+  });
 }
 
 export default async function PlayerPage({ params }: Params) {

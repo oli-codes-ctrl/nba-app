@@ -14,6 +14,7 @@ import { Avatar, TeamChip } from '@/components/primitives';
 import { SearchTrigger } from '@/components/shell/SearchTrigger';
 import { bestGames, gameLine, heatCheck, HEAT_Z, lastGameDate, type GameLog, type HeatRow } from '@/games/logs';
 import { formatDate, formatStat, seasonLabel } from '@/lib/format';
+import { ogImage, pageMeta } from '@/lib/meta';
 import { playerPath, statPath } from '@/lib/routes';
 import { SITE } from '@/lib/site';
 import { cardRows } from '@/players/card';
@@ -27,11 +28,14 @@ const SEASON_BEST = 8;
 const HEAT_ROWS = 4;
 const LEADER_ROWS = 5;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: { absolute: `${SITE.name}: Basketball Stats for Fans Who Argue` },
   description: SITE.description,
-  alternates: { canonical: '/' },
-};
+  path: '/',
+  share: `${SITE.name}: ${SITE.tagline}`,
+  image: ogImage.page('site'),
+  imageAlt: `${SITE.name}: ${SITE.tagline} Players ranked, teams rated and three stat games.`,
+});
 
 /** "Nov 10" */
 function shortDate(iso: string): string {

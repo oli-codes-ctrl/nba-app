@@ -4,15 +4,18 @@ import Link from 'next/link';
 import s from '@/components/games/games.module.css';
 import { TrophyCase } from '@/components/games/TrophyCase';
 import pl from '@/components/player/player.module.css';
+import { ogImage, pageMeta } from '@/lib/meta';
 
 export function generateMetadata(): Metadata {
-  return {
+  return pageMeta({
     title: 'Trophies',
     description:
       'Milestones across every game and the rest of the site: from your first Daily Guess to a 30-day streak, a perfect Box Score Mystery and 20 in a row at Higher or Lower.',
-    alternates: { canonical: '/games/trophies' },
-    openGraph: { title: 'Which trophies have you earned?', url: '/games/trophies' },
-  };
+    path: '/games/trophies',
+    share: 'Which trophies have you earned?',
+    image: ogImage.page('trophies'),
+    imageAlt: 'Which trophies have you earned?',
+  });
 }
 
 export default function TrophiesPage() {

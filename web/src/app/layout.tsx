@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import { TrophyNotice } from '@/components/games/TrophyNotice';
 import { TopNav } from '@/components/shell/TopNav';
+import { OG_SIZE, ogImage } from '@/lib/meta';
 import { SITE } from '@/lib/site';
 
 import '@/styles/tokens.css';
@@ -17,8 +18,22 @@ export const metadata: Metadata = {
   title: { default: `${SITE.name}: ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description: SITE.description,
   applicationName: SITE.name,
-  openGraph: { type: 'website', siteName: SITE.name, locale: 'en_US' },
+  // Fallback for pages without their own (the 404); every other page sets these through lib/meta.ts.
+  openGraph: {
+    type: 'website',
+    siteName: SITE.name,
+    locale: 'en_US',
+    images: [{ url: ogImage.page('site'), ...OG_SIZE, alt: `${SITE.name}: ${SITE.tagline}`, type: 'image/png' }],
+  },
   twitter: { card: 'summary_large_image' },
+  icons: {
+    icon: [
+      { url: '/icons/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  manifest: '/manifest.webmanifest',
   formatDetection: { telephone: false },
   other: { 'page-type': 'software', 'site-kind': 'software' },
 };
