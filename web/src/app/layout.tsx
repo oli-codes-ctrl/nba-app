@@ -14,7 +14,9 @@ import '@/styles/base.css';
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter', axes: ['opsz'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE.url),
+  // The sub-path goes into the base: Next joins page paths onto it for canonical and share URLs,
+  // but does not add basePath to metadata URLs itself.
+  metadataBase: new URL(`${SITE.url}${SITE.basePath}/`),
   title: { default: `${SITE.name}: ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description: SITE.description,
   applicationName: SITE.name,
@@ -28,10 +30,10 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image' },
   icons: {
     icon: [
-      { url: '/icons/icon.svg', type: 'image/svg+xml' },
-      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: `${SITE.basePath}/icons/icon.svg`, type: 'image/svg+xml' },
+      { url: `${SITE.basePath}/icons/icon-32.png`, sizes: '32x32', type: 'image/png' },
     ],
-    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+    apple: [{ url: `${SITE.basePath}/icons/apple-touch-icon.png`, sizes: '180x180' }],
   },
   manifest: '/manifest.webmanifest',
   formatDetection: { telephone: false },

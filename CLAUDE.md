@@ -64,6 +64,7 @@ Design every screen as a senior design engineer would. Concretely:
 ## Layout
 - `pipeline/`: Python 3.12 package `hoops_pipeline`, managed with uv. Pulls ESPN season stats, computes derived stats, publishes JSON.
 - `app/`: Expo (TypeScript, expo-router). iOS first, plus a static web build. Built and submitted with EAS, no Mac.
+- `.github/workflows/site.yml`: rebuilds the website when `web/` changes on `master`, against the data already on `gh-pages`, and publishes it beside `/v1/` and `/v2/`. The nightly workflow also builds the site from each night's data and publishes both in one commit (a failed site build keeps the previous site and fails the run after the data is out). Both share the `gh-pages` concurrency group. The site is served at `https://<owner>.github.io/<repo>/`, so builds set `NEXT_PUBLIC_BASE_PATH` and `NEXT_PUBLIC_SITE_URL`; Next does not add the base path to metadata URLs, so `metadataBase` and the icon links carry it.
 - `.github/workflows/nightly-data.yml`: tries the pipeline six times a day (10:15-18:45 UTC; GitHub often starts them up to an hour late) and publishes to the `gh-pages` branch under `/v2/` (plus the `/v1/` compatibility copy) once ESPN has caught up. `nightly` exits 75 when ESPN is still behind (retry later) and 76 when those games are already published; only the last attempt fails loudly. `nightly` also exits 75 once any of today's games has finished (scoreboard check), so late attempts never label today's results as yesterday's.
 - Pipeline state (last ESPN response, rebound splits, team totals and standings, puzzle history, nightly totals, box scores, last published date) lives on the `pipeline-state` branch as one force-pushed commit. The app never reads it.
 
@@ -124,7 +125,7 @@ V6. [x] Box scores from game summaries, then trends (rolling 10-game lines with 
 Then:
 4b. [ ] Tabs (Explore / Players / Teams / Play) and one search for players and teams; cut Who Has More? Charts move into Explore and Teams.
 5. [ ] Glossary and first-launch onboarding.
-W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home [x], players table [x], compare [x], teams [x], explore [x], stat page [x], games (hub and Daily Guess [x]; Higher or Lower, Box Score Mystery, Trophies [x]), glossary/about/404 [x], launch polish.
+W. [ ] Website rebuild in `web/` (replaces 4b, 5, 8 and 14; order and state in `docs/website-redesign.md` section 7): foundation [x], player page [x], home [x], players table [x], compare [x], teams [x], explore [x], stat page [x], games (hub and Daily Guess [x]; Higher or Lower, Box Score Mystery, Trophies [x]), glossary/about/404 [x], launch polish and hosting [x] (GitHub Pages beside the data; live once `master` is pushed).
 8. [ ] (superseded by W) Website: static Expo web build on GitHub Pages, one deploy with the data, a link for every player, team and chart. Known: the web tab bar (expo-router NativeTabs, Radix) logs a hydration id mismatch on every page in dev. On the web the tab bar is themed from tokens and moved to the bottom (`theme/WebTabBar.tsx`, matched by its ARIA attributes since the class names are hashed); scrolling screens keep 64 pt of bottom padding so content clears it.
 11. [ ] Build your own MVP: weight sliders over standardized categories, shareable ladder.
 14. [ ] Share cards for every chart and result.
@@ -137,7 +138,7 @@ Cut: age curve, lineups/on-off, salaries, Who Has More?, the trend-line coloring
 - Pipeline tests: `cd pipeline && uv run --extra dev pytest`
 - Pipeline local run (about 2 minutes): `cd pipeline && uv run python -m hoops_pipeline nightly --state ../.state --out ../out`
 - Rebuild JSON from saved state without network: same with `build-only`.
-- Website: `cd web && npm run dev` (fetches data on first run). Build and preview as a static host would serve it: `npm run build && npm run serve` (http://localhost:4173). Tests: `npm test`. Refresh data: `npm run data` (set `HOOPS_DATA_URL` to a URL or a local pipeline `out/v2` folder).
+- Website: `cd web && npm run dev` (fetches data on first run). Build and preview as a static host would serve it: `npm run build && npm run serve` (http://localhost:4173). Tests: `npm test`. Check every built page (links, anchors, titles, share images): `npm run check`. Sub-path preview: build with `NEXT_PUBLIC_BASE_PATH=/nba-app` (from PowerShell: Git Bash rewrites the leading slash), then serve with `BASE_PATH=/nba-app`. Refresh data: `npm run data` (set `HOOPS_DATA_URL` to a URL or a local pipeline `out/v2` folder).
 - App: `cd app && npx expo start` (scan the QR code with Expo Go)
 - App tests: `cd app && npx jest`
 - App against local data: serve the pipeline's `--out` folder with CORS, then `EXPO_PUBLIC_DATA_URL=http://localhost:PORT/v2/ npx expo start --web`.

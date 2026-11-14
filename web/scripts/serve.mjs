@@ -2,6 +2,8 @@
  * Serves the built site (out/) the way a static host does: folder URLs map
  * to index.html and unknown paths get 404.html. For checking a build
  * locally: `npm run build && npm run serve`. PORT defaults to 4173.
+ * BASE_PATH (e.g. /nba-app) serves the site under a sub-path, as GitHub
+ * Pages does for a project site; build with the same NEXT_PUBLIC_BASE_PATH.
  */
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -10,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(fileURLToPath(new URL('..', import.meta.url)), 'out');
 const PORT = Number(process.env.PORT || 4173);
+const BASE = (process.env.BASE_PATH || '').replace(/\/$/, '');
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -21,6 +24,7 @@ const TYPES = {
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml; charset=utf-8',
+  '.webmanifest': 'application/manifest+json',
 };
 
 function resolve(pathname) {
@@ -33,7 +37,9 @@ function resolve(pathname) {
 
 createServer((req, res) => {
   const { pathname } = new URL(req.url ?? '/', 'http://localhost');
-  const file = resolve(pathname);
+  // Under a sub-path, anything outside it is not part of the site.
+  const inside = !BASE || pathname === BASE || pathname.startsWith(BASE + '/');
+  const file = inside ? resolve(pathname.slice(BASE.length) || '/') : null;
   const target = file ?? join(ROOT, '404.html');
   res.writeHead(file ? 200 : 404, {
     'content-type': TYPES[extname(target)] ?? 'application/octet-stream',

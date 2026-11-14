@@ -9,6 +9,7 @@
     "prebuild": "node scripts/fetch-data.mjs",
     "build": "next build && node scripts/postbuild.mjs",
     "serve": "node scripts/serve.mjs",
+    "check": "node scripts/check-site.mjs",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },

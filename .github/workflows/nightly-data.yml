@@ -25,9 +25,11 @@ on:
 permissions:
   contents: write
 
+# Shared with site.yml: both replace the gh-pages branch, so they never run at once.
 concurrency:
-  group: nightly-data
+  group: gh-pages
   cancel-in-progress: false
+
 
 jobs:
   publish:
@@ -68,7 +70,42 @@ jobs:
             *) exit $code ;;
           esac
 
-      - name: Publish JSON to gh-pages
+      - uses: actions/setup-node@v4
+        if: steps.run.outputs.publish == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build the website from this data
+        id: site
+        if: steps.run.outputs.publish == 'true'
+        # A broken site build must not hold back the data the app reads.
+        continue-on-error: true
+        working-directory: web
+        env:
+          HOOPS_DATA_URL: ${{ github.workspace }}/out/v2
+        run: |
+          # Served next to the data: https://<owner>.github.io/<repo>/ (scheduled runs carry no repository
+          # details in github.event, so both come from GITHUB_REPOSITORY).
+          export NEXT_PUBLIC_SITE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io"
+          export NEXT_PUBLIC_BASE_PATH="/${GITHUB_REPOSITORY#*/}"
+          npm ci
+          npm run build
+          npm run check
+          cp -r out/. ../out/
+
+      - name: Keep the last published site if the build failed
+        if: steps.run.outputs.publish == 'true' && steps.site.outcome == 'failure'
+        run: |
+          git fetch --depth=1 origin gh-pages
+          mkdir -p last
+          git archive FETCH_HEAD | tar -x -C last
+          rm -rf last/v1 last/v2
+          cp -r last/. out/
+          echo "::warning::The website build failed; the data is published with the previous site."
+
+      - name: Publish data and site to gh-pages
         if: steps.run.outputs.publish == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -92,3 +129,9 @@ jobs:
           git add -A
           git commit -q -m "Pipeline state $(date -u +%F)"
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:pipeline-state
+
+      - name: Fail loudly if the website build failed
+        if: steps.site.outcome == 'failure'
+        run: |
+          echo "::error::The website build failed (see 'Build the website from this data'); the data was published with the previous site."
+          exit 1
