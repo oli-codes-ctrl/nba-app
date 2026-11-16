@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Fragment } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 
-import { PercentileBar } from '@/components/primitives';
+import { PercentileBar, percentileColor } from '@/components/primitives';
 import type { Player } from '@/data/types';
 import { betterPct, betterThan, formatStat, rankText } from '@/lib/format';
 import { statPath, type Pool } from '@/lib/routes';
@@ -30,43 +30,133 @@ type Props = {
   method: string;
 };
 
-/** The stats a fan reaches for first: the short list the numbers section opens on, in two tables. */
-export const KEY_STATS: readonly { title: string; stats: readonly StatId[] }[] = [
-  { title: 'Per game', stats: ['pts', 'reb', 'ast', 'stl', 'blk', 'tov', 'mpg'] },
-  { title: 'Shooting and role', stats: ['fg_pct', 'fg3_pct', 'ft_pct', 'ts_pct', 'usg_pct', 'game_score'] },
+/**
+ * The stats a fan reaches for first: the stat sheet the numbers section
+ * opens on. Three bands of 6, 4 and 2 figures, so every figure takes two
+ * columns of the page's 12 (the shooting and role bands share a row).
+ */
+export const KEY_STATS: readonly { id: string; title: string; stats: readonly StatId[] }[] = [
+  { id: 'game', title: 'Per game', stats: ['pts', 'reb', 'ast', 'stl', 'blk', 'tov'] },
+  { id: 'shooting', title: 'Shooting', stats: ['fg_pct', 'fg3_pct', 'ft_pct', 'ts_pct'] },
+  { id: 'role', title: 'Role', stats: ['mpg', 'usg_pct'] },
 ];
 
-/** The short list: the key stats in two plain tables, without sample notes. */
+/** The sheet's labels: its band heading says "per game", so the figures need only the word. */
+const SHEET_LABELS: Partial<Record<StatId, string>> = {
+  pts: 'Points',
+  reb: 'Rebounds',
+  ast: 'Assists',
+  stl: 'Steals',
+  blk: 'Blocks',
+  tov: 'Turnovers',
+  fg_pct: 'Field goal %',
+  fg3_pct: 'Three-point %',
+  ft_pct: 'Free throw %',
+  ts_pct: 'True shooting %',
+  mpg: 'Minutes a game',
+  usg_pct: 'Usage rate',
+};
+
+/** The short list: the key stats as a stat sheet of large figures, each with a percentile meter and his rank. */
 export function KeyStats({ player, ranks, noun, pool, rules }: Omit<Props, 'method'>) {
   return (
-    <div className={s.keyTables}>
-      {KEY_STATS.map((group) => (
-        <section key={group.title} className={s.tableGroup} aria-labelledby={`key-${group.title}-${pool}`}>
-          <h3 id={`key-${group.title}-${pool}`} className={`t-eyebrow ${s.groupTitle}`}>
-            {group.title}
+    <div className={s.sheet}>
+      {KEY_STATS.map((band) => (
+        <section
+          key={band.id}
+          className={s.band}
+          data-band={band.id}
+          style={{ '--n': band.stats.length } as CSSProperties}
+          aria-labelledby={`key-${band.id}-${pool}`}>
+          <h3 id={`key-${band.id}-${pool}`} className={`t-eyebrow ${s.bandTitle}`}>
+            {band.title}
           </h3>
-          <table className={s.table}>
-            <Head ranked={player.q} />
-            <tbody>
-              {group.stats.map((id) => (
-                <StatRow
-                  key={id}
-                  def={CATALOG[id]}
-                  player={player}
-                  pct={ranks.pct?.[id]}
-                  rank={ranks.rank?.[id]}
-                  poolSize={ranks.size[id]}
-                  noun={noun}
-                  pool={pool}
-                  rules={rules}
-                  notes={false}
-                />
-              ))}
-            </tbody>
-          </table>
+          <ul className={s.figures}>
+            {band.stats.map((id) => (
+              <Figure
+                key={id}
+                def={CATALOG[id]}
+                player={player}
+                pct={ranks.pct?.[id]}
+                rank={ranks.rank?.[id]}
+                poolSize={ranks.size[id]}
+                noun={noun}
+                pool={pool}
+                rules={rules}
+              />
+            ))}
+          </ul>
         </section>
       ))}
     </div>
+  );
+}
+
+/** One figure on the sheet: the word, the number set large, a meter filled to his percentile, his rank. */
+function Figure({
+  def,
+  player,
+  pct,
+  rank,
+  poolSize,
+  noun,
+  pool,
+  rules,
+}: {
+  def: StatDef;
+  player: Player;
+  pct: number | undefined;
+  rank: number | undefined;
+  poolSize: number | undefined;
+  noun: string;
+  pool: Pool;
+  rules: AttemptRules | undefined;
+}) {
+  const sample = sampleFor(player, def.id, rules);
+  const better = pct == null ? null : betterThan(def.id, pct);
+  const waiting = better == null && player.q && sample != null && !sample.enough;
+  const value = formatStat(def.id, player.s[def.id]);
+  // A trailing "%" is set smaller, as on a broadcast graphic.
+  const percent = value.endsWith('%');
+  const label = SHEET_LABELS[def.id] ?? def.label;
+  const body = (
+    <>
+      <span className={s.figureLabel}>{label}</span>
+      <span className={`t-score ${s.figureValue}`}>
+        {percent ? value.slice(0, -1) : value}
+        {percent ? <span className={s.figureUnit}>%</span> : null}
+      </span>
+      {player.q ? (
+        <span className={s.meter} aria-hidden="true">
+          {better != null && def.neutral ? (
+            <span className={s.meterDot} style={{ left: `${better}%` }} />
+          ) : better != null ? (
+            <span className={s.meterFill} style={{ width: `${Math.max(2, better)}%`, background: percentileColor(better) }} />
+          ) : null}
+        </span>
+      ) : null}
+      {player.q ? (
+        <span className={`t-caption num ${s.figureRank}`}>
+          {waiting ? 'Not ranked yet' : rank != null && poolSize ? rankText(def.id, rank, poolSize) : 'Not ranked'}
+        </span>
+      ) : null}
+      {better != null ? (
+        <span className="visually-hidden">
+          , {def.neutral ? 'higher' : 'better'} than {betterPct(better)} percent of qualified {noun}
+        </span>
+      ) : null}
+    </>
+  );
+  return (
+    <li className={s.figure}>
+      {def.ranked ? (
+        <Link href={statPath(def.id, { player: player.id, pos: pool })} className={s.figureBody} prefetch={false}>
+          {body}
+        </Link>
+      ) : (
+        <div className={s.figureBody}>{body}</div>
+      )}
+    </li>
   );
 }
 
@@ -143,7 +233,6 @@ function StatRow({
   noun,
   pool,
   rules,
-  notes = true,
 }: {
   def: StatDef;
   player: Player;
@@ -153,8 +242,6 @@ function StatRow({
   noun: string;
   pool: Pool;
   rules: AttemptRules | undefined;
-  /** The sample size and likely range under the label; off in the short list. */
-  notes?: boolean;
 }) {
   const sample = sampleFor(player, def.id, rules);
   const better = pct == null ? null : betterThan(def.id, pct);
@@ -185,7 +272,7 @@ function StatRow({
         ) : (
           def.label
         )}
-        {notes && sampleLine ? (
+        {sampleLine ? (
           <span className={`t-caption num ${s.sample}`}>
             {sampleLine}
             {rangeParts.map((part, i) => (

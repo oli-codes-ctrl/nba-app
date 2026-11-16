@@ -238,11 +238,7 @@ export default async function PlayerPage({ params }: Params) {
             <h2 id="every-title" className="t-card-title">
               What are his numbers?
             </h2>
-            <p className="t-body-sm t-subtle">
-              {player.q
-                ? 'Key stats with where he ranks among qualified players. Select a stat to see everyone.'
-                : 'Key stats. Ranks appear once he has enough games and minutes.'}
-            </p>
+            {player.q ? null : <p className="t-body-sm t-subtle">Ranks appear once he has enough games and minutes.</p>}
           </header>
           <StatsMore
             total={TOTAL_STATS}
