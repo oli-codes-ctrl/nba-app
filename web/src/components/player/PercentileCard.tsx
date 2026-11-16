@@ -43,12 +43,12 @@ export function PercentileCard({ id, title, poolText, through, rows, insights, p
       howTo={
         <>
           <p>
-            Each ring sits at his percentile: 100 is best, 50 is the middle of the group. For turnovers, fewer counts
-            as better.
+            Each bar fills to his percentile: the share of the group he ranks above, so a full bar is the best and the
+            notch is the middle. For turnovers, fewer counts as better.
           </p>
           <p>
-            The bar under a ring is where his rank could sit once luck is allowed for (95% range). A short bar means
-            the rank is settled; no bar means no range is published for that stat yet.
+            The lighter stretch over a bar is where his rank could sit once luck is allowed for (95% range). A short
+            stretch means the rank is settled; none means no range is published for that stat yet.
           </p>
           <p>
             Elite means top {100 - ELITE}% even at the unlucky end of his range. Weak spot means bottom {100 - ELITE}%
@@ -58,18 +58,16 @@ export function PercentileCard({ id, title, poolText, through, rows, insights, p
         </>
       }>
       <div className={s.cardBody}>
-        <div className={s.key} role="img" aria-label="Ring: his percentile. Bar under it: where his rank could sit, allowing for luck.">
+        <div className={s.key} role="img" aria-label="Bar: his percentile, right is better. Lighter stretch: where luck could still put him.">
           <span className={s.keyItem}>
-            <span className={s.keyRing} />
-            His percentile
+            <span className={s.keyFill} />
+            His percentile (right is better)
           </span>
           <span className={s.keyItem}>
-            <span className={s.keyBar} />
-            Where it could be, allowing for luck (95%)
+            <span className={s.keyRange} />
+            Where luck could still put him
           </span>
         </div>
-
-        <CardScale />
 
         {CARD_SECTIONS.map((section) => (
           <div key={section.title} className={s.cardSection}>
@@ -91,20 +89,6 @@ export function PercentileCard({ id, title, poolText, through, rows, insights, p
   );
 }
 
-function CardScale() {
-  return (
-    <div className={s.scale} aria-hidden="true">
-      <span />
-      <span className={s.scaleTicks}>
-        <span style={{ left: '0%' }}>0</span>
-        <span style={{ left: '50%' }}>50</span>
-        <span style={{ left: '100%' }}>100</span>
-      </span>
-      <span />
-    </div>
-  );
-}
-
 /**
  * The card's rows alone, as a picture of the product (the home page hero):
  * no headings and no links, since the panel around them is one link.
@@ -112,7 +96,6 @@ function CardScale() {
 export function CardPreview({ rows }: { rows: readonly CardRow[] }) {
   return (
     <div className={s.cardBody}>
-      <CardScale />
       <ul>
         {rows.map((row) => (
           <li key={row.stat}>
@@ -163,6 +146,11 @@ function Answer({ insights }: { insights: CardInsights }) {
   );
 }
 
+/**
+ * One stat as one bar: filled to his percentile (cold to hot), with the
+ * percentile in words beside it. A lighter stretch over the bar is where
+ * luck could still put him; roles (usage) get a grey dot instead of a fill.
+ */
 function Row({ row, href }: { row: CardRow; href?: string }) {
   const ranked = row.better != null;
   const color = row.neutral || !ranked ? 'var(--viz-mark)' : percentileColor(row.better!);
@@ -171,7 +159,7 @@ function Row({ row, href }: { row: CardRow; href?: string }) {
     (ranked
       ? `, ${row.neutral ? 'higher' : 'better'} than ${betterPct(row.better!)} percent` +
         (row.band
-          ? `; allowing for luck, between the ${ordinal(Math.round(row.band[0]))} and ${ordinal(Math.round(row.band[1]))} percentile`
+          ? `; allowing for luck, between the ${ordinal(betterPct(row.band[0]))} and ${ordinal(betterPct(row.band[1]))} percentile`
           : '')
       : ', not ranked yet') +
     '. See every player.';
@@ -179,26 +167,24 @@ function Row({ row, href }: { row: CardRow; href?: string }) {
   const body = (
     <>
       <span className={s.rowLabel}>{row.label}</span>
-      <span className={s.track} style={{ '--mark': color } as CSSProperties}>
-        <span className={s.trackLine} />
-        <span className={s.trackInner}>
-          <span className={s.trackMid} />
-          {/* The range sits under the ring, so a settled (short) one still shows as a dash. */}
-          {ranked && row.band ? (
-            <span
-              className={s.band}
-              style={{ left: `${row.band[0]}%`, width: `${Math.max(0, row.band[1] - row.band[0])}%` }}
-            />
-          ) : null}
-          {ranked ? (
-            <span className={`num ${s.ring}`} style={{ left: `${row.better}%` }}>
-              {Math.round(row.better!)}
-            </span>
-          ) : null}
-        </span>
-        {!ranked ? <span className={`t-caption ${s.unranked}`}>Not ranked yet</span> : null}
+      <span className={s.bar} style={{ '--mark': color } as CSSProperties} aria-hidden="true">
+        <span className={s.barMid} />
+        {ranked && !row.neutral ? <span className={s.barFill} style={{ width: `${Math.max(1, row.better!)}%` }} /> : null}
+        {ranked && row.neutral ? <span className={s.barDot} style={{ left: `${row.better}%` }} /> : null}
+        {ranked && row.band ? (
+          <span
+            className={s.barRange}
+            style={{ left: `${row.band[0]}%`, width: `${Math.max(1, row.band[1] - row.band[0])}%` }}
+          />
+        ) : null}
       </span>
-      <span className={`num ${s.rowValue}`}>{formatStat(row.stat, row.value)}</span>
+      <span className={`num ${s.rowPct}`} aria-hidden="true">
+        {/* Words stop at 99th, as every sentence does: no one beats himself. */}
+        {ranked ? ordinal(betterPct(row.better!)) : '–'}
+      </span>
+      <span className={`num ${s.rowValue}`} aria-hidden="true">
+        {formatStat(row.stat, row.value)}
+      </span>
     </>
   );
   return href ? (
@@ -206,6 +192,8 @@ function Row({ row, href }: { row: CardRow; href?: string }) {
       {body}
     </Link>
   ) : (
-    <span className={s.row}>{body}</span>
+    <span className={s.row} aria-label={spoken} role="img">
+      {body}
+    </span>
   );
 }

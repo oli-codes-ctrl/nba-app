@@ -5,7 +5,7 @@ import { PercentileBar } from '@/components/primitives';
 import type { Player } from '@/data/types';
 import { betterPct, betterThan, formatStat, rankText } from '@/lib/format';
 import { statPath, type Pool } from '@/lib/routes';
-import { GROUPS, statsInGroup, type StatDef, type StatGroup, type StatId } from '@/stats/catalog';
+import { CATALOG, GROUPS, statsInGroup, type StatDef, type StatGroup, type StatId } from '@/stats/catalog';
 import { attemptsText, sampleFor, type AttemptRules } from '@/stats/samples';
 
 import s from './player.module.css';
@@ -30,6 +30,69 @@ type Props = {
   method: string;
 };
 
+/** The stats a fan reaches for first: the short list the numbers section opens on, in two tables. */
+export const KEY_STATS: readonly { title: string; stats: readonly StatId[] }[] = [
+  { title: 'Per game', stats: ['pts', 'reb', 'ast', 'stl', 'blk', 'tov', 'mpg'] },
+  { title: 'Shooting and role', stats: ['fg_pct', 'fg3_pct', 'ft_pct', 'ts_pct', 'usg_pct', 'game_score'] },
+];
+
+/** The short list: the key stats in two plain tables, without sample notes. */
+export function KeyStats({ player, ranks, noun, pool, rules }: Omit<Props, 'method'>) {
+  return (
+    <div className={s.keyTables}>
+      {KEY_STATS.map((group) => (
+        <section key={group.title} className={s.tableGroup} aria-labelledby={`key-${group.title}-${pool}`}>
+          <h3 id={`key-${group.title}-${pool}`} className={`t-eyebrow ${s.groupTitle}`}>
+            {group.title}
+          </h3>
+          <table className={s.table}>
+            <Head ranked={player.q} />
+            <tbody>
+              {group.stats.map((id) => (
+                <StatRow
+                  key={id}
+                  def={CATALOG[id]}
+                  player={player}
+                  pct={ranks.pct?.[id]}
+                  rank={ranks.rank?.[id]}
+                  poolSize={ranks.size[id]}
+                  noun={noun}
+                  pool={pool}
+                  rules={rules}
+                  notes={false}
+                />
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function Head({ ranked }: { ranked: boolean }) {
+  return (
+    <thead>
+      <tr>
+        <th scope="col">Stat</th>
+        <th scope="col" className={s.right}>
+          Value
+        </th>
+        {ranked ? (
+          <>
+            <th scope="col" className={s.pctHead}>
+              <abbr title="Percentile: better than this share of the group">Pctl</abbr>
+            </th>
+            <th scope="col" className={s.right}>
+              Rank
+            </th>
+          </>
+        ) : null}
+      </tr>
+    </thead>
+  );
+}
+
 /** The reference list: every published stat, grouped, as real tables. */
 export function StatTables({ player, ranks, noun, pool, rules, method }: Props) {
   const traded = player.teams.length > 1;
@@ -47,24 +110,7 @@ export function StatTables({ player, ranks, noun, pool, rules, method }: Props) 
             </p>
           ) : null}
           <table className={s.table}>
-            <thead>
-              <tr>
-                <th scope="col">Stat</th>
-                <th scope="col" className={s.right}>
-                  Value
-                </th>
-                {player.q ? (
-                  <>
-                    <th scope="col" className={s.pctHead}>
-                      <abbr title="Percentile: better than this share of the group">Pctl</abbr>
-                    </th>
-                    <th scope="col" className={s.right}>
-                      Rank
-                    </th>
-                  </>
-                ) : null}
-              </tr>
-            </thead>
+            <Head ranked={player.q} />
             <tbody>
               {statsInGroup(g.id).map((def) => (
                 <StatRow
@@ -97,6 +143,7 @@ function StatRow({
   noun,
   pool,
   rules,
+  notes = true,
 }: {
   def: StatDef;
   player: Player;
@@ -106,6 +153,8 @@ function StatRow({
   noun: string;
   pool: Pool;
   rules: AttemptRules | undefined;
+  /** The sample size and likely range under the label; off in the short list. */
+  notes?: boolean;
 }) {
   const sample = sampleFor(player, def.id, rules);
   const better = pct == null ? null : betterThan(def.id, pct);
@@ -136,7 +185,7 @@ function StatRow({
         ) : (
           def.label
         )}
-        {sampleLine ? (
+        {notes && sampleLine ? (
           <span className={`t-caption num ${s.sample}`}>
             {sampleLine}
             {rangeParts.map((part, i) => (

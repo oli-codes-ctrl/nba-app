@@ -67,6 +67,9 @@
 
   /* Shaded ranges behind marks: a region, not a mark. */
   --viz-band: #232a33;
+  /* A likely range laid over a percentile bar: a lighter stretch with a faint edge. */
+  --viz-range: rgb(243 245 247 / 0.22);
+  --viz-range-edge: rgb(243 245 247 / 0.26);
   --viz-mark: #929ba8;
   --viz-line: #bac2cd;
   --viz-reference: #929ba8;

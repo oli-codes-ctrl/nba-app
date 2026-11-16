@@ -12,7 +12,8 @@ import { PlayerCard, type CardPool } from '@/components/player/PlayerCard';
 import s from '@/components/player/player.module.css';
 import { PoolProvider, PoolView } from '@/components/player/pool';
 import { StatGroups } from '@/components/player/StatGroups';
-import { StatTables } from '@/components/player/StatTables';
+import { StatsMore } from '@/components/player/StatsMore';
+import { KeyStats, StatTables } from '@/components/player/StatTables';
 import { Avatar, TeamChip, type Tile } from '@/components/primitives';
 import { SectionNav, type Section } from '@/components/SectionNav';
 import type { Player } from '@/data/types';
@@ -24,7 +25,7 @@ import { comparePath, idFromSlug, playerPath, playerSlug, statPath } from '@/lib
 import { cardInsights, cardRows, type CardRow } from '@/players/card';
 import { comps } from '@/players/similar';
 import { loadData, type SiteData } from '@/server/data';
-import { CATALOG, type StatId } from '@/stats/catalog';
+import { CATALOG, GROUPS, statsInGroup, type StatId } from '@/stats/catalog';
 import { groupNoun, positionGroup, positionName, type PositionGroup } from '@/stats/views';
 import { teamInfo } from '@/theme/teams';
 
@@ -32,6 +33,8 @@ import { teamInfo } from '@/theme/teams';
 const EARLY_SEASON_GAMES = 20;
 const TILE_STATS: readonly StatId[] = ['pts', 'reb', 'ast', 'ts_pct', 'game_score', 'mpg'];
 const RECENT_STATS: readonly StatId[] = ['pts', 'reb', 'ast', 'fg3m', 'ts_pct'];
+/** Every stat the full tables list. */
+const TOTAL_STATS = GROUPS.reduce((n, g) => n + statsInGroup(g.id).length, 0);
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -110,6 +113,10 @@ export default async function PlayerPage({ params }: Params) {
       ]
     : [{ pool: 'all', group: null }];
 
+  const ranksFor = (g: PositionGroup | null) =>
+    g
+      ? { pct: player.pctPos, rank: player.rankPos, size: data.players.poolSizePos?.[g] ?? {} }
+      : { pct: player.pct, rank: player.rank, size: data.players.poolSize };
   const cardPools: CardPool[] = player.q
     ? pools.map(({ pool, group: g }) => {
         const rows = cardRows(player, all, g);
@@ -125,7 +132,7 @@ export default async function PlayerPage({ params }: Params) {
     ...(player.q ? [{ id: 'ranks', label: 'Ranks' }] : []),
     ...(log.length > 0 ? [{ id: 'trend', label: 'Form' }] : data.players.latest || data.players.recent ? [{ id: 'form', label: 'Form' }] : []),
     ...(similar.length > 0 ? [{ id: 'comps', label: 'Plays Like' }] : []),
-    { id: 'every', label: 'Every Stat' },
+    { id: 'every', label: 'Numbers' },
   ];
 
   return (
@@ -229,37 +236,43 @@ export default async function PlayerPage({ params }: Params) {
         <section id="every" className={s.every} aria-labelledby="every-title">
           <header className={s.everyHead}>
             <h2 id="every-title" className="t-card-title">
-              Every stat
+              What are his numbers?
             </h2>
             <p className="t-body-sm t-subtle">
               {player.q
-                ? 'Season numbers with where he ranks among qualified players. Select a stat to see everyone.'
-                : 'Season numbers. Ranks appear once he has enough games and minutes.'}
+                ? 'Key stats with where he ranks among qualified players. Select a stat to see everyone.'
+                : 'Key stats. Ranks appear once he has enough games and minutes.'}
             </p>
           </header>
-          <StatGroups>
-          {pools.map(({ pool, group: g }) => (
-            <PoolView key={pool} pool={pool}>
-              <StatTables
-                player={player}
-                ranks={
-                  g
-                    ? { pct: player.pctPos, rank: player.rankPos, size: data.players.poolSizePos?.[g] ?? {} }
-                    : { pct: player.pct, rank: player.rank, size: data.players.poolSize }
-                }
-                noun={g ? groupNoun(g) : 'players'}
-                pool={g ?? 'all'}
-                rules={rules}
-                method={
-                  (g
-                    ? `Percentiles compare him with the ${data.players.poolSizePos?.[g]?.pts ?? 0} qualified ${groupNoun(g)}.`
-                    : `Percentiles compare against the ${data.manifest.qualifiedCount} qualified players.`) +
-                  ' Shooting percentages rank only players with enough attempts. “Skill” is where his long-run percentage probably falls (95% range); a skill estimate also weighs how the league’s shooters usually do, so a hot or cold start counts for less. For turnovers and fouls, fewer counts as better.'
-                }
-              />
-            </PoolView>
-          ))}
-          </StatGroups>
+          <StatsMore
+            total={TOTAL_STATS}
+            short={pools.map(({ pool, group: g }) => (
+              <PoolView key={pool} pool={pool}>
+                <KeyStats player={player} ranks={ranksFor(g)} noun={g ? groupNoun(g) : 'players'} pool={g ?? 'all'} rules={rules} />
+              </PoolView>
+            ))}
+            full={
+              <StatGroups>
+                {pools.map(({ pool, group: g }) => (
+                  <PoolView key={pool} pool={pool}>
+                    <StatTables
+                      player={player}
+                      ranks={ranksFor(g)}
+                      noun={g ? groupNoun(g) : 'players'}
+                      pool={g ?? 'all'}
+                      rules={rules}
+                      method={
+                      (g
+                        ? `Percentiles compare him with the ${data.players.poolSizePos?.[g]?.pts ?? 0} qualified ${groupNoun(g)}.`
+                        : `Percentiles compare against the ${data.manifest.qualifiedCount} qualified players.`) +
+                      ' Shooting percentages rank only players with enough attempts. “Skill” is where his long-run percentage probably falls (95% range); a skill estimate also weighs how the league’s shooters usually do, so a hot or cold start counts for less. For turnovers and fouls, fewer counts as better.'
+                      }
+                    />
+                  </PoolView>
+                ))}
+              </StatGroups>
+            }
+          />
         </section>
       </PoolProvider>
     </div>
@@ -273,7 +286,7 @@ function rankSummary(rows: readonly CardRow[]): string | undefined {
   const best = judged.reduce((x, y) => (y.better > x.better ? y : x));
   const low = judged.reduce((x, y) => (y.better < x.better ? y : x));
   const at = (r: CardRow & { better: number }) => `${inSentence(r.label)} (${ordinal(betterPct(r.better))} percentile)`;
-  return best === low ? `Ranked in one stat: ${at(best)}.` : `Highest in ${at(best)}; lowest in ${at(low)}. The bar under each ring is where luck could still put him.`;
+  return best === low ? `Ranked in one stat: ${at(best)}.` : `Highest in ${at(best)}; lowest in ${at(low)}. The lighter stretch on each bar is where luck could still put him.`;
 }
 
 function inSentence(label: string): string {
