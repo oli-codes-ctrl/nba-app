@@ -6,7 +6,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-import { contrastRatio, TEAMS } from '@/theme/teams';
+import { contrastRatio, TEAM_SURFACE, TEAMS } from '@/theme/teams';
 
 const css = readFileSync(join(__dirname, '..', 'src', 'styles', 'tokens.css'), 'utf8');
 const tokens: Record<string, string> = {};
@@ -20,12 +20,16 @@ const t = (name: string): string => {
 const SURFACES = ['canvas', 'surface-1', 'surface-2', 'surface-3', 'surface-4'];
 
 describe('design tokens', () => {
-  it('match DESIGN.md', () => {
-    expect(t('canvas')).toBe('#010102');
-    expect(t('surface-1')).toBe('#0f1011');
-    expect(t('ink')).toBe('#f7f8f8');
-    expect(t('accent')).toBe('#5e6ad2');
-    expect(t('hairline')).toBe('#23252a');
+  it('match docs/design-system.md', () => {
+    expect(t('canvas')).toBe('#0c0f13');
+    expect(t('surface-1')).toBe('#12161b');
+    expect(t('ink')).toBe('#f3f5f7');
+    expect(t('accent')).toBe('#f3f5f7');
+    expect(t('hairline')).toBe('#262d36');
+  });
+
+  it('muted ink is body-text strong (7:1) on every surface', () => {
+    for (const surface of SURFACES) expect(contrastRatio(t('ink-muted'), t(surface))).toBeGreaterThanOrEqual(7);
   });
 
   it.each(['ink', 'ink-muted', 'ink-subtle', 'accent-text', 'success', 'danger'])(
@@ -37,8 +41,9 @@ describe('design tokens', () => {
     },
   );
 
-  it('white text reads on the accent fill, at rest and pressed (4.5:1)', () => {
+  it('arena text reads on the chalk action fill, at rest and pressed (4.5:1)', () => {
     expect(contrastRatio(t('on-accent'), t('accent'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(t('on-accent'), t('accent-hover'))).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(t('on-accent'), t('accent-pressed'))).toBeGreaterThanOrEqual(4.5);
   });
 
@@ -78,8 +83,27 @@ describe('design tokens', () => {
     expect(band).toBeLessThan(contrastRatio(t('viz-mark'), t('surface-1')));
   });
 
-  it('has a name and a color for all 30 teams', () => {
+  it('has a name and published colors for all 30 teams', () => {
     expect(Object.keys(TEAMS)).toHaveLength(30);
-    for (const team of Object.values(TEAMS)) expect(team.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    for (const team of Object.values(TEAMS)) {
+      expect(team.colors.length).toBeGreaterThan(0);
+      for (const c of team.colors) expect(c).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      expect(team.colors).toContain(team.color);
+    }
+  });
+
+  it('team colors are judged against the real panel surface', () => {
+    expect(TEAM_SURFACE.toLowerCase()).toBe(t('surface-1'));
+  });
+
+  // Chip swatches sit on surface-2, where the red teams fall just under 3:1; there the abbreviation beside the
+  // swatch carries the identity, so the swatch is decoration, not the only cue.
+  it("every team's display color shows on the page and the panels (3:1)", () => {
+    for (const [abbr, team] of Object.entries(TEAMS)) {
+      for (const surface of ['canvas', 'surface-1']) {
+        const ratio = contrastRatio(team.color, t(surface));
+        if (ratio < 3) throw new Error(`${abbr} ${team.color} on ${surface}: ${ratio.toFixed(2)}`);
+      }
+    }
   });
 });

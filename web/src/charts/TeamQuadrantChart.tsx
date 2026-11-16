@@ -9,6 +9,7 @@ import { scale, tickLabel, ticks } from '@/graphs/math';
 import { ordinal } from '@/lib/format';
 import { teamPath } from '@/lib/routes';
 import { netLines, squareDomains, TEAM_QUADRANTS, teamQuadrant, type TeamQuadrant } from '@/teams/analysis';
+import { teamInfo } from '@/theme/teams';
 
 import s from './charts.module.css';
 import { useChartBox } from './useChartBox';
@@ -104,15 +105,15 @@ export function TeamQuadrantChart({ teams, league, highlight = null, summary }: 
   const hits = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
   const lineLabels: { c: number; text: string; x: number; y: number; box: Box }[] = [];
   for (const l of lines) {
-    const text = l.c > 0 ? `+${l.c}` : l.c < 0 ? `−${Math.abs(l.c)}` : '0';
-    const w = textWidth(text, 10);
+    const text = l.c > 0 ? `+${l.c} net` : l.c < 0 ? `−${Math.abs(l.c)} net` : 'Even';
+    const w = textWidth(text, 12);
     const spots = [
-      { x: l.start.x + 3, y: l.start.y + 11 },
+      { x: l.start.x + 3, y: l.start.y + 13 },
       { x: l.end.x - w - 3, y: l.end.y - 3 },
     ].map((p) => {
       const x = Math.min(plot.x1 - w - 2, Math.max(plot.x0 + 3, p.x));
-      const y = Math.max(plot.y1 + 11, Math.min(plot.y0 - 3, p.y));
-      return { x, y, box: { x0: x - 1, y0: y - 9, x1: x + w + 1, y1: y + 2 } };
+      const y = Math.max(plot.y1 + 13, Math.min(plot.y0 - 3, p.y));
+      return { x, y, box: { x0: x - 1, y0: y - 11, x1: x + w + 1, y1: y + 3 } };
     });
     const free = spots.find((p) => ![...cornerBoxes, ...lineLabels.map((o) => o.box)].some((b) => hits(p.box, b)));
     if (free) lineLabels.push({ c: l.c, text, ...free });
@@ -254,7 +255,15 @@ export function TeamQuadrantChart({ teams, league, highlight = null, summary }: 
             <g className={s.marks}>
               {teams.map((t, i) =>
                 i === hi ? null : (
-                  <circle key={t.abbr} cx={screen[i].x} cy={screen[i].y} r={i === active ? DOT + 1.5 : DOT} className={i === active ? s.dotHover : s.dot} />
+                  // The ring is the team's color: identity, repeated by the label, never the encoding.
+                  <circle
+                    key={t.abbr}
+                    cx={screen[i].x}
+                    cy={screen[i].y}
+                    r={i === active ? DOT + 1.5 : DOT}
+                    className={i === active ? s.dotHover : s.dotTeam}
+                    style={i === active ? undefined : { stroke: teamInfo(t.abbr).color }}
+                  />
                 ),
               )}
               {hi >= 0 ? <circle cx={screen[hi].x} cy={screen[hi].y} r={BIG_DOT} className={s.dotFocus} /> : null}
@@ -288,7 +297,11 @@ export function TeamQuadrantChart({ teams, league, highlight = null, summary }: 
       {ready && tip && tipAt ? (
         <div
           className={tipAt.y < 120 ? `${s.tooltip} ${s.tooltipBelow}` : s.tooltip}
-          style={{ left: Math.min(Math.max(tipAt.x, 100), Math.max(100, width - 100)), top: tipAt.y }}
+          style={{
+            left: Math.min(Math.max(tipAt.x, 100), Math.max(100, width - 100)),
+            top: tipAt.y,
+            borderTopColor: teamInfo(tip.abbr).color,
+          }}
           aria-hidden="true">
           <div className={s.tipTitle}>{tip.name}</div>
           <div className={s.tipValue}>

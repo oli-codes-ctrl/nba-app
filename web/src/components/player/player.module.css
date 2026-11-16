@@ -196,7 +196,7 @@
   height: 16px;
   margin: 0 calc(var(--ring) / 2);
   color: var(--ink-subtle);
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .scaleTicks span {
@@ -291,10 +291,10 @@
   border-radius: 50%;
   background: var(--surface-1);
   color: var(--ink);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 750;
+  font-stretch: var(--width-score);
   line-height: 1;
-  letter-spacing: -0.2px;
 }
 .rowLink:hover .ring {
   background: var(--surface-3);

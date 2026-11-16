@@ -7,6 +7,8 @@ import { beeswarm, quantile } from '@/graphs/distribution';
 import { textWidth } from '@/graphs/labels';
 import { extent, paddedDomain, scale, tickLabel, ticks } from '@/graphs/math';
 
+import { teamInfo } from '@/theme/teams';
+
 import s from './charts.module.css';
 import type { ScatterTip } from './ScatterChart';
 import { useChartBox } from './useChartBox';
@@ -233,7 +235,11 @@ export function DistributionChart({ dots, reversed, markId, markLabel, range, fo
       {ready && info && at ? (
         <div
           className={at.y < 130 ? `${s.tooltip} ${s.tooltipBelow}` : s.tooltip}
-          style={{ left: Math.min(Math.max(at.x, 110), Math.max(110, width - 110)), top: at.y }}
+          style={{
+            left: Math.min(Math.max(at.x, 110), Math.max(110, width - 110)),
+            top: at.y,
+            borderTopColor: info.team ? teamInfo(info.team).color : undefined,
+          }}
           aria-hidden="true">
           <div className={s.tipValue}>{info.title}</div>
           {info.meta ? <div className={s.tipTitle}>{info.meta}</div> : null}

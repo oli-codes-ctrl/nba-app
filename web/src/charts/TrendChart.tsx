@@ -86,7 +86,8 @@ export function TrendChart({ values, dates, trailing, seasonMean, selected, onSe
     onSelect(next);
   }
 
-  const yTicks = ticks(yd, 4);
+  // Ask for six so a typical range gets four or five labeled lines, not two.
+  const yTicks = ticks(yd, 6);
   const tipX = hover == null ? 0 : Math.min(Math.max(sx(hover), 96), Math.max(96, width - 96));
   const tipY = hover == null ? 0 : sy(values[hover]);
 

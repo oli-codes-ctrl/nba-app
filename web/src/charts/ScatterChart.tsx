@@ -7,18 +7,21 @@ import type { QuadrantKey } from '@/graphs/analysis';
 import { placeLabels, textWidth, type Box } from '@/graphs/labels';
 import { extent, paddedDomain, scale, tickLabel, ticks, type ChartPoint } from '@/graphs/math';
 
+import { teamInfo } from '@/theme/teams';
+
 import s from './charts.module.css';
 import { useChartBox } from './useChartBox';
 
 const MARGIN = { left: 44, right: 12, top: 28, bottom: 44 };
-const DOT = 4.5;
-const BIG_DOT = 7;
+const DOT = 5;
+const BIG_DOT = 7.5;
 const LABEL_SIZE = 11;
 const CORNER_SIZE = 11;
 const HIT = 24;
 
 /** What the tooltip says about one dot. */
-export type ScatterTip = { title: string; meta?: string; rows: readonly (readonly [string, string])[]; note?: string };
+/** A tooltip card. `team` (an abbreviation) draws the team's color as a band along its top edge. */
+export type ScatterTip = { title: string; meta?: string; rows: readonly (readonly [string, string])[]; note?: string; team?: string };
 
 type Props = {
   points: readonly ChartPoint[];
@@ -368,7 +371,11 @@ export function ScatterChart({
       {ready && info && at ? (
         <div
           className={at.y < 140 ? `${s.tooltip} ${s.tooltipBelow}` : s.tooltip}
-          style={{ left: Math.min(Math.max(at.x, 110), Math.max(110, width - 110)), top: at.y }}
+          style={{
+            left: Math.min(Math.max(at.x, 110), Math.max(110, width - 110)),
+            top: at.y,
+            borderTopColor: info.team ? teamInfo(info.team).color : undefined,
+          }}
           aria-hidden="true">
           <div className={s.tipValue}>{info.title}</div>
           {info.meta ? <div className={s.tipTitle}>{info.meta}</div> : null}

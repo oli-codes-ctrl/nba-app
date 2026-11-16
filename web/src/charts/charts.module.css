@@ -1,7 +1,9 @@
 /*
- * One chart style for the whole site. Grid and axes recede (hairline grays);
- * marks are neutral ink unless color carries meaning; text is never the
- * series color. Tooltips lift two surfaces above the panel.
+ * One chart style for the whole site (docs/design-system.md, "Charts").
+ * Grid and axes recede; marks are neutral ink unless color carries meaning;
+ * text is never the series color and never under 12px. A team's color
+ * appears only as identity: a ring on its mark, a band on its tooltip.
+ * Tooltips are floating layers: the top surface plus the float shadow.
  */
 .chart {
   position: relative;
@@ -26,7 +28,8 @@
 }
 .tick {
   fill: var(--viz-axis-label);
-  font-size: 11px;
+  font-size: 12px;
+  font-stretch: var(--width-table);
   font-variant-numeric: tabular-nums;
 }
 .band {
@@ -57,6 +60,11 @@
   fill: var(--ink-muted);
   stroke: var(--surface-1);
   stroke-width: 1.5;
+}
+/* A team's mark: neutral fill, its color as a ring (identity, repeated by the label). */
+.dotTeam {
+  fill: var(--viz-mark);
+  stroke-width: 2.5;
 }
 .dotSelected {
   fill: var(--viz-highlight);
@@ -113,24 +121,26 @@
 }
 .axisTitle {
   fill: var(--ink-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
 }
 .corner {
   fill: var(--ink-subtle);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 650;
+  font-stretch: var(--width-table);
 }
 .label,
 .labelStrong {
   fill: var(--ink-muted);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 650;
+  font-stretch: var(--width-table);
 }
 .labelStrong {
   fill: var(--ink);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 750;
 }
 /* Text over marks and lines keeps a ring of the panel color, so it stays readable. */
 .halo {
@@ -176,11 +186,13 @@
   max-width: 220px;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--hairline-strong);
+  /* The team's color, when the mark has a team; a neutral edge otherwise. */
+  border-top: 3px solid var(--hairline-tertiary);
   border-radius: var(--radius-md);
   background: var(--surface-4);
-  box-shadow: var(--edge-highlight);
+  box-shadow: var(--shadow-float);
   color: var(--ink);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.4;
   pointer-events: none;
   transform: translate(-50%, calc(-100% - 14px));

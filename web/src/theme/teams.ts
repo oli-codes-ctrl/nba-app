@@ -1,51 +1,51 @@
 /**
- * Team names and primary colors for the abbreviation chips. No logos.
+ * Team names and colors. No logos: a team is its abbreviation plus a color.
  * Abbreviations match pipeline/hoops_pipeline/teams.py.
+ *
+ * Colors are each team's published set, primary first, as listed on
+ * teamcolorcodes.com (checked 2026-11-16; Utah's list predates its 2025
+ * rebrand). The site shows one of them, the display color: the first
+ * chromatic color that reaches 3:1 against the panel surface, else the first
+ * neutral that does. A navy primary on a dark page is invisible, so Denver
+ * shows its gold and Brooklyn its white. Team colors are identity only:
+ * never text, never a data encoding.
  */
-/** Text colors that sit on a team color, chosen by its brightness. */
-export const chipText = { onLight: '#111316', onDark: '#FFFFFF' } as const;
 
-export type TeamInfo = { name: string; color: string };
+/** The panel surface team colors sit on (`--surface-1` in styles/tokens.css; a test keeps them equal). */
+export const TEAM_SURFACE = '#12161B';
 
-export const TEAMS: Record<string, TeamInfo> = {
-  // Deeper than the brand red so white chip text reaches 4.5:1.
-  ATL: { name: 'Atlanta', color: '#C8102E' },
-  BOS: { name: 'Boston', color: '#007A33' },
-  BKN: { name: 'Brooklyn', color: '#000000' },
-  CHA: { name: 'Charlotte', color: '#1D1160' },
-  CHI: { name: 'Chicago', color: '#CE1141' },
-  CLE: { name: 'Cleveland', color: '#860038' },
-  DAL: { name: 'Dallas', color: '#00538C' },
-  DEN: { name: 'Denver', color: '#0E2240' },
-  DET: { name: 'Detroit', color: '#C8102E' },
-  GSW: { name: 'Golden State', color: '#1D428A' },
-  HOU: { name: 'Houston', color: '#CE1141' },
-  IND: { name: 'Indiana', color: '#002D62' },
-  LAC: { name: 'LA Clippers', color: '#C8102E' },
-  LAL: { name: 'LA Lakers', color: '#552583' },
-  MEM: { name: 'Memphis', color: '#5D76A9' },
-  MIA: { name: 'Miami', color: '#98002E' },
-  MIL: { name: 'Milwaukee', color: '#00471B' },
-  MIN: { name: 'Minnesota', color: '#0C2340' },
-  NOP: { name: 'New Orleans', color: '#0C2340' },
-  NYK: { name: 'New York', color: '#006BB6' },
-  OKC: { name: 'Oklahoma City', color: '#007AC1' },
-  ORL: { name: 'Orlando', color: '#0077C0' },
-  PHI: { name: 'Philadelphia', color: '#006BB6' },
-  PHX: { name: 'Phoenix', color: '#1D1160' },
-  POR: { name: 'Portland', color: '#C8102E' },
-  SAC: { name: 'Sacramento', color: '#5A2D81' },
-  SAS: { name: 'San Antonio', color: '#C4CED4' },
-  TOR: { name: 'Toronto', color: '#CE1141' },
-  UTA: { name: 'Utah', color: '#002B5C' },
-  WAS: { name: 'Washington', color: '#002B5C' },
+const COLORS: Record<string, { name: string; colors: readonly string[] }> = {
+  ATL: { name: 'Atlanta', colors: ['#E03A3E', '#C1D32F', '#26282A'] },
+  BOS: { name: 'Boston', colors: ['#007A33', '#BA9653', '#963821', '#FFFFFF', '#000000'] },
+  BKN: { name: 'Brooklyn', colors: ['#000000', '#FFFFFF'] },
+  CHA: { name: 'Charlotte', colors: ['#1D1160', '#00788C', '#A1A1A4'] },
+  CHI: { name: 'Chicago', colors: ['#CE1141', '#000000'] },
+  CLE: { name: 'Cleveland', colors: ['#860038', '#041E42', '#FDBB30', '#000000'] },
+  DAL: { name: 'Dallas', colors: ['#00538C', '#002B5E', '#B8C4CA', '#000000'] },
+  DEN: { name: 'Denver', colors: ['#0E2240', '#FEC524', '#8B2131', '#1D428A'] },
+  DET: { name: 'Detroit', colors: ['#C8102E', '#1D42BA', '#BEC0C2', '#002D62'] },
+  GSW: { name: 'Golden State', colors: ['#1D428A', '#FFC72C'] },
+  HOU: { name: 'Houston', colors: ['#CE1141', '#000000', '#C4CED4'] },
+  IND: { name: 'Indiana', colors: ['#002D62', '#FDBB30', '#BEC0C2'] },
+  LAC: { name: 'LA Clippers', colors: ['#C8102E', '#1D428A', '#BEC0C2', '#000000'] },
+  LAL: { name: 'LA Lakers', colors: ['#552583', '#FDB927', '#000000'] },
+  MEM: { name: 'Memphis', colors: ['#5D76A9', '#12173F', '#F5B112', '#707271'] },
+  MIA: { name: 'Miami', colors: ['#98002E', '#F9A01B', '#000000'] },
+  MIL: { name: 'Milwaukee', colors: ['#00471B', '#EEE1C6', '#0077C0', '#000000'] },
+  MIN: { name: 'Minnesota', colors: ['#0C2340', '#236192', '#9EA2A2', '#78BE20'] },
+  NOP: { name: 'New Orleans', colors: ['#0C2340', '#C8102E', '#85714D'] },
+  NYK: { name: 'New York', colors: ['#006BB6', '#F58426', '#BEC0C2', '#000000'] },
+  OKC: { name: 'Oklahoma City', colors: ['#007AC1', '#EF3B24', '#002D62', '#FDBB30'] },
+  ORL: { name: 'Orlando', colors: ['#0077C0', '#C4CED4', '#000000'] },
+  PHI: { name: 'Philadelphia', colors: ['#006BB6', '#ED174C', '#002B5C', '#C4CED4'] },
+  PHX: { name: 'Phoenix', colors: ['#1D1160', '#E56020', '#000000', '#63727A', '#F9AD1B'] },
+  POR: { name: 'Portland', colors: ['#E03A3E', '#000000'] },
+  SAC: { name: 'Sacramento', colors: ['#5A2D81', '#63727A', '#000000'] },
+  SAS: { name: 'San Antonio', colors: ['#C4CED4', '#000000'] },
+  TOR: { name: 'Toronto', colors: ['#CE1141', '#000000', '#A1A1A4', '#B4975A'] },
+  UTA: { name: 'Utah', colors: ['#002B5C', '#00471B', '#F9A01B'] },
+  WAS: { name: 'Washington', colors: ['#002B5C', '#E31837', '#C4CED4'] },
 };
-
-const FALLBACK: TeamInfo = { name: 'Unknown team', color: '#868E96' };
-
-export function teamInfo(abbr: string): TeamInfo {
-  return TEAMS[abbr] ?? FALLBACK;
-}
 
 /** Relative luminance (WCAG) of a #RRGGBB color. */
 export function luminance(hex: string): number {
@@ -62,9 +62,32 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Whichever of white or near-black text reads better on a chip. */
-export function chipTextColor(background: string): string {
-  return contrastRatio(chipText.onDark, background) >= contrastRatio(chipText.onLight, background)
-    ? chipText.onDark
-    : chipText.onLight;
+/** A color rather than a grey, white or black: its channels spread apart. */
+function isChromatic(hex: string): boolean {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return Math.max(...c) - Math.min(...c) > 40;
+}
+
+/** The color a team shows on the site's panels (see the file comment). */
+export function displayColor(colors: readonly string[]): string {
+  const visible = colors.filter((c) => contrastRatio(c, TEAM_SURFACE) >= 3);
+  return visible.find(isChromatic) ?? visible[0] ?? FALLBACK.color;
+}
+
+export type TeamInfo = {
+  name: string;
+  /** The published colors, primary first. */
+  colors: readonly string[];
+  /** The one the site shows. */
+  color: string;
+};
+
+const FALLBACK = { name: 'Unknown team', colors: ['#8C95A2'], color: '#8C95A2' } as const;
+
+export const TEAMS: Record<string, TeamInfo> = Object.fromEntries(
+  Object.entries(COLORS).map(([abbr, t]) => [abbr, { ...t, color: displayColor(t.colors) }]),
+);
+
+export function teamInfo(abbr: string): TeamInfo {
+  return TEAMS[abbr] ?? FALLBACK;
 }

@@ -409,7 +409,7 @@
 }
 .miniAxisTitle {
   fill: var(--ink-subtle);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .more {
@@ -581,10 +581,9 @@
 .versus {
   align-self: center;
   color: var(--ink-subtle);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 700;
+  font-stretch: var(--width-score);
 }
 .duelCard {
   display: flex;

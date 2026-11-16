@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Archivo } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import { TrophyNotice } from '@/components/games/TrophyNotice';
@@ -11,7 +11,8 @@ import '@/styles/tokens.css';
 import '@/styles/base.css';
 
 // Downloaded at build time and served from this site: no request to a font host.
-const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter', axes: ['opsz'] });
+// One variable family with a width axis (62 to 125): condensed for names and scores, normal for reading.
+const archivo = Archivo({ subsets: ['latin'], display: 'swap', variable: '--font-archivo', axes: ['wdth'] });
 
 export const metadata: Metadata = {
   // The sub-path goes into the base: Next joins page paths onto it for canonical and share URLs,
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#010102',
+  themeColor: '#0c0f13',
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
@@ -49,7 +50,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable} data-type="software">
+    <html lang="en" className={archivo.variable} data-type="software">
       <body>
         <TopNav />
         {children}

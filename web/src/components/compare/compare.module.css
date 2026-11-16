@@ -432,7 +432,7 @@
   height: 16px;
   margin: 0 calc(var(--ring) / 2);
   color: var(--ink-subtle);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   font-variant-numeric: tabular-nums;
 }

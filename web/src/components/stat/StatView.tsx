@@ -22,6 +22,7 @@ import { useQuery } from '@/lib/useQueryParam';
 import { CATALOG, type StatId } from '@/stats/catalog';
 import { attemptsText } from '@/stats/samples';
 import { groupNoun, POSITION_GROUPS, positionGroup, positionName, type PositionGroup } from '@/stats/views';
+import { teamInfo } from '@/theme/teams';
 
 import s from './stat.module.css';
 import { unpackStatRow, type PackedStatRow, type StatRow } from './statData';
@@ -132,7 +133,8 @@ export function StatView({ stat, packed, rule, through, related, relatedTitle }:
     const k = rankOf(r);
     return {
       title: r.name,
-      meta: `${positionName(r.pos)} · ${r.team}`,
+      meta: `${teamInfo(r.team).name} ${positionName(r.pos).toLowerCase()}`,
+      team: r.team,
       rows: [[def.short, fmt(r.value)], ...(k != null ? [['Rank', rankText(stat, k, pool.length)] as const] : [])],
       note: p != null ? `${capital(more)} than ${betterPct(betterThan(stat, p))}% of ${noun}` : undefined,
     };

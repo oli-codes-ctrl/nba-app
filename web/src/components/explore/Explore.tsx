@@ -37,6 +37,7 @@ import { useQuery } from '@/lib/useQueryParam';
 import { CATALOG, GROUPS, isStatId, STAT_IDS, statsInGroup, type StatDef, type StatId } from '@/stats/catalog';
 import { attemptsText, hasSample, minimumsText, sampleFor, type AttemptRules } from '@/stats/samples';
 import { groupNoun, POSITION_GROUPS, positionGroup, positionName, type PositionGroup } from '@/stats/views';
+import { teamInfo } from '@/theme/teams';
 
 import tb from '@/components/table.module.css';
 
@@ -240,7 +241,8 @@ export function Explore({ packed, rules, through }: Props) {
     const corner = preset && analysis ? preset.quadrants[quadrantOf(p, analysis.medians.x, analysis.medians.y, invertY)] : null;
     return {
       title: p.name,
-      meta: player ? `${positionName(player.pos)} · ${player.team}` : undefined,
+      meta: player ? `${teamInfo(player.team).name} ${positionName(player.pos).toLowerCase()}` : undefined,
+      team: player?.team,
       rows: columns.map(({ stat, axis }) => [CATALOG[stat].short, formatStat(stat, p[axis])] as const),
       note: analysis?.hollow.has(p.id) ? 'Under half the typical minutes' : (corner ?? undefined),
     };
