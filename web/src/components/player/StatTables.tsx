@@ -36,7 +36,7 @@ export function StatTables({ player, ranks, noun, pool, rules, method }: Props) 
   return (
     <div className={s.tables}>
       {GROUPS.map((g) => (
-        <section key={g.id} className={s.tableGroup} aria-labelledby={`group-${g.id}-${pool}`}>
+        <section key={g.id} className={s.tableGroup} data-group={g.id} aria-labelledby={`group-${g.id}-${pool}`}>
           <h3 id={`group-${g.id}-${pool}`} className={`t-eyebrow ${s.groupTitle}`}>
             {g.title}
           </h3>
@@ -112,7 +112,7 @@ function StatRow({
   // Qualified, but too few attempts for this percentage to be ranked yet.
   const waiting = better == null && player.q && sample != null && !sample.enough;
   const sampleLine = sample
-    ? `On ${attemptsText(sample.have, sample.by)}` + (waiting ? ` · ranked from ${sample.need}` : '')
+    ? `On ${attemptsText(sample.have, sample.by)}` + (waiting ? `, ranked from ${sample.need}` : '')
     : null;
   // Long-run skill: the 95% range, plus the sample-adjusted estimate when
   // published. Worded as skill, since a cold or hot start can sit outside it.
@@ -121,8 +121,8 @@ function StatRow({
   const adj = player.adj?.[def.id];
   const rangeParts = ci
     ? adj != null
-      ? [`Skill estimate ${adj.toFixed(1)}%`, `likely ${ci[0]}–${ci[1]}%`]
-      : [`Skill likely ${ci[0]}–${ci[1]}%`]
+      ? [`skill estimate ${adj.toFixed(1)}%`, `likely ${ci[0]}–${ci[1]}%`]
+      : [`skill likely ${ci[0]}–${ci[1]}%`]
     : [];
   const value = formatStat(def.id, player.s[def.id]);
 
@@ -139,9 +139,9 @@ function StatRow({
         {sampleLine ? (
           <span className={`t-caption num ${s.sample}`}>
             {sampleLine}
-            {rangeParts.map((part) => (
+            {rangeParts.map((part, i) => (
               <Fragment key={part}>
-                {' · '}
+                {i === 0 ? '; ' : ', '}
                 <span>{part}</span>
               </Fragment>
             ))}

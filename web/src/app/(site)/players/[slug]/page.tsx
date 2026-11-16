@@ -8,22 +8,25 @@ import { CompareIcon } from '@/components/icons';
 import { FollowButton } from '@/components/player/FollowButton';
 import { GameTrend } from '@/components/player/GameTrend';
 import { PercentileCard } from '@/components/player/PercentileCard';
+import { PlayerCard, type CardPool } from '@/components/player/PlayerCard';
 import s from '@/components/player/player.module.css';
-import { PoolProvider, PoolSwitch, PoolView } from '@/components/player/pool';
+import { PoolProvider, PoolView } from '@/components/player/pool';
+import { StatGroups } from '@/components/player/StatGroups';
 import { StatTables } from '@/components/player/StatTables';
-import { Avatar, Note, StatTiles, TeamChip, type Tile } from '@/components/primitives';
+import { Avatar, TeamChip, type Tile } from '@/components/primitives';
+import { SectionNav, type Section } from '@/components/SectionNav';
 import type { Player } from '@/data/types';
 import { playerLog } from '@/games/logs';
 import { shortName } from '@/graphs/analysis';
-import { formatDate, formatStat, rankText, seasonLabel } from '@/lib/format';
-import { comparePath, idFromSlug, playerPath, playerSlug, statPath, teamPath } from '@/lib/routes';
-import { cardInsights, cardRows } from '@/players/card';
+import { betterPct, formatDate, formatStat, ordinal, rankText, seasonLabel } from '@/lib/format';
+import { ogImage, pageMeta } from '@/lib/meta';
+import { comparePath, idFromSlug, playerPath, playerSlug, statPath } from '@/lib/routes';
+import { cardInsights, cardRows, type CardRow } from '@/players/card';
 import { comps } from '@/players/similar';
 import { loadData, type SiteData } from '@/server/data';
 import { CATALOG, type StatId } from '@/stats/catalog';
 import { groupNoun, positionGroup, positionName, type PositionGroup } from '@/stats/views';
 import { teamInfo } from '@/theme/teams';
-import { ogImage, pageMeta } from '@/lib/meta';
 
 /** Below this many team games, the page warns that ranks are volatile. */
 const EARLY_SEASON_GAMES = 20;
@@ -107,6 +110,24 @@ export default async function PlayerPage({ params }: Params) {
       ]
     : [{ pool: 'all', group: null }];
 
+  const cardPools: CardPool[] = player.q
+    ? pools.map(({ pool, group: g }) => {
+        const rows = cardRows(player, all, g);
+        return { pool, noun: g ? groupNoun(g) : 'players', route: g ?? 'all', rows, insights: cardInsights(rows) };
+      })
+    : [];
+  const note = !player.q
+    ? null
+    : data.mostGames > 0 && data.mostGames < EARLY_SEASON_GAMES
+      ? `Early season: teams have played about ${data.mostGames} games, so ranks can still swing from night to night. Games through ${through}.`
+      : `Games through ${through}.`;
+  const sections: Section[] = [
+    ...(player.q ? [{ id: 'ranks', label: 'Ranks' }] : []),
+    ...(log.length > 0 ? [{ id: 'trend', label: 'Form' }] : data.players.latest || data.players.recent ? [{ id: 'form', label: 'Form' }] : []),
+    ...(similar.length > 0 ? [{ id: 'comps', label: 'Plays Like' }] : []),
+    { id: 'every', label: 'Every Stat' },
+  ];
+
   return (
     <div className={`wrap ${s.page}`}>
       <nav aria-label="Breadcrumb" className={`t-caption ${s.crumbs}`}>
@@ -117,89 +138,43 @@ export default async function PlayerPage({ params }: Params) {
         <span aria-current="page">{player.name}</span>
       </nav>
 
-      <header className={s.header}>
-        <div className={s.identity}>
-          <span className={s.portrait}>
-            <Avatar name={player.name} size={64} />
-          </span>
-          <div className={s.titles}>
-            <h1 className="t-display-md">{player.name}</h1>
-            <div className={`t-body-sm ${s.metaClip}`}>
-              <ul className={s.metaList}>
-                <li>
-                  <TeamChip abbr={player.team} />
-                  <Link href={teamPath(player.team)} className="link">
-                    {teamInfo(player.team).name}
-                  </Link>
-                </li>
-                <li>{positionName(player.pos)}</li>
-                {player.s.age != null ? <li className="num">Age {player.s.age}</li> : null}
-                <li className="num">
-                  {player.s.gp ?? 0} {player.s.gp === 1 ? 'game' : 'games'}
-                </li>
-              </ul>
-            </div>
-            {earlierTeams.length > 0 ? (
-              <p className={`t-caption ${s.meta}`}>
-                Earlier this season:
-                {earlierTeams.map((t) => (
-                  <TeamChip key={t} abbr={t} link muted />
-                ))}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <div className={s.actions}>
-          <FollowButton id={player.id} name={player.name} />
-          <ButtonLink variant="primary" href={comparePath(player.id)} icon={<CompareIcon />}>
-            Compare
-          </ButtonLink>
-        </div>
-      </header>
-
-      <StatTiles tiles={tiles} label={`${player.name} season averages, with his rank among qualified players`} />
-
-      {!player.q ? (
-        <Note>
-          Not enough games or minutes yet to rank against qualified players. Season averages are shown without
-          percentiles.
-        </Note>
-      ) : data.mostGames > 0 && data.mostGames < EARLY_SEASON_GAMES ? (
-        <Note>
-          Early season: teams have played about {data.mostGames} games, so these ranks can swing a lot from night to
-          night.
-        </Note>
-      ) : null}
-
       <PoolProvider groupLabel={groupLabel}>
-        {groupLabel ? (
-          <div className={s.toolbar}>
-            <p className="t-body-sm t-subtle">Ranks compare him with</p>
-            <PoolSwitch groupLabel={groupLabel} />
-          </div>
-        ) : null}
+        <div className={s.lead}>
+          <PlayerCard
+            player={player}
+            pools={cardPools}
+            groupLabel={groupLabel}
+            tiles={tiles}
+            actions={
+              <>
+                <ButtonLink variant="primary" href={comparePath(player.id)} icon={<CompareIcon />}>
+                  Compare
+                </ButtonLink>
+                <FollowButton id={player.id} name={player.name} />
+              </>
+            }
+          />
+          {note ? <p className={`t-caption t-subtle num ${s.leadNote}`}>{note}</p> : null}
+        </div>
+
+        <SectionNav sections={sections} label={`${player.name}: sections`} />
 
         <div className={s.grid}>
-          {player.q
-            ? pools.map(({ pool, group: g }) => {
-                const rows = cardRows(player, all, g);
-                const size = g ? data.players.poolSizePos?.[g] ?? {} : data.players.poolSize;
-                return (
-                  <PoolView key={pool} pool={pool}>
-                    <PercentileCard
-                      id="card"
-                      title={`How good is ${short}, really?`}
-                      poolText={`${size.pts ?? 0} qualified ${g ? groupNoun(g) : 'players'}`}
-                      through={through}
-                      rows={rows}
-                      insights={cardInsights(rows)}
-                      playerId={player.id}
-                      pool={g ?? 'all'}
-                    />
-                  </PoolView>
-                );
-              })
-            : null}
+          {cardPools.map((p) => (
+            <PoolView key={p.pool} pool={p.pool}>
+              <PercentileCard
+                id="ranks"
+                title="Where does he rank in each stat?"
+                poolText={`${(p.route === 'all' ? data.players.poolSize : data.players.poolSizePos?.[p.route] ?? {}).pts ?? 0} qualified ${p.noun}`}
+                through=""
+                rows={p.rows}
+                insights={p.insights}
+                playerId={player.id}
+                pool={p.route}
+                answer={rankSummary(p.rows)}
+              />
+            </PoolView>
+          ))}
 
           <div className={s.side}>
             {log.length > 0 ? (
@@ -212,7 +187,7 @@ export default async function PlayerPage({ params }: Params) {
               <ChartFrame
                 id="comps"
                 title="Who’s he like?"
-                meta="Closest styles this season · 100 means the same style"
+                meta="Closest styles this season; 100 means the same style"
                 howTo={
                   <>
                     <p>
@@ -235,11 +210,11 @@ export default async function PlayerPage({ params }: Params) {
                             {other.name} <TeamChip abbr={other.team} />
                           </span>
                           {drivers.length > 0 ? (
-                            <span className={`t-caption ${s.compWhy}`}>Both: {drivers.map((d) => d.text).join(' · ')}</span>
+                            <span className={`t-caption ${s.compWhy}`}>Both: {list(drivers.map((d) => d.text))}</span>
                           ) : null}
                         </span>
                         <span className={s.compMatch}>
-                          <span className={`num ${s.compScore}`}>{Math.round(100 * match)}</span>
+                          <span className={`t-score ${s.compScore}`}>{Math.round(100 * match)}</span>
                           <span className="t-caption t-subtle">match</span>
                         </span>
                       </Link>
@@ -251,7 +226,7 @@ export default async function PlayerPage({ params }: Params) {
           </div>
         </div>
 
-        <section className={s.every} aria-labelledby="every-title">
+        <section id="every" className={s.every} aria-labelledby="every-title">
           <header className={s.everyHead}>
             <h2 id="every-title" className="t-card-title">
               Every stat
@@ -262,6 +237,7 @@ export default async function PlayerPage({ params }: Params) {
                 : 'Season numbers. Ranks appear once he has enough games and minutes.'}
             </p>
           </header>
+          <StatGroups>
           {pools.map(({ pool, group: g }) => (
             <PoolView key={pool} pool={pool}>
               <StatTables
@@ -283,10 +259,29 @@ export default async function PlayerPage({ params }: Params) {
               />
             </PoolView>
           ))}
+          </StatGroups>
         </section>
       </PoolProvider>
     </div>
   );
+}
+
+/** The ranks panel's answer: his highest and lowest percentile among the stats that have a better end. */
+function rankSummary(rows: readonly CardRow[]): string | undefined {
+  const judged = rows.filter((r): r is CardRow & { better: number } => !r.neutral && r.better != null);
+  if (!judged.length) return undefined;
+  const best = judged.reduce((x, y) => (y.better > x.better ? y : x));
+  const low = judged.reduce((x, y) => (y.better < x.better ? y : x));
+  const at = (r: CardRow & { better: number }) => `${inSentence(r.label)} (${ordinal(betterPct(r.better))} percentile)`;
+  return best === low ? `Ranked in one stat: ${at(best)}.` : `Highest in ${at(best)}; lowest in ${at(low)}. The bar under each ring is where luck could still put him.`;
+}
+
+function inSentence(label: string): string {
+  return label.startsWith('Game Score') ? label : label.charAt(0).toLowerCase() + label.slice(1);
+}
+
+function list(items: readonly string[]): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
 function capital(text: string): string {

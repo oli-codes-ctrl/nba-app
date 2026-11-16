@@ -1,0 +1,58 @@
+/* In-page section navigation: sticks under the top bar; the current item is underlined in chalk. */
+.bar {
+  position: sticky;
+  top: var(--nav-height);
+  z-index: calc(var(--z-nav) - 1);
+  margin-block: calc(-1 * var(--space-2));
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+}
+/* Anchored sections clear both sticky bars. */
+html:has(.bar) {
+  scroll-padding-top: calc(var(--nav-height) + 64px);
+}
+.list {
+  position: relative;
+  display: flex;
+  gap: var(--space-6);
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.list::-webkit-scrollbar {
+  display: none;
+}
+.item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--ink-subtle);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--motion-fast) ease;
+}
+.item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+.item:hover {
+  color: var(--ink);
+}
+.item[aria-current='location'] {
+  color: var(--ink);
+}
+.item[aria-current='location']::after {
+  transform: scaleX(1);
+}
+.item:focus-visible {
+  outline-offset: -4px;
+}

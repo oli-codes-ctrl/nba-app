@@ -57,6 +57,14 @@
   --viz-grid: #1c2229;
   --viz-axis: #343d48;
   --viz-axis-label: #929ba8;
+  /*
+   * A card field in a team's color: a tint over --surface-1, lighter behind
+   * text (captions still clear 4.5:1 for every team) and stronger on the
+   * court side, where only ink and muted ink sit. Tested for all 30 teams.
+   */
+  --team-tint-text: 10%;
+  --team-tint-court: 20%;
+
   /* Shaded ranges behind marks: a region, not a mark. */
   --viz-band: #232a33;
   --viz-mark: #929ba8;

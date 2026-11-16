@@ -26,7 +26,7 @@ type Props = {
  */
 export function ChartFrame({ title, meta, controls, answer, howTo, children, id, className }: Props) {
   return (
-    <section className={className ? `${s.frame} ${className}` : s.frame} aria-labelledby={`${id}-title`}>
+    <section id={id} className={className ? `${s.frame} ${className}` : s.frame} aria-labelledby={`${id}-title`}>
       <header className={s.head}>
         <h2 id={`${id}-title`} className="t-card-title">
           {title}

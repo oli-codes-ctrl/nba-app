@@ -1,4 +1,4 @@
-/* Player page: header, percentile card, comps, stat tables, game log. */
+/* Player page: the card (card.module.css), percentile panel, comps, stat tables, game log. */
 
 .page {
   display: flex;
@@ -30,76 +30,14 @@
   color: var(--ink);
 }
 
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-4) var(--space-6);
-}
-.identity {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  min-width: 0;
-}
-.titles {
+/* The card and the line under it. */
+.lead {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
+  gap: var(--space-3);
 }
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-  color: var(--ink-subtle);
-}
-/* A dot before every item; the clip hides the one that would start a line. */
-.metaClip {
-  overflow: hidden;
-  color: var(--ink-subtle);
-}
-.metaList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) 0;
-  margin-left: -17px;
-}
-.metaList li {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-left: 17px;
-  white-space: nowrap;
-}
-.metaList li::before {
-  content: '';
-  position: absolute;
-  left: 7px;
-  top: 50%;
-  width: 3px;
-  height: 3px;
-  margin-top: -1.5px;
-  border-radius: 50%;
-  background: var(--ink-disabled);
-}
-.portrait {
-  display: inline-flex;
-}
-.actions {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-3);
-  margin-top: var(--space-2);
+.leadNote {
+  max-width: 76ch;
 }
 
 /* ---------- Main grid: card beside trend and comps ---------- */
@@ -391,6 +329,26 @@
   columns: 2;
   column-gap: var(--space-12);
 }
+/* Phone: one stat group at a time, chosen with chips (StatGroups). Wider screens show them all. */
+.groupPicker {
+  display: none;
+}
+@media (max-width: 767px) {
+  .groupPicker {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+  .groups[data-active='overall'] .tableGroup:not([data-group='overall']),
+  .groups[data-active='scoring'] .tableGroup:not([data-group='scoring']),
+  .groups[data-active='shooting'] .tableGroup:not([data-group='shooting']),
+  .groups[data-active='other'] .tableGroup:not([data-group='other']),
+  .groups[data-active='rates'] .tableGroup:not([data-group='rates']),
+  .groups[data-active='per36'] .tableGroup:not([data-group='per36']),
+  .groups[data-active='per100'] .tableGroup:not([data-group='per100']) {
+    display: none;
+  }
+}
+
 .tableGroup {
   break-inside: avoid;
   display: flex;
@@ -565,18 +523,9 @@
   .side {
     gap: var(--space-4);
   }
-  .actions {
-    width: 100%;
-  }
-  .actions > * {
-    flex: 1;
-  }
   .cardBody {
     --label: 104px;
     --value: 46px;
-  }
-  .portrait {
-    zoom: 0.75;
   }
   .scale,
   .row {

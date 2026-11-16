@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { ChartFrame } from '@/components/ChartFrame';
 import { percentileColor } from '@/components/primitives';
@@ -21,6 +21,8 @@ type Props = {
   insights: CardInsights;
   playerId: number;
   pool: Pool;
+  /** Replaces the default answer (the insights), e.g. when the page header already gives the verdict. */
+  answer?: ReactNode;
 };
 
 /**
@@ -30,14 +32,14 @@ type Props = {
  * could sit allowing for luck. Roles (usage) get a gray ring: more is
  * neither good nor bad. Every row links to that stat across the league.
  */
-export function PercentileCard({ id, title, poolText, through, rows, insights, playerId, pool }: Props) {
+export function PercentileCard({ id, title, poolText, through, rows, insights, playerId, pool, answer }: Props) {
   const byStat = new Map(rows.map((r) => [r.stat, r]));
   return (
     <ChartFrame
       id={id}
       title={title}
-      meta={`Percentiles among ${poolText} · games through ${through}`}
-      answer={<Answer insights={insights} />}
+      meta={through ? `Percentiles among ${poolText}, games through ${through}` : `Percentiles among ${poolText}`}
+      answer={answer ?? <Answer insights={insights} />}
       howTo={
         <>
           <p>

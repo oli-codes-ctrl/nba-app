@@ -68,7 +68,7 @@ function Tile({ label, value, note }: { label: string; value: string; note?: str
         borderRadius: 16,
       }}>
       <span style={{ fontSize: 22, color: tok('ink-subtle') }}>{label}</span>
-      <span style={{ fontSize: 46, fontWeight: 600, letterSpacing: -1 }}>{value}</span>
+      <span style={{ fontFamily: 'Archivo Score', fontSize: 58, fontWeight: 800, lineHeight: 1 }}>{value}</span>
       {note ? <span style={{ fontSize: 22, color: tok('ink-subtle') }}>{note}</span> : null}
     </div>
   );
@@ -107,10 +107,11 @@ export function playerImage(player: Player) {
   const pool = byPosition ? `Percentile among qualified ${groupNoun(group!)}` : 'Percentile among qualified players';
   return (
     <Frame
-      eyebrow={`${teamInfo(player.team).name} · ${positionName(player.pos)}`}
+      eyebrow={`${teamInfo(player.team).name} ${positionName(player.pos).toLowerCase()}`}
       title={player.name}
       through={data.through}
-      titleSize={player.name.length > 20 ? 76 : 92}>
+      team={teamInfo(player.team).color}
+      titleSize={player.name.length > 20 ? 92 : 112}>
       {player.q ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18, width: '100%' }}>
           <span style={{ fontSize: 22, color: tok('ink-subtle') }}>{pool}</span>
@@ -151,7 +152,7 @@ export function teamImage(abbr: string) {
           ? 'Too early to tell: within luck of an average team'
           : 'Net rating per 100 possessions';
   return (
-    <Frame eyebrow={answer} title={`Is ${name} for real?`} through={doc.gamesThrough} titleSize={name.length > 14 ? 76 : 88}>
+    <Frame eyebrow={answer} title={`Is ${name} for real?`} through={doc.gamesThrough} team={teamInfo(abbr).color} titleSize={name.length > 14 ? 84 : 100}>
       <div style={{ display: 'flex', gap: 16, width: '100%' }}>
         <Tile label="Record" value={t && t.w != null && t.l != null ? `${t.w}–${t.l}` : '–'} />
         <Tile label="Net rating" value={t?.net != null ? signed(t.net) : '–'} note={rank('net')} />

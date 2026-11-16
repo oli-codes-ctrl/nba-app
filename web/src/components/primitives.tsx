@@ -54,10 +54,21 @@ export function TeamChip({ abbr, link = false, muted = false }: { abbr: string; 
 export type Tile = { label: string; value: string; note?: string; href?: string; title?: string };
 
 /** A strip of headline numbers. */
-export function StatTiles({ tiles, label, phoneColumns = 3 }: { tiles: readonly Tile[]; label: string; phoneColumns?: 2 | 3 }) {
+export function StatTiles({
+  tiles,
+  label,
+  phoneColumns = 3,
+  className,
+}: {
+  tiles: readonly Tile[];
+  label: string;
+  phoneColumns?: 2 | 3;
+  /** Extra class, e.g. to set the strip into a card. */
+  className?: string;
+}) {
   return (
     <ul
-      className={phoneColumns === 2 ? `${s.tiles} ${s.tilesPair}` : s.tiles}
+      className={[s.tiles, phoneColumns === 2 ? s.tilesPair : '', className ?? ''].filter(Boolean).join(' ')}
       style={{ '--tiles': tiles.length } as CSSProperties}
       aria-label={label}>
       {tiles.map((t) => {

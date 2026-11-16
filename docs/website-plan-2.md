@@ -164,3 +164,22 @@ Each step: [playwright-cli] screenshots at 1440, 768 and 390 with every interact
 - The new palette needs the dataviz validator again for the percentile scale and position colors against the new surface; any color that fails is re-stepped and reported.
 - The share images pick up the new look in step 1 (players), 3 (teams) and 9 (the rest).
 - CLAUDE.md's website section is updated to point at `docs/design-system.md`.
+
+## 8. Build log (round 2)
+
+| Step | State | Notes |
+|---|---|---|
+| 0. Foundation | done 2026-11-16, approved | Tokens, Archivo, team display colors (tested for all 30), chart frame v2 (answer first, table toggle top right, who is included in the footer), chart style (team rings, tooltip team band, larger dots, 12 px labels, more trend ticks), chalk buttons with a press state, controls squared to the control radius. `docs/design-system.md` replaces `DESIGN.md` for the website. |
+| 1. Player page | done 2026-11-16, awaiting review | The card (`components/player/PlayerCard.tsx`): a field in the team's display color (10% tint behind text, 20% on the court side, tested for every team), the court drawn to scale in it (`components/CourtLines.tsx`), the name in the display face, the facts as label-value pairs, the verdict in one sentence from the gated insights, five rings that sweep in once (the one orchestrated moment), the pool switch beside them, the season numbers along the bottom. A quiet line under it for early season and the games-through date. A sticky section menu (`components/SectionNav.tsx`: Ranks, Form, Plays Like, Every Stat; current section marked). "Where does he rank in each stat?" answers with his highest and lowest percentile. On phones, "Every stat" shows one group at a time (`?group=`), cutting the page from 7,136 to 4,256 px. Share image redrawn as the card (Archivo instances cut from the variable font, `og/fonts`). |
+
+### Measured on the player page (round 2)
+
+- JavaScript 153 KB gzip (was 152), HTML 26.5 KB gzip. No sideways scroll at 1440, 768 and 390; no duplicate ids; no console errors.
+- Checked in the click-through: the pool switch changes the verdict and the rings (true shooting: better than 26% of centers, 50% of all players), the section menu jumps under both sticky bars and marks the section, ring links open the stat page with the player and position, the phone group chips, an unqualified player (no rings, no Ranks or Plays Like in the menu), a traded player (earlier team chip), a long name at 1440 and 390, reduced motion (no sweep).
+
+### Waivers (round 2)
+
+| Rule | Where | Reason |
+|---|---|---|
+| guidelines: animate transform and opacity only | the card's ring sweep | `stroke-dashoffset` on five small SVG arcs, once on load, paint only (no layout); off under reduced motion. It is the page's one orchestrated moment. |
+| taste: `container-edges`, `flush`, `hero-*`, `one-section`, `section-*`, `cta`, `no-visual`, `text-only`, `row-lines`, `top-stagger`, `visual-caption`, `copy-headline`, `copy-headings` | tool pages | As in round 1 (`docs/website-redesign.md`, section 7): data pages, not marketing pages. |
