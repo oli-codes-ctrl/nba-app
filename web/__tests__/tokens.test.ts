@@ -92,6 +92,28 @@ describe('design tokens', () => {
     }
   });
 
+  it('text on a team card field stays readable for every team', () => {
+    const pct = (name: string) => Number(css.match(new RegExp(`--${name}:\\s*(\\d+)%`))![1]) / 100;
+    const mix = (a: string, b: string, t: number) =>
+      '#' +
+      [1, 3, 5]
+        .map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * t + parseInt(b.slice(i, i + 2), 16) * (1 - t)))
+        .map((v) => v.toString(16).padStart(2, '0'))
+        .join('');
+    for (const [abbr, team] of Object.entries(TEAMS)) {
+      const text = mix(team.color, t('surface-1'), pct('team-tint-text'));
+      const court = mix(team.color, t('surface-1'), pct('team-tint-court'));
+      for (const [ink, bg, min] of [
+        ['ink-subtle', text, 4.5],
+        ['ink-muted', court, 4.5],
+        ['ink', court, 7],
+      ] as const) {
+        const ratio = contrastRatio(t(ink), bg);
+        if (ratio < min) throw new Error(`${abbr}: ${ink} on ${bg} is ${ratio.toFixed(2)}`);
+      }
+    }
+  });
+
   it('team colors are judged against the real panel surface', () => {
     expect(TEAM_SURFACE.toLowerCase()).toBe(t('surface-1'));
   });
